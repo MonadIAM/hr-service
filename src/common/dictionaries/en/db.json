@@ -1,0 +1,10 @@
+{
+  "NOT_FOUND": "{resource} does not exist.",
+  "UNIQUE_VIOLATION": "{resource} with the specified data already exists.",
+  "FK_VIOLATION": "A foreign key constraint was violated for related resource {resource}.",
+  "NOT_NULL_VIOLATION": "A required field of {resource} is missing.",
+  "DEADLOCK": "Concurrent access conflict detected. Please retry the operation later.",
+  "LOCK_TIMEOUT": "Database lock wait timeout exceeded.",
+  "CONNECTION_LOST": "The connection to the database was lost.",
+  "INTERNAL_DRIVER_ERROR": "Internal database driver error (code: {code})."
+}

@@ -1,0 +1,29 @@
+{
+  "extends": "./configs/tsconfig.base.json",  // Root config, better to avoid editing!
+  "compilerOptions": {
+    "rootDir": ".",                           // Root directory of the source code
+    "outDir": "./dist",                       // Output directory for compiled files
+    "paths": {
+      "~infrastructure": ["./src/infrastructure"],
+      "~infrastructure/*": ["./src/infrastructure/*"],
+      "~observability": ["./src/observability"],
+      "~observability/*": ["./src/observability/*"],
+      "~bootstrap/*": ["./src/bootstrap/*"],
+      "~bootstrap": ["./src/bootstrap"],
+      "~context/*": ["./src/context/*"],
+      "~common/*": ["./src/common/*"],
+      "~testing/*": ["./src/testing/*"],
+      "~root/*": ["./*"],
+    },
+  },
+  "include": [
+    "./mikro-orm.config.ts",
+    "./env.d.ts",
+    "src/**/*",
+  ],
+  "exclude": [
+    "node_modules",
+    "configs",
+    "dist",
+  ],
+}

@@ -1,0 +1,17 @@
+strictPeerDependencies: true
+blockExoticSubdeps: true
+engineStrict: true
+lockfile: true
+color: true
+loglevel: info
+savePrefix: ""
+allowBuilds:
+  "@monadiam/shared@https://codeload.github.com/MonadIAM/shared/tar.gz/4156b964afaf549924fd92ab22fa7303da428b62": true
+  "@launchql/protobufjs": true
+  "msgpackr-extract": true
+  "unrs-resolver": true
+  "@scarf/scarf": false
+  "cpu-features": true
+  "protobufjs": true
+  "esbuild": true
+  "ssh2": true

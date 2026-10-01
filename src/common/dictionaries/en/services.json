@@ -1,0 +1,17 @@
+{
+  "kafka-incoming": {
+    "EVENT_MISSING": "The Kafka message key required for idempotent processing is missing."
+  },
+  "schema-registry": {
+    "ENCODE_FAILED": "Failed to encode a message for subject {subject}: {reason}.",
+    "DECODE_FAILED": "Failed to decode a message for subject {subject}: {reason}.",
+    "MESSAGE_INVALID": "The message for subject {subject} does not match the schema. Invalid fields: {fields}."
+  },
+  "jwt": {
+    "INVALID_ACCESS_TOKEN": "The access token is invalid or expired."
+  },
+  "vault": {
+    "REQUEST_FAILED": "Vault Transit request failed.",
+    "INVALID_SIGNATURE": "Vault Transit returned an invalid signature."
+  }
+}

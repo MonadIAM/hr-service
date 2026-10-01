@@ -1,0 +1,17 @@
+{
+  "kafka-incoming": {
+    "EVENT_MISSING": "Отсутствует Kafka key, необходимый для идемпотентной обработки сообщения."
+  },
+  "schema-registry": {
+    "ENCODE_FAILED": "Не удалось закодировать сообщение для subject {subject}: {reason}.",
+    "DECODE_FAILED": "Не удалось декодировать сообщение для subject {subject}: {reason}.",
+    "MESSAGE_INVALID": "Сообщение для subject {subject} не соответствует схеме. Некорректные поля: {fields}."
+  },
+  "jwt": {
+    "INVALID_ACCESS_TOKEN": "Access-токен недействителен или просрочен."
+  },
+  "vault": {
+    "REQUEST_FAILED": "Запрос к Vault Transit завершился ошибкой.",
+    "INVALID_SIGNATURE": "Vault Transit вернул недействительную подпись."
+  }
+}

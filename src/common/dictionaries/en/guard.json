@@ -1,0 +1,19 @@
+{
+  "permission": {
+    "ACCOUNT_REQUIRED": "An authenticated account is required to perform this operation.",
+    "REALM_REQUIRED": "A realm is required to perform this operation.",
+    "REALM_SCOPE_MISSING": "The session does not carry a realm scope.",
+    "REALM_OUT_OF_SESSION_SCOPE": "The requested realm is outside the session's scope.",
+    "GLOBAL_SCOPE_REQUIRES_DIRECT_LOGIN": "Global permissions require a session established via a direct MonadIAM login.",
+    "INSUFFICIENT_PERMISSIONS": "Insufficient permissions to perform this operation."
+  },
+  "authn": {
+    "TOKEN_MISSING": "An authentication token is required.",
+    "MALFORMED_AUTHORIZATION": "The Authorization header is malformed.",
+    "SESSION_REVOKED": "The session has been revoked."
+  },
+  "reauthentication": {
+    "REAUTHENTICATION_REQUIRED": "Reauthentication is required to perform this operation.",
+    "NOT_AUTHENTICATED": "Authentication is required to reauthenticate."
+  }
+}

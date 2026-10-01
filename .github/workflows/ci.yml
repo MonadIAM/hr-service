@@ -1,0 +1,72 @@
+name: CI Checks (Parallel)
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+
+jobs:
+  gitleaks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Run Gitleaks
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}:/repo" \
+            ghcr.io/gitleaks/gitleaks:v8.29.0 \
+            git /repo --config /repo/.gitleaks.toml --verbose
+
+  static-analysis:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24.18.0"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run Env checks
+        run: ./scripts/env.check.sh
+
+      - name: Run Intl checks
+        run: ./scripts/intl.check.sh
+
+      - name: Run TSC
+        run: pnpm exec tsc --noEmit
+
+      - name: Run ESLint
+        run: pnpm exec eslint . --quiet
+
+      - name: Run Knip
+        run: pnpm run knip
+
+      - name: Run unit tests
+        run: NODE_OPTIONS=--experimental-vm-modules pnpm exec jest --config ./jest.unit.config.mjs
+
+  build:
+    runs-on: ubuntu-latest
+    needs: [static-analysis]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24.18.0"
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run build

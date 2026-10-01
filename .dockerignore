@@ -1,0 +1,40 @@
+# Dependencies and build artifacts
+node_modules
+dist
+build
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables and secrets
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# Container data (avoid copying gigabytes of logs during build)
+zookeeper_data/
+zookeeper_log/
+kafka_data/
+*.db
+
+# Git metadata
+.git
+.gitignore
+.gitattributes
+
+# IDE configs and system files
+.vscode
+.idea
+.history
+.swp
+.DS_Store
+Thumbs.db
+
+# Documentation and management scripts
+README.md
+Makefile
+scripts/

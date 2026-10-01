@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "assets": [
+      {
+        "include": "context/infrastructure/scripts/**/*.lua",
+        "outDir": "dist/src",
+        "watch": true
+      },
+      {
+        "include": "common/dictionaries/**/*.json",
+        "outDir": "dist/src",
+        "watch": true
+      },
+      {
+        "include": "assets/**/*",
+        "outDir": "dist/src",
+        "watch": true
+      }
+    ],
+    "watchAssets": true
+  }
+}

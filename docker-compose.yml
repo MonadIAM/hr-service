@@ -1,0 +1,115 @@
+x-base: &base
+  restart: on-failure
+  env_file:
+    - .env
+
+name: ${SERVICE_NAME:?}
+
+services:
+  vault-bootstrap:
+    image: ${VAULT_IMAGE:?}
+    container_name: ${SERVICE_NAME:?}-vault-bootstrap
+    env_file:
+      - .env
+    volumes:
+      - ./docker/vault/bootstrap.sh:/bootstrap.sh:ro
+      - vault_agent_bootstrap:/vault/agent-bootstrap
+      - vault_agent_config:/vault/config
+    entrypoint: ["sh", "/bootstrap.sh"]
+    networks:
+      vault_net:
+
+  vault-agent:
+    image: ${VAULT_IMAGE:?}
+    container_name: ${SERVICE_NAME:?}-vault-agent
+    restart: always
+    depends_on:
+      vault-bootstrap:
+        condition: service_completed_successfully
+    entrypoint: ["vault"]
+    command: ["agent", "-config=/agent.hcl"]
+    volumes:
+      - ./docker/vault/agent.hcl:/agent.hcl:ro
+      - vault_agent_config:/vault/config:ro
+      - vault_agent_bootstrap:/vault/agent-bootstrap
+      - vault_agent_token:/vault/token
+      - application_secrets:/secrets/application
+      - vault_agent_proxy:/vault/proxy
+    networks:
+      vault_net:
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "test -f /secrets/application/postgresql_username && test -f /secrets/application/postgresql_password && test -f /secrets/application/redis_password",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 60
+      start_period: 5s
+
+  service:
+    <<: *base
+    build:
+      context: .
+      dockerfile: docker/app/Dockerfile
+      args:
+        BASE_IMAGE: ${APP_BASE_IMAGE:?}
+    image: ${SERVICE_NAME:?}:latest
+    container_name: ${SERVICE_NAME:?}-app
+    ports:
+      - "${APP_PORT:?}:${APP_PORT:?}"
+    depends_on:
+      vault-agent:
+        condition: service_healthy
+    volumes:
+      - ./docker/app/entrypoint.sh:/usr/local/bin/entrypoint.sh:ro
+      - ./docker/app/with-vault-secrets.sh:/usr/local/bin/with-vault-secrets.sh:ro
+      - ./mikro-orm.config.ts:/app/mikro-orm.config.ts:ro
+      - ./tsconfig.build.json:/app/tsconfig.build.json:ro
+      - ./tsconfig.json:/app/tsconfig.json:ro
+      - ./src:/app/src
+      - application_secrets:/vault/secrets:ro
+      - vault_agent_proxy:/vault/proxy:ro
+      - uploads_data:/app/uploads
+    entrypoint: ["sh", "/usr/local/bin/entrypoint.sh"]
+    networks:
+      postgres_net:
+      kafka_net:
+      redis_net:
+      vault_net:
+      monitoring_net:
+        aliases:
+          - template-service-app
+    stop_grace_period: 1s
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:${APP_PORT:?}/api/v${API_VERSION:?}/health/liveness"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+volumes:
+  vault_agent_bootstrap:
+  application_secrets:
+  vault_agent_config:
+  vault_agent_proxy:
+  vault_agent_token:
+  uploads_data:
+
+networks:
+  kafka_net:
+    external: true
+    name: ${DOCKER_NETWORK_KAFKA:?}
+  postgres_net:
+    external: true
+    name: ${DOCKER_NETWORK_POSTGRES:?}
+  redis_net:
+    external: true
+    name: ${DOCKER_NETWORK_REDIS:?}
+  vault_net:
+    external: true
+    name: ${DOCKER_NETWORK_VAULT:?}
+  monitoring_net:
+    external: true
+    name: ${DOCKER_NETWORK_MONITORING:-monitoring-net}
