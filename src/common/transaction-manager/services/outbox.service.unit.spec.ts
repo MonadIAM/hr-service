@@ -107,7 +107,7 @@ describe("OutboxService", () => {
                 actor: "00000000-0000-4000-8000-000000000010",
                 input: JSON.stringify({ example: "admin" }),
                 created_at: CREATED_AT.toISOString(),
-                service: "template-service",
+                service: "hr-service",
                 user_agent: "unit-agent",
                 action_type: "CREATE",
                 entity_type: "ROLE",
@@ -132,7 +132,7 @@ describe("OutboxService", () => {
 
             expect(service.buildAuditLogArchive(audit).payload).toEqual({
                 created_at: CREATED_AT.toISOString(),
-                service: "template-service",
+                service: "hr-service",
                 action_type: "CREATE",
                 entity_type: "ROLE",
                 user_agent: null,
@@ -172,7 +172,7 @@ describe("OutboxService", () => {
                 entity: "00000000-0000-4000-8000-000000000010",
                 created_at: CREATED_AT.toISOString(),
                 change_type: ChangeSetType.UPDATE,
-                service: "template-service",
+                service: "hr-service",
                 delta: JSON.stringify(delta),
                 audit_entry: AUDIT_ID,
                 entity_type: "ROLE",

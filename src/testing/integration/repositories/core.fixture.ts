@@ -19,7 +19,7 @@ export class CoreFixture implements Fixtures.Core.Contract {
             input: props.input,
             context: {
                 ip: props.context?.ip ?? "127.0.0.1",
-                userAgent: props.context?.userAgent ?? "template-test",
+                userAgent: props.context?.userAgent ?? "hr-test",
             },
         });
 

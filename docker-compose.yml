@@ -80,7 +80,7 @@ services:
       vault_net:
       monitoring_net:
         aliases:
-          - template-service-app
+          - hr-service-app
     stop_grace_period: 1s
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:${APP_PORT:?}/api/v${API_VERSION:?}/health/liveness"]

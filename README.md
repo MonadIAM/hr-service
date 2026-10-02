@@ -1,37 +1,11 @@
-# @monadiam/template-service
+# @monadiam/hr-service
 
-NestJS service template for the MonadIAM platform.
+HR Service is responsible for employee records, staffing, work calendars and
+schedules, leave management, and employee requests with approval workflows.
 
-It includes authentication against `identity-service`, permission checks through
-`access-control-service`, audit/change logs with outbox archival, and BullMQ
-retention cleanup.
-
-Domain-specific entities, commands, queries, and controllers are intentionally
-left minimal.
-
-----
-
-<details>
-<summary><strong>What's Included</strong></summary>
-
-| Area                                 | Files                                            |
-|:-------------------------------------|:-------------------------------------------------|
-| Authn and permission guards          | `src/context/infrastructure/guards`              |
-| Access cache and invalidation        | `src/context/infrastructure/queues/access-cache` |
-| Kafka retry/dead-letter flow         | `src/context/infrastructure/queues/kafka-retry`  |
-| Vault Transit client                 | `src/common/services/vault-transit.service.ts`   |
-| Audit/change log transaction manager | `src/common/transaction-manager`                 |
-| Access Control gRPC client           | `src/infrastructure/grpc`                        |
-| PostgreSQL config and migrations     | `src/infrastructure/database`                    |
-| Redis config                         | `src/infrastructure/redis`                       |
-| Observability                        | `src/observability`                              |
-| Docker local runtime                 | `docker`, `docker-compose.yml`                   |
-
-Generic exports that are expected to be used by future domain code may be marked
-with `/** @public */` so `knip` does not report them while the template is still
-empty.
-
-</details>
+The repository currently provides authentication through `identity-service`,
+permission checks through `access-control-service`, audit/change logs, Kafka
+integration, and retention cleanup.
 
 ----
 
@@ -97,19 +71,24 @@ make build
 make up
 ```
 
-The local service container depends on:
+Local infrastructure provisions HR PostgreSQL, Redis, Vault credentials,
+the Debezium outbox connector, and monitoring. The service uses:
 
 | Dependency          | Address inside Docker network      |
 |:--------------------|:-----------------------------------|
-| PostgreSQL          | `template-postgresql:5432`         |
-| Redis               | `template-redis:6379`              |
+| PostgreSQL          | `hr-postgresql:5432`               |
+| Redis               | `hr-redis:6379`                    |
 | Kafka               | `kafka:29092`                      |
 | Vault               | `vault:8200`                       |
 | Identity JWKS       | `identity-service-app:4002`        |
 | Access Control gRPC | `access-control-service-app:50051` |
 
+Vault Agent reads runtime credentials from `kv/data/hr-service/runtime`; the
+AppRole is `hr-service`, and the Transit keys are `hr-audit-mask-hmac` and
+`hr-audit-log-sig`.
+
 Shared Docker networks are created by the infra repository:
-`postgres-net`, `redis-net`, `kafka-net`, and `vault-net`.
+`postgres-net`, `redis-net`, `kafka-net`, `vault-net`, and `monitoring-net`.
 
 </details>
 
@@ -120,9 +99,9 @@ Shared Docker networks are created by the infra repository:
 
 | Resource   | Port                                 |
 |:-----------|:-------------------------------------|
-| HTTP API   | `4000`                               |
-| PostgreSQL | `6000` on host, `5432` inside Docker |
-| Redis      | `7000` on host, `6379` inside Docker |
+| HTTP API   | `4005`                               |
+| PostgreSQL | `6005` on host, `5432` inside Docker |
+| Redis      | `7005` on host, `6379` inside Docker |
 
 </details>
 
@@ -152,9 +131,6 @@ Shared Docker networks are created by the infra repository:
 | `make graphify`                   | Create or update the local code graph and Markdown report.          |
 | `make graphify-rebuild`           | Rescan all code files and regenerate the report.                    |
 | `make graphify-html`              | Update the graph and report, then export HTML visualization.        |
-| `make swagger`                    | Generate the OpenAPI Swagger JSON file.                             |
-| `make postman`                    | Generate and patch the Postman collection JSON file.                |
-| `make docs`                       | Generate Swagger and Postman documentation artifacts.               |
 | **Database**                      |                                                                     |
 | `make migrate`                    | Apply pending MikroORM migrations in the running service container. |
 | `make migration name="..."`       | Generate a MikroORM migration in the running service container.     |

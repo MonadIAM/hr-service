@@ -32,19 +32,19 @@ listener "unix" {
 }
 
 template {
-    contents    = "{{ with secret \"kv/data/template-service/runtime\" }}{{ .Data.data.postgresql_username }}{{ end }}"
+    contents    = "{{ with secret \"kv/data/hr-service/runtime\" }}{{ .Data.data.postgresql_username }}{{ end }}"
     destination = "/secrets/application/postgresql_username"
     perms       = "0440"
 }
 
 template {
-    contents    = "{{ with secret \"kv/data/template-service/runtime\" }}{{ .Data.data.postgresql_password }}{{ end }}"
+    contents    = "{{ with secret \"kv/data/hr-service/runtime\" }}{{ .Data.data.postgresql_password }}{{ end }}"
     destination = "/secrets/application/postgresql_password"
     perms       = "0440"
 }
 
 template {
-    contents    = "{{ with secret \"kv/data/template-service/runtime\" }}{{ .Data.data.redis_password }}{{ end }}"
+    contents    = "{{ with secret \"kv/data/hr-service/runtime\" }}{{ .Data.data.redis_password }}{{ end }}"
     destination = "/secrets/application/redis_password"
     perms       = "0440"
 }

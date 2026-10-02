@@ -27,7 +27,7 @@ describe("TransactionalService integration", () => {
     const INCOMING_MESSAGE = {
         source: { topic: "source-topic", partition: 0, offset: "42" },
         event: "00000000-0000-4000-8000-000000000001",
-        consumerKey: "template.placeholder.v1",
+        consumerKey: "hr.placeholder.v1",
     };
 
     describe("consume", () => {

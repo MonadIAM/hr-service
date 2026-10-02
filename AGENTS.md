@@ -21,7 +21,7 @@
 
 ## TypeScript navigation
 
-- When connected, use `template-lsp` for types, namespace contracts, `Pick`
+- When connected, use `hr-lsp` for types, namespace contracts, `Pick`
   and inherited generic methods: prefer focused hover, definition, signature-help
   and completion requests anchored to a specific usage.
 - Pass this repository as `root` and relative file paths. Lines are one-based;

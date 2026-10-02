@@ -11,7 +11,7 @@ import { KafkaTopic } from "~context/enums";
 export class BlacklistConsumer implements Consumers.Blacklist.Contract, OnModuleInit {
     private readonly incomingMapper = new KafkaIncomingMapper();
     private readonly logger = new Logger(BlacklistConsumer.name);
-    private readonly consumerKey = "template.blacklist.v1";
+    private readonly consumerKey = "hr.blacklist.v1";
 
     public constructor(
         @Inject(BLACKLIST_CACHE_SERVICE)

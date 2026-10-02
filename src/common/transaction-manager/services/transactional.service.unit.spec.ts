@@ -273,7 +273,7 @@ describe("TransactionalService", () => {
 
     describe("consume", () => {
         const incoming: TransactionManager.Service.IncomingMessage = {
-            consumerKey: "template.placeholder.v1",
+            consumerKey: "hr.placeholder.v1",
             event: "00000000-0000-4000-8000-000000000001",
             source: { topic: "source-topic", partition: 0, offset: "42" },
         };

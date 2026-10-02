@@ -61,7 +61,7 @@ export class KafkaResource {
 
     public static config(): ConfigService {
         return new ConfigService({
-            SERVICE_NAME: "template-integration",
+            SERVICE_NAME: "hr-integration",
             KAFKA_BROKER: requiredEnvironment("MONADIAM_TEST_KAFKA_BROKER"),
             KAFKA_SSL_ENABLED: false,
             KAFKA_SASL_ENABLED: false,

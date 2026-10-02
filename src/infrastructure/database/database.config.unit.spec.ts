@@ -15,7 +15,7 @@ let MikroOrmConfig: typeof DatabaseConfig;
 const values = {
     POSTGRES_USER: "service",
     POSTGRES_PASSWORD: "secret",
-    POSTGRES_DB: "template",
+    POSTGRES_DB: "hr",
     POSTGRES_READ_HOST: "replica",
     POSTGRES_READ_PORT: 5433,
     POSTGRES_READ_POOL_MAX: 5,
@@ -60,7 +60,7 @@ describe("MikroOrmConfig", () => {
                 port,
                 user: "service",
                 password: "secret",
-                dbName: "template",
+                dbName: "hr",
                 pool: { max, idleTimeoutMillis },
                 entities: [path.join(process.cwd(), "dist/**/*.schema.js")],
                 entitiesTs: [path.join(process.cwd(), "src/**/*.schema.ts")],

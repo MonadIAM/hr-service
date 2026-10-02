@@ -7,7 +7,7 @@ const readFileSync = jest.fn<(path: string, encoding: string) => string>();
 jest.unstable_mockModule("fs", () => ({ readFileSync }));
 let KafkaUtils: typeof Utils;
 
-const base = { SERVICE_NAME: "template", KAFKA_BROKER: "broker:9093" };
+const base = { SERVICE_NAME: "hr", KAFKA_BROKER: "broker:9093" };
 const ssl = {
     KAFKA_SSL_ENABLED: true,
     KAFKA_SSL_REJECT_UNAUTHORIZED: true,
@@ -35,7 +35,7 @@ describe("KafkaUtils", () => {
         it.each([false, true])("includes clientId only when requested: %s", (withClientId) => {
             expect(KafkaUtils.buildClientConfig(new ConfigService(base), { withClientId })).toEqual({
                 brokers: ["broker:9093"],
-                ...(withClientId ? { clientId: "template" } : {}),
+                ...(withClientId ? { clientId: "hr" } : {}),
             });
             expect(readFileSync).not.toHaveBeenCalled();
         });
