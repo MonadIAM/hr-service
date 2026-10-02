@@ -21,17 +21,17 @@ describe("AuditLogRepository", () => {
             const actor = randomUUID();
             const auditLog = await suite.fixtures().createAuditLog({
                 context: { ip: "10.20.30.40", userAgent: "mapping-agent" },
-                input: { field: "mapping-input" },
-                entityType: EntityType.EXAMPLE,
+                input: { firstName: "Updated Name" },
+                entityType: EntityType.EMPLOYEE,
                 actionType: ActionType.UPDATE,
                 actor,
                 realm,
             });
 
             await expect(suite.repository().findUniqueOrThrow({ where: { id: auditLog.id } })).resolves.toMatchObject({
-                input: { field: "mapping-input" },
+                input: { firstName: "Updated Name" },
                 keyVersion: auditLog.keyVersion,
-                entityType: EntityType.EXAMPLE,
+                entityType: EntityType.EMPLOYEE,
                 signature: auditLog.signature,
                 createdAt: auditLog.createdAt,
                 actionType: ActionType.UPDATE,
@@ -47,12 +47,16 @@ describe("AuditLogRepository", () => {
     describe("findMany", () => {
         it("finds audit log entries by action and entity mapper filters", async () => {
             const matched = await suite.fixtures().createAuditLog({
-                entityType: EntityType.EXAMPLE,
+                entityType: EntityType.EMPLOYEE,
                 actionType: ActionType.CREATE,
             });
             await suite.fixtures().createAuditLog({
-                entityType: EntityType.EXAMPLE,
+                entityType: EntityType.EMPLOYEE,
                 actionType: ActionType.UPDATE,
+            });
+            await suite.fixtures().createAuditLog({
+                entityType: EntityType.POSITION,
+                actionType: ActionType.CREATE,
             });
 
             const [entries, total] = await suite.repository().findMany({
@@ -65,7 +69,7 @@ describe("AuditLogRepository", () => {
                     },
                     entityType: {
                         operator: PublicStringOperator.EQUAL,
-                        value: EntityType.EXAMPLE,
+                        value: EntityType.EMPLOYEE,
                     },
                 },
             });

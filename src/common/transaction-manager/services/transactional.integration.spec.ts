@@ -19,7 +19,7 @@ describe("TransactionalService integration", () => {
     const AUDIT_PROPS = {
         context: { ip: "127.0.0.1", userAgent: "transactional-integration" },
         actionType: ActionType.CREATE,
-        entityType: EntityType.EXAMPLE,
+        entityType: EntityType.EMPLOYEE,
         actor: randomUUID(),
         realm: randomUUID(),
     };

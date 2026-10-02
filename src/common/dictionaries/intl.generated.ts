@@ -15,6 +15,107 @@ export type I18nTranslations = {
         "CONNECTION_LOST": string;
         "INTERNAL_DRIVER_ERROR": string;
     };
+    "entities": {
+        "position": {
+            "CANNOT_UPDATE_ARCHIVED": string;
+            "NO_CHANGES_DETECTED": string;
+            "EMPTY_UPDATE_PATCH": string;
+            "ALREADY_ARCHIVED": string;
+            "ALREADY_ACTIVE": string;
+            "CANNOT_PURGE_ACTIVE": string;
+        };
+        "work-calendar": {
+            "CANNOT_UPDATE_ARCHIVED": string;
+            "NO_CHANGES_DETECTED": string;
+            "EMPTY_UPDATE_PATCH": string;
+            "ALREADY_ARCHIVED": string;
+            "ALREADY_ACTIVE": string;
+            "CANNOT_PURGE_ACTIVE": string;
+        };
+        "work-calendar-exception": {
+            "NO_CHANGES_DETECTED": string;
+            "EMPTY_UPDATE_PATCH": string;
+            "ORGANIZATION_MISMATCH": string;
+        };
+        "work-schedule": {
+            "ALREADY_ARCHIVED": string;
+            "ALREADY_ACTIVE": string;
+            "CANNOT_PURGE_ACTIVE": string;
+            "CANNOT_UPDATE_ARCHIVED": string;
+            "NO_CHANGES_DETECTED": string;
+        };
+        "leave-policy": {
+            "ALREADY_ARCHIVED": string;
+            "ALREADY_ACTIVE": string;
+            "CANNOT_PURGE_ACTIVE": string;
+            "CANNOT_UPDATE_ARCHIVED": string;
+            "NO_CHANGES_DETECTED": string;
+        };
+        "employee": {
+            "CANNOT_UPDATE_ARCHIVED": string;
+            "NO_CHANGES_DETECTED": string;
+            "EMPTY_UPDATE_PATCH": string;
+            "ACCOUNT_ALREADY_LINKED": string;
+            "ACCOUNT_NOT_LINKED": string;
+            "INVALID_HRBP": string;
+            "INVALID_STATUS": string;
+            "INVALID_PERIOD": string;
+            "ORGANIZATION_MISMATCH": string;
+            "ARCHIVED_TERMS": string;
+        };
+        "position-assignment": {
+            "INVALID_STATUS": string;
+            "INVALID_PERIOD": string;
+            "REQUEST_MISMATCH": string;
+            "ORGANIZATION_MISMATCH": string;
+            "INACTIVE_REFERENCE": string;
+            "PLACEMENT_MISMATCH": string;
+        };
+        "employment": {
+            "ORGANIZATION_MISMATCH": string;
+            "REQUEST_MISMATCH": string;
+        };
+        "hr-request": {
+            "INVALID_STATUS": string;
+            "NO_CHANGES_DETECTED": string;
+            "EMPTY_UPDATE_PATCH": string;
+            "INVALID_EXECUTION_STATUS": string;
+            "APPLICATION_NOT_DUE": string;
+            "STALE_REVISION": string;
+            "ORGANIZATION_MISMATCH": string;
+            "REQUEST_MISMATCH": string;
+        };
+        "hr-approval-step": {
+            "INVALID_STATUS": string;
+            "INACTIVE_ASSIGNEE": string;
+            "NO_CHANGES_DETECTED": string;
+            "ORGANIZATION_MISMATCH": string;
+            "STALE_REVISION": string;
+            "INVALID_REQUEST_STATUS": string;
+        };
+        "hr-approval-decision": {
+            "ORGANIZATION_MISMATCH": string;
+            "STALE_REVISION": string;
+            "INVALID_ACTOR": string;
+            "INVALID_REQUEST_STATUS": string;
+            "INVALID_STATUS": string;
+        };
+        "absence": {
+            "INVALID_STATUS": string;
+            "NO_CHANGES_DETECTED": string;
+            "REQUEST_MISMATCH": string;
+            "INVALID_REQUEST_STATUS": string;
+            "ORGANIZATION_MISMATCH": string;
+            "INVALID_POOL": string;
+        };
+        "leave-ledger-entry": {
+            "ORGANIZATION_MISMATCH": string;
+            "REQUEST_MISMATCH": string;
+            "POOL_MISMATCH": string;
+            "INVALID_POOL": string;
+            "INVALID_REVERSAL": string;
+        };
+    };
     "global": {
         "throttle": string;
     };

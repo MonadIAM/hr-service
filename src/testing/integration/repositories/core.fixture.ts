@@ -12,7 +12,7 @@ export class CoreFixture implements Fixtures.Core.Contract {
 
     public async createAuditLog(props: Fixtures.Core.CreateAuditLog.Props = {}): Fixtures.Core.CreateAuditLog.Result {
         const auditLog = this.entities.createAuditLog({
-            entityType: props.entityType ?? EntityType.EXAMPLE,
+            entityType: props.entityType ?? EntityType.EMPLOYEE,
             actionType: props.actionType ?? ActionType.CREATE,
             actor: props.actor ?? randomUUID(),
             realm: props.realm ?? randomUUID(),
@@ -32,9 +32,9 @@ export class CoreFixture implements Fixtures.Core.Contract {
     public async createChangeLog(props: Fixtures.Core.CreateChangeLog.Props = {}): Fixtures.Core.CreateChangeLog.Result {
         const auditEntry = props.auditEntry ?? (await this.createAuditLog());
         const changeLog = this.entities.createChangeLog({
-            delta: props.delta ?? new DeltaChanges({ name: { old: null, new: "Updated Name" } }),
+            delta: props.delta ?? new DeltaChanges({ firstName: { old: null, new: "Updated Name" } }),
             changeType: props.changeType ?? ChangeSetType.CREATE,
-            entityType: props.entityType ?? EntityType.EXAMPLE,
+            entityType: props.entityType ?? EntityType.EMPLOYEE,
             entity: props.entity ?? randomUUID(),
             auditEntry: auditEntry.id,
         });

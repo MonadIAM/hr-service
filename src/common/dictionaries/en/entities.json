@@ -1,1 +1,101 @@
-{}
+{
+    "position": {
+        "CANNOT_UPDATE_ARCHIVED": "An archived record cannot be changed.",
+        "NO_CHANGES_DETECTED": "No changes were detected.",
+        "EMPTY_UPDATE_PATCH": "No fields were provided for the update.",
+        "ALREADY_ARCHIVED": "The record is already archived.",
+        "ALREADY_ACTIVE": "The record is already active.",
+        "CANNOT_PURGE_ACTIVE": "An active record cannot be deleted."
+    },
+    "work-calendar": {
+        "CANNOT_UPDATE_ARCHIVED": "An archived record cannot be changed.",
+        "NO_CHANGES_DETECTED": "No changes were detected.",
+        "EMPTY_UPDATE_PATCH": "No fields were provided for the update.",
+        "ALREADY_ARCHIVED": "The record is already archived.",
+        "ALREADY_ACTIVE": "The record is already active.",
+        "CANNOT_PURGE_ACTIVE": "An active record cannot be deleted."
+    },
+    "work-calendar-exception": {
+        "NO_CHANGES_DETECTED": "No changes were detected.",
+        "EMPTY_UPDATE_PATCH": "No fields were provided for the update.",
+        "ORGANIZATION_MISMATCH": "Related records must belong to the same organization."
+    },
+    "work-schedule": {
+        "ALREADY_ARCHIVED": "The record is already archived.",
+        "ALREADY_ACTIVE": "The record is already active.",
+        "CANNOT_PURGE_ACTIVE": "An active record cannot be deleted.",
+        "CANNOT_UPDATE_ARCHIVED": "An archived record cannot be changed.",
+        "NO_CHANGES_DETECTED": "No changes were detected."
+    },
+    "leave-policy": {
+        "ALREADY_ARCHIVED": "The record is already archived.",
+        "ALREADY_ACTIVE": "The record is already active.",
+        "CANNOT_PURGE_ACTIVE": "An active record cannot be deleted.",
+        "CANNOT_UPDATE_ARCHIVED": "An archived record cannot be changed.",
+        "NO_CHANGES_DETECTED": "No changes were detected."
+    },
+    "employee": {
+        "CANNOT_UPDATE_ARCHIVED": "An archived record cannot be changed.",
+        "NO_CHANGES_DETECTED": "No changes were detected.",
+        "EMPTY_UPDATE_PATCH": "No fields were provided for the update.",
+        "ACCOUNT_ALREADY_LINKED": "An account is already linked to the employee.",
+        "ACCOUNT_NOT_LINKED": "No account is linked to the employee.",
+        "INVALID_HRBP": "HR BP must be another active employee of the same organization.",
+        "INVALID_STATUS": "This operation is not allowed in the current state.",
+        "INVALID_PERIOD": "The dates do not form a valid period.",
+        "ORGANIZATION_MISMATCH": "Related records must belong to the same organization.",
+        "ARCHIVED_TERMS": "Archived calendars, schedules or leave policies cannot be assigned."
+    },
+    "position-assignment": {
+        "INVALID_STATUS": "This operation is not allowed in the current state.",
+        "INVALID_PERIOD": "The dates do not form a valid period.",
+        "REQUEST_MISMATCH": "The related request does not match the employee or operation.",
+        "ORGANIZATION_MISMATCH": "Related records must belong to the same organization.",
+        "INACTIVE_REFERENCE": "The employee and position must be active.",
+        "PLACEMENT_MISMATCH": "The placement must match the position department and team."
+    },
+    "employment": {
+        "ORGANIZATION_MISMATCH": "Related records must belong to the same organization.",
+        "REQUEST_MISMATCH": "The related request does not match the employee or operation."
+    },
+    "hr-request": {
+        "INVALID_STATUS": "This operation is not allowed in the current state.",
+        "NO_CHANGES_DETECTED": "No changes were detected.",
+        "EMPTY_UPDATE_PATCH": "No fields were provided for the update.",
+        "INVALID_EXECUTION_STATUS": "This operation is not allowed in the current execution state.",
+        "APPLICATION_NOT_DUE": "The effective time of the request has not been reached.",
+        "STALE_REVISION": "The operation refers to an invalid or outdated request revision.",
+        "ORGANIZATION_MISMATCH": "Related records must belong to the same organization.",
+        "REQUEST_MISMATCH": "The related request does not match the employee or operation."
+    },
+    "hr-approval-step": {
+        "INVALID_STATUS": "This operation is not allowed in the current state.",
+        "INACTIVE_ASSIGNEE": "The approver must be an active employee.",
+        "NO_CHANGES_DETECTED": "No changes were detected.",
+        "ORGANIZATION_MISMATCH": "Related records must belong to the same organization.",
+        "STALE_REVISION": "The operation refers to an invalid or outdated request revision.",
+        "INVALID_REQUEST_STATUS": "The request is not in the state required for this operation."
+    },
+    "hr-approval-decision": {
+        "ORGANIZATION_MISMATCH": "Related records must belong to the same organization.",
+        "STALE_REVISION": "The operation refers to an invalid or outdated request revision.",
+        "INVALID_ACTOR": "The decision must be made by the assigned approver using their linked account.",
+        "INVALID_REQUEST_STATUS": "The request is not in the state required for this operation.",
+        "INVALID_STATUS": "This operation is not allowed in the current state."
+    },
+    "absence": {
+        "INVALID_STATUS": "This operation is not allowed in the current state.",
+        "NO_CHANGES_DETECTED": "No changes were detected.",
+        "REQUEST_MISMATCH": "The related request does not match the employee or operation.",
+        "INVALID_REQUEST_STATUS": "The request is not in the state required for this operation.",
+        "ORGANIZATION_MISMATCH": "Related records must belong to the same organization.",
+        "INVALID_POOL": "The leave pool and unit must exist in the selected leave policy."
+    },
+    "leave-ledger-entry": {
+        "ORGANIZATION_MISMATCH": "Related records must belong to the same organization.",
+        "REQUEST_MISMATCH": "The related request does not match the employee or operation.",
+        "POOL_MISMATCH": "The related record must have the same employee, leave pool and unit.",
+        "INVALID_POOL": "The leave pool and unit must exist in the selected leave policy.",
+        "INVALID_REVERSAL": "A reversal must negate both changes of the referenced entry."
+    }
+}

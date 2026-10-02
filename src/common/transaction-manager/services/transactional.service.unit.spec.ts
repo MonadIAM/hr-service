@@ -13,7 +13,7 @@ const AUDIT_PROPS = {
     context: { ip: "127.0.0.1", userAgent: "unit-agent" },
     input: { password: "secret" },
     actionType: ActionType.CREATE,
-    entityType: EntityType.EXAMPLE,
+    entityType: EntityType.EMPLOYEE,
 };
 
 describe("TransactionalService", () => {
@@ -112,7 +112,7 @@ describe("TransactionalService", () => {
                 audit: {
                     context: { ip: "127.0.0.1", userAgent: "unit-agent" },
                     actionType: ActionType.CREATE,
-                    entityType: EntityType.EXAMPLE,
+                    entityType: EntityType.EMPLOYEE,
                 },
                 execute: () => helpers.createExample(),
             });

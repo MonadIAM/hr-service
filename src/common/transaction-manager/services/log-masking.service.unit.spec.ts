@@ -17,7 +17,7 @@ const helpers = new LogMaskingUnitHelpers();
 function createAuditLog(props: Partial<AuditLog>): AuditLog {
     return helpers.createAuditLog({
         actionType: ActionType.CREATE,
-        entityType: EntityType.EXAMPLE,
+        entityType: EntityType.EMPLOYEE,
         createdAt: CREATED_AT,
         id: AUDIT_ID,
         ...props,

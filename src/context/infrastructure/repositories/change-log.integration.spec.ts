@@ -21,20 +21,20 @@ describe("ChangeLogRepository", () => {
         it("maps the persisted change log entry through the schema", async () => {
             const entity = randomUUID();
             const changeLog = await suite.fixtures().createChangeLog({
-                delta: new DeltaChanges({ name: { old: "Old Name", new: "New Name" } }),
+                delta: new DeltaChanges({ firstName: { old: "Old Name", new: "New Name" } }),
                 changeType: ChangeSetType.UPDATE,
-                entityType: EntityType.EXAMPLE,
+                entityType: EntityType.EMPLOYEE,
                 entity,
             });
 
             await expect(suite.repository().findUniqueOrThrow({ where: { id: changeLog.id } })).resolves.toMatchObject({
-                delta: new DeltaChanges({ name: { old: "Old Name", new: "New Name" } }),
+                delta: new DeltaChanges({ firstName: { old: "Old Name", new: "New Name" } }),
                 auditEntry: changeLog.auditEntry,
                 changeType: ChangeSetType.UPDATE,
                 signature: changeLog.signature,
                 keyVersion: changeLog.keyVersion,
                 createdAt: changeLog.createdAt,
-                entityType: EntityType.EXAMPLE,
+                entityType: EntityType.EMPLOYEE,
                 id: changeLog.id,
                 entity,
             });
@@ -54,11 +54,15 @@ describe("ChangeLogRepository", () => {
         it("finds change log entries by change type and entity mapper filters", async () => {
             const matched = await suite.fixtures().createChangeLog({
                 changeType: ChangeSetType.CREATE,
-                entityType: EntityType.EXAMPLE,
+                entityType: EntityType.EMPLOYEE,
             });
             await suite.fixtures().createChangeLog({
                 changeType: ChangeSetType.UPDATE,
-                entityType: EntityType.EXAMPLE,
+                entityType: EntityType.EMPLOYEE,
+            });
+            await suite.fixtures().createChangeLog({
+                changeType: ChangeSetType.CREATE,
+                entityType: EntityType.POSITION,
             });
 
             const [entries, total] = await suite.repository().findMany({
@@ -71,7 +75,7 @@ describe("ChangeLogRepository", () => {
                     },
                     entityType: {
                         operator: PublicStringOperator.EQUAL,
-                        value: EntityType.EXAMPLE,
+                        value: EntityType.EMPLOYEE,
                     },
                 },
             });

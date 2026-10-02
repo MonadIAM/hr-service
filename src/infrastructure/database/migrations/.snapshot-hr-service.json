@@ -1,9 +1,5000 @@
 {
   "name": "public",
   "namespaces": [
+    "hr",
     "system"
   ],
   "tables": [
+    {
+      "name": "absence",
+      "schema": "hr",
+      "columns": {
+        "calculation_snapshot": {
+          "name": "calculation_snapshot",
+          "type": "jsonb",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "json"
+        },
+        "cancelled_by_request_id": {
+          "name": "cancelled_by_request_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz(3)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 3,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "datetime"
+        },
+        "employee_id": {
+          "name": "employee_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "end_date": {
+          "name": "end_date",
+          "type": "date",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "date"
+        },
+        "ends_at": {
+          "name": "ends_at",
+          "type": "timestamptz(3)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": 3,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "datetime"
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": true,
+          "nullable": false,
+          "unique": true,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "leave_policy_id": {
+          "name": "leave_policy_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "organization_id": {
+          "name": "organization_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "pool_code": {
+          "name": "pool_code",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "text"
+        },
+        "quantity": {
+          "name": "quantity",
+          "type": "numeric(14,6)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": 14,
+          "scale": 6,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "decimal"
+        },
+        "source_item_key": {
+          "name": "source_item_key",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "text"
+        },
+        "source_request_id": {
+          "name": "source_request_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": true,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "start_date": {
+          "name": "start_date",
+          "type": "date",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "date"
+        },
+        "starts_at": {
+          "name": "starts_at",
+          "type": "timestamptz(3)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": 3,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "datetime"
+        },
+        "status": {
+          "name": "status",
+          "type": "hr.absence_status",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": "'SCHEDULED'",
+          "comment": null,
+          "collation": null,
+          "enumItems": [
+            "SCHEDULED",
+            "IN_PROGRESS",
+            "COMPLETED",
+            "CANCELLED"
+          ],
+          "mappedType": "enum",
+          "nativeEnumName": "absence_status"
+        },
+        "timezone": {
+          "name": "timezone",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "text"
+        },
+        "unit": {
+          "name": "unit",
+          "type": "hr.leave_unit",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [
+            "DAY",
+            "MINUTE"
+          ],
+          "mappedType": "enum",
+          "nativeEnumName": "leave_unit"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamptz(3)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": 3,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "datetime"
+        },
+        "version": {
+          "name": "version",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": "1",
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "integer"
+        }
+      },
+      "indexes": [
+        {
+          "columnNames": [
+            "id",
+            "employee_id",
+            "organization_id",
+            "pool_code",
+            "unit"
+          ],
+          "composite": true,
+          "constraint": true,
+          "keyName": "absence_employee_pool_code_unit_organization_unique",
+          "primary": false,
+          "unique": true
+        },
+        {
+          "columnNames": [
+            "organization_id",
+            "employee_id",
+            "start_date"
+          ],
+          "composite": true,
+          "constraint": false,
+          "keyName": "absence_organization_employee_start_date_idx",
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": [
+            "organization_id",
+            "employee_id",
+            "starts_at"
+          ],
+          "composite": true,
+          "constraint": false,
+          "keyName": "absence_organization_employee_starts_at_idx",
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": [
+            "id",
+            "organization_id"
+          ],
+          "composite": true,
+          "constraint": true,
+          "keyName": "absence_organization_unique",
+          "primary": false,
+          "unique": true
+        },
+        {
+          "columnNames": [
+            "id"
+          ],
+          "composite": false,
+          "constraint": true,
+          "keyName": "absence_pkey",
+          "primary": true,
+          "unique": true
+        },
+        {
+          "columnNames": [
+            "source_request_id",
+            "employee_id",
+            "organization_id",
+            "source_item_key"
+          ],
+          "composite": true,
+          "constraint": true,
+          "keyName": "absence_source_request_source_item_key_unique",
+          "primary": false,
+          "unique": true
+        }
+      ],
+      "checks": [],
+      "triggers": [],
+      "foreignKeys": {
+        "absence_cancelled_by_request_id_employee_id_orga_916d2_foreign": {
+          "columnNames": [
+            "cancelled_by_request_id",
+            "employee_id",
+            "organization_id"
+          ],
+          "constraintName": "absence_cancelled_by_request_id_employee_id_orga_916d2_foreign",
+          "localTableName": "hr.absence",
+          "referencedColumnNames": [
+            "id",
+            "employee_id",
+            "organization_id"
+          ],
+          "referencedTableName": "hr.hr_request",
+          "deleteRule": "restrict"
+        },
+        "absence_employee_id_organization_id_foreign": {
+          "columnNames": [
+            "employee_id",
+            "organization_id"
+          ],
+          "constraintName": "absence_employee_id_organization_id_foreign",
+          "localTableName": "hr.absence",
+          "referencedColumnNames": [
+            "id",
+            "organization_id"
+          ],
+          "referencedTableName": "hr.employee",
+          "deleteRule": "restrict"
+        },
+        "absence_leave_policy_id_organization_id_foreign": {
+          "columnNames": [
+            "leave_policy_id",
+            "organization_id"
+          ],
+          "constraintName": "absence_leave_policy_id_organization_id_foreign",
+          "localTableName": "hr.absence",
+          "referencedColumnNames": [
+            "id",
+            "organization_id"
+          ],
+          "referencedTableName": "hr.leave_policy",
+          "deleteRule": "restrict"
+        },
+        "absence_source_request_id_employee_id_organization_id_foreign": {
+          "columnNames": [
+            "source_request_id",
+            "employee_id",
+            "organization_id"
+          ],
+          "constraintName": "absence_source_request_id_employee_id_organization_id_foreign",
+          "localTableName": "hr.absence",
+          "referencedColumnNames": [
+            "id",
+            "employee_id",
+            "organization_id"
+          ],
+          "referencedTableName": "hr.hr_request",
+          "deleteRule": "restrict"
+        }
+      },
+      "comment": null
+    },
+    {
+      "name": "employee",
+      "schema": "hr",
+      "columns": {
+        "account_id": {
+          "name": "account_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "contract_ends_on": {
+          "name": "contract_ends_on",
+          "type": "date",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "date"
+        },
+        "contract_type": {
+          "name": "contract_type",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "text"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz(3)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 3,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "datetime"
+        },
+        "employee_number": {
+          "name": "employee_number",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "text"
+        },
+        "employment_ended_on": {
+          "name": "employment_ended_on",
+          "type": "date",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "date"
+        },
+        "employment_started_on": {
+          "name": "employment_started_on",
+          "type": "date",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "date"
+        },
+        "first_name": {
+          "name": "first_name",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "text"
+        },
+        "hr_bp_employee_id": {
+          "name": "hr_bp_employee_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": true,
+          "nullable": false,
+          "unique": true,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "last_name": {
+          "name": "last_name",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "text"
+        },
+        "leave_policy_id": {
+          "name": "leave_policy_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "middle_name": {
+          "name": "middle_name",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "text"
+        },
+        "organization_id": {
+          "name": "organization_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": true,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "schedule_anchor_date": {
+          "name": "schedule_anchor_date",
+          "type": "date",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "date"
+        },
+        "schedule_timezone": {
+          "name": "schedule_timezone",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "text"
+        },
+        "status": {
+          "name": "status",
+          "type": "hr.employee_status",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": "'DRAFT'",
+          "comment": null,
+          "collation": null,
+          "enumItems": [
+            "DRAFT",
+            "ACTIVE",
+            "TERMINATED",
+            "ARCHIVED"
+          ],
+          "mappedType": "enum",
+          "nativeEnumName": "employee_status"
+        },
+        "terms_revision": {
+          "name": "terms_revision",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "integer"
+        },
+        "terms_valid_from": {
+          "name": "terms_valid_from",
+          "type": "date",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "date"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamptz(3)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": 3,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "datetime"
+        },
+        "version": {
+          "name": "version",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": "1",
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "integer"
+        },
+        "work_calendar_id": {
+          "name": "work_calendar_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "work_email": {
+          "name": "work_email",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "text"
+        },
+        "work_schedule_id": {
+          "name": "work_schedule_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        }
+      },
+      "indexes": [
+        {
+          "columnNames": [
+            "hr_bp_employee_id",
+            "organization_id"
+          ],
+          "composite": true,
+          "constraint": false,
+          "keyName": "employee_hr_bp_employee_organization_idx",
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": [
+            "organization_id",
+            "account_id"
+          ],
+          "composite": true,
+          "constraint": true,
+          "keyName": "employee_organization_account_unique",
+          "primary": false,
+          "unique": true
+        },
+        {
+          "columnNames": [
+            "organization_id",
+            "employee_number"
+          ],
+          "composite": true,
+          "constraint": true,
+          "keyName": "employee_organization_employee_number_unique",
+          "primary": false,
+          "unique": true
+        },
+        {
+          "columnNames": [
+            "organization_id",
+            "status"
+          ],
+          "composite": true,
+          "constraint": false,
+          "keyName": "employee_organization_status_idx",
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": [
+            "id",
+            "organization_id"
+          ],
+          "composite": true,
+          "constraint": true,
+          "keyName": "employee_organization_unique",
+          "primary": false,
+          "unique": true
+        },
+        {
+          "columnNames": [
+            "id"
+          ],
+          "composite": false,
+          "constraint": true,
+          "keyName": "employee_pkey",
+          "primary": true,
+          "unique": true
+        }
+      ],
+      "checks": [],
+      "triggers": [],
+      "foreignKeys": {
+        "employee_hr_bp_employee_id_organization_id_foreign": {
+          "columnNames": [
+            "hr_bp_employee_id",
+            "organization_id"
+          ],
+          "constraintName": "employee_hr_bp_employee_id_organization_id_foreign",
+          "localTableName": "hr.employee",
+          "referencedColumnNames": [
+            "id",
+            "organization_id"
+          ],
+          "referencedTableName": "hr.employee",
+          "deleteRule": "restrict"
+        },
+        "employee_leave_policy_id_organization_id_foreign": {
+          "columnNames": [
+            "leave_policy_id",
+            "organization_id"
+          ],
+          "constraintName": "employee_leave_policy_id_organization_id_foreign",
+          "localTableName": "hr.employee",
+          "referencedColumnNames": [
+            "id",
+            "organization_id"
+          ],
+          "referencedTableName": "hr.leave_policy",
+          "deleteRule": "restrict"
+        },
+        "employee_work_calendar_id_organization_id_foreign": {
+          "columnNames": [
+            "work_calendar_id",
+            "organization_id"
+          ],
+          "constraintName": "employee_work_calendar_id_organization_id_foreign",
+          "localTableName": "hr.employee",
+          "referencedColumnNames": [
+            "id",
+            "organization_id"
+          ],
+          "referencedTableName": "hr.work_calendar",
+          "deleteRule": "restrict"
+        },
+        "employee_work_schedule_id_organization_id_foreign": {
+          "columnNames": [
+            "work_schedule_id",
+            "organization_id"
+          ],
+          "constraintName": "employee_work_schedule_id_organization_id_foreign",
+          "localTableName": "hr.employee",
+          "referencedColumnNames": [
+            "id",
+            "organization_id"
+          ],
+          "referencedTableName": "hr.work_schedule",
+          "deleteRule": "restrict"
+        }
+      },
+      "comment": null
+    },
+    {
+      "name": "employment",
+      "schema": "hr",
+      "columns": {
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz(3)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 3,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "datetime"
+        },
+        "employee_id": {
+          "name": "employee_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": true,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": true,
+          "nullable": false,
+          "unique": true,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "leave_policy_id": {
+          "name": "leave_policy_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "organization_id": {
+          "name": "organization_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "replaced_by_request_id": {
+          "name": "replaced_by_request_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "terms_revision": {
+          "name": "terms_revision",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "integer"
+        },
+        "terms_snapshot": {
+          "name": "terms_snapshot",
+          "type": "jsonb",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "json"
+        },
+        "valid_from": {
+          "name": "valid_from",
+          "type": "date",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "date"
+        },
+        "valid_to": {
+          "name": "valid_to",
+          "type": "date",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "date"
+        },
+        "work_calendar_id": {
+          "name": "work_calendar_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "work_schedule_id": {
+          "name": "work_schedule_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        }
+      },
+      "indexes": [
+        {
+          "columnNames": [
+            "employee_id",
+            "organization_id",
+            "terms_revision"
+          ],
+          "composite": true,
+          "constraint": true,
+          "keyName": "employment_employee_terms_revision_unique",
+          "primary": false,
+          "unique": true
+        },
+        {
+          "columnNames": [
+            "id",
+            "organization_id"
+          ],
+          "composite": true,
+          "constraint": true,
+          "keyName": "employment_id_organization_unique",
+          "primary": false,
+          "unique": true
+        },
+        {
+          "columnNames": [
+            "id"
+          ],
+          "composite": false,
+          "constraint": true,
+          "keyName": "employment_pkey",
+          "primary": true,
+          "unique": true
+        }
+      ],
+      "checks": [],
+      "triggers": [],
+      "foreignKeys": {
+        "employment_employee_id_organization_id_foreign": {
+          "columnNames": [
+            "employee_id",
+            "organization_id"
+          ],
+          "constraintName": "employment_employee_id_organization_id_foreign",
+          "localTableName": "hr.employment",
+          "referencedColumnNames": [
+            "id",
+            "organization_id"
+          ],
+          "referencedTableName": "hr.employee",
+          "deleteRule": "restrict"
+        },
+        "employment_leave_policy_id_organization_id_foreign": {
+          "columnNames": [
+            "leave_policy_id",
+            "organization_id"
+          ],
+          "constraintName": "employment_leave_policy_id_organization_id_foreign",
+          "localTableName": "hr.employment",
+          "referencedColumnNames": [
+            "id",
+            "organization_id"
+          ],
+          "referencedTableName": "hr.leave_policy",
+          "deleteRule": "restrict"
+        },
+        "employment_replaced_by_request_id_employee_id_or_98fa4_foreign": {
+          "columnNames": [
+            "replaced_by_request_id",
+            "employee_id",
+            "organization_id"
+          ],
+          "constraintName": "employment_replaced_by_request_id_employee_id_or_98fa4_foreign",
+          "localTableName": "hr.employment",
+          "referencedColumnNames": [
+            "id",
+            "employee_id",
+            "organization_id"
+          ],
+          "referencedTableName": "hr.hr_request",
+          "deleteRule": "restrict"
+        },
+        "employment_work_calendar_id_organization_id_foreign": {
+          "columnNames": [
+            "work_calendar_id",
+            "organization_id"
+          ],
+          "constraintName": "employment_work_calendar_id_organization_id_foreign",
+          "localTableName": "hr.employment",
+          "referencedColumnNames": [
+            "id",
+            "organization_id"
+          ],
+          "referencedTableName": "hr.work_calendar",
+          "deleteRule": "restrict"
+        },
+        "employment_work_schedule_id_organization_id_foreign": {
+          "columnNames": [
+            "work_schedule_id",
+            "organization_id"
+          ],
+          "constraintName": "employment_work_schedule_id_organization_id_foreign",
+          "localTableName": "hr.employment",
+          "referencedColumnNames": [
+            "id",
+            "organization_id"
+          ],
+          "referencedTableName": "hr.work_schedule",
+          "deleteRule": "restrict"
+        }
+      },
+      "comment": null
+    },
+    {
+      "name": "hr_approval_decision",
+      "schema": "hr",
+      "columns": {
+        "actor_account_id": {
+          "name": "actor_account_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "actor_employee_id": {
+          "name": "actor_employee_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "comment": {
+          "name": "comment",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "text"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz(3)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 3,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "datetime"
+        },
+        "decided_at": {
+          "name": "decided_at",
+          "type": "timestamptz(3)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 3,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "datetime"
+        },
+        "decision": {
+          "name": "decision",
+          "type": "hr.decision_kind",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [
+            "APPROVE",
+            "REJECT",
+            "RETURN"
+          ],
+          "mappedType": "enum",
+          "nativeEnumName": "decision_kind"
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": true,
+          "nullable": false,
+          "unique": true,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "organization_id": {
+          "name": "organization_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "request_id": {
+          "name": "request_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "request_revision": {
+          "name": "request_revision",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "integer"
+        },
+        "step_id": {
+          "name": "step_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": true,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        }
+      },
+      "indexes": [
+        {
+          "columnNames": [
+            "id",
+            "organization_id"
+          ],
+          "composite": true,
+          "constraint": true,
+          "keyName": "hr_approval_decision_id_organization_unique",
+          "primary": false,
+          "unique": true
+        },
+        {
+          "columnNames": [
+            "id"
+          ],
+          "composite": false,
+          "constraint": true,
+          "keyName": "hr_approval_decision_pkey",
+          "primary": true,
+          "unique": true
+        },
+        {
+          "columnNames": [
+            "step_id",
+            "request_id",
+            "request_revision",
+            "organization_id"
+          ],
+          "composite": true,
+          "constraint": true,
+          "keyName": "hr_approval_decision_step_unique",
+          "primary": false,
+          "unique": true
+        }
+      ],
+      "checks": [],
+      "triggers": [],
+      "foreignKeys": {
+        "hr_approval_decision_actor_employee_id_organization_id_foreign": {
+          "columnNames": [
+            "actor_employee_id",
+            "organization_id"
+          ],
+          "constraintName": "hr_approval_decision_actor_employee_id_organization_id_foreign",
+          "localTableName": "hr.hr_approval_decision",
+          "referencedColumnNames": [
+            "id",
+            "organization_id"
+          ],
+          "referencedTableName": "hr.employee",
+          "deleteRule": "restrict"
+        },
+        "hr_approval_decision_step_id_request_id_request__e985b_foreign": {
+          "columnNames": [
+            "step_id",
+            "request_id",
+            "request_revision",
+            "organization_id"
+          ],
+          "constraintName": "hr_approval_decision_step_id_request_id_request__e985b_foreign",
+          "localTableName": "hr.hr_approval_decision",
+          "referencedColumnNames": [
+            "id",
+            "request_id",
+            "request_revision",
+            "organization_id"
+          ],
+          "referencedTableName": "hr.hr_approval_step",
+          "deleteRule": "restrict"
+        }
+      },
+      "comment": null
+    },
+    {
+      "name": "hr_approval_step",
+      "schema": "hr",
+      "columns": {
+        "assignee_employee_id": {
+          "name": "assignee_employee_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz(3)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 3,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "datetime"
+        },
+        "due_at": {
+          "name": "due_at",
+          "type": "timestamptz(3)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": 3,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "datetime"
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": true,
+          "nullable": false,
+          "unique": true,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "text"
+        },
+        "ordinal": {
+          "name": "ordinal",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "integer"
+        },
+        "organization_id": {
+          "name": "organization_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "request_id": {
+          "name": "request_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": true,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "request_revision": {
+          "name": "request_revision",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "integer"
+        },
+        "resolved_at": {
+          "name": "resolved_at",
+          "type": "timestamptz(3)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": 3,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "datetime"
+        },
+        "status": {
+          "name": "status",
+          "type": "hr.approval_status",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": "'WAITING'",
+          "comment": null,
+          "collation": null,
+          "enumItems": [
+            "WAITING",
+            "ACTIVE",
+            "APPROVED",
+            "REJECTED",
+            "RETURNED",
+            "SKIPPED"
+          ],
+          "mappedType": "enum",
+          "nativeEnumName": "approval_status"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamptz(3)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": 3,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "datetime"
+        },
+        "version": {
+          "name": "version",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": "1",
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "integer"
+        }
+      },
+      "indexes": [
+        {
+          "columnNames": [
+            "id",
+            "organization_id"
+          ],
+          "composite": true,
+          "constraint": true,
+          "keyName": "hr_approval_step_id_organization_unique",
+          "primary": false,
+          "unique": true
+        },
+        {
+          "columnNames": [
+            "id",
+            "request_id",
+            "organization_id",
+            "request_revision"
+          ],
+          "composite": true,
+          "constraint": true,
+          "keyName": "hr_approval_step_id_request_revision_organization_unique",
+          "primary": false,
+          "unique": true
+        },
+        {
+          "columnNames": [
+            "organization_id",
+            "assignee_employee_id",
+            "status"
+          ],
+          "composite": true,
+          "constraint": false,
+          "keyName": "hr_approval_step_organization_assignee_employee_status_idx",
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": [
+            "id"
+          ],
+          "composite": false,
+          "constraint": true,
+          "keyName": "hr_approval_step_pkey",
+          "primary": true,
+          "unique": true
+        },
+        {
+          "columnNames": [
+            "request_id",
+            "organization_id",
+            "request_revision",
+            "ordinal"
+          ],
+          "composite": true,
+          "constraint": true,
+          "keyName": "hr_approval_step_request_request_revision_ordinal_unique",
+          "primary": false,
+          "unique": true
+        }
+      ],
+      "checks": [],
+      "triggers": [],
+      "foreignKeys": {
+        "hr_approval_step_assignee_employee_id_organization_id_foreign": {
+          "columnNames": [
+            "assignee_employee_id",
+            "organization_id"
+          ],
+          "constraintName": "hr_approval_step_assignee_employee_id_organization_id_foreign",
+          "localTableName": "hr.hr_approval_step",
+          "referencedColumnNames": [
+            "id",
+            "organization_id"
+          ],
+          "referencedTableName": "hr.employee",
+          "deleteRule": "restrict"
+        },
+        "hr_approval_step_request_id_organization_id_foreign": {
+          "columnNames": [
+            "request_id",
+            "organization_id"
+          ],
+          "constraintName": "hr_approval_step_request_id_organization_id_foreign",
+          "localTableName": "hr.hr_approval_step",
+          "referencedColumnNames": [
+            "id",
+            "organization_id"
+          ],
+          "referencedTableName": "hr.hr_request",
+          "deleteRule": "restrict"
+        }
+      },
+      "comment": null
+    },
+    {
+      "name": "hr_request",
+      "schema": "hr",
+      "columns": {
+        "applied_at": {
+          "name": "applied_at",
+          "type": "timestamptz(3)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": 3,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "datetime"
+        },
+        "applied_revision": {
+          "name": "applied_revision",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "integer"
+        },
+        "approved_at": {
+          "name": "approved_at",
+          "type": "timestamptz(3)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": 3,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "datetime"
+        },
+        "approved_revision": {
+          "name": "approved_revision",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "integer"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz(3)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 3,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "datetime"
+        },
+        "effective_at": {
+          "name": "effective_at",
+          "type": "timestamptz(3)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": 3,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "datetime"
+        },
+        "employee_id": {
+          "name": "employee_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "execution_status": {
+          "name": "execution_status",
+          "type": "hr.execution_status",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": "'NOT_STARTED'",
+          "comment": null,
+          "collation": null,
+          "enumItems": [
+            "NOT_STARTED",
+            "SCHEDULED",
+            "RUNNING",
+            "APPLIED",
+            "FAILED"
+          ],
+          "mappedType": "enum",
+          "nativeEnumName": "execution_status"
+        },
+        "failure": {
+          "name": "failure",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "text"
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": true,
+          "nullable": false,
+          "unique": true,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "idempotency_key": {
+          "name": "idempotency_key",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "text"
+        },
+        "initiator_account_id": {
+          "name": "initiator_account_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "initiator_employee_id": {
+          "name": "initiator_employee_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "organization_id": {
+          "name": "organization_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": true,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "payload": {
+          "name": "payload",
+          "type": "jsonb",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "json"
+        },
+        "payload_schema_version": {
+          "name": "payload_schema_version",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "integer"
+        },
+        "related_request_id": {
+          "name": "related_request_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "result": {
+          "name": "result",
+          "type": "jsonb",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "json"
+        },
+        "revision": {
+          "name": "revision",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "integer"
+        },
+        "status": {
+          "name": "status",
+          "type": "hr.request_status",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": "'DRAFT'",
+          "comment": null,
+          "collation": null,
+          "enumItems": [
+            "DRAFT",
+            "SUBMITTED",
+            "APPROVED",
+            "REJECTED",
+            "WITHDRAWN",
+            "CANCELLED"
+          ],
+          "mappedType": "enum",
+          "nativeEnumName": "request_status"
+        },
+        "submitted_at": {
+          "name": "submitted_at",
+          "type": "timestamptz(3)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": 3,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "datetime"
+        },
+        "target_position_id": {
+          "name": "target_position_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "type": {
+          "name": "type",
+          "type": "hr.request_type",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [
+            "HIRE",
+            "REHIRE",
+            "TRANSFER",
+            "CHANGE_TERMS",
+            "TERMINATE",
+            "ABSENCE",
+            "OVERTIME",
+            "CANCEL_REQUEST",
+            "LEAVE_ADJUSTMENT"
+          ],
+          "mappedType": "enum",
+          "nativeEnumName": "request_type"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamptz(3)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": 3,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "datetime"
+        },
+        "version": {
+          "name": "version",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": "1",
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "integer"
+        },
+        "workflow_code": {
+          "name": "workflow_code",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "text"
+        },
+        "workflow_version": {
+          "name": "workflow_version",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "integer"
+        }
+      },
+      "indexes": [
+        {
+          "columnNames": [
+            "execution_status",
+            "effective_at"
+          ],
+          "composite": true,
+          "constraint": false,
+          "keyName": "hr_request_execution_status_effective_at_idx",
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": [
+            "id",
+            "employee_id",
+            "organization_id"
+          ],
+          "composite": true,
+          "constraint": true,
+          "keyName": "hr_request_id_employee_organization_unique",
+          "primary": false,
+          "unique": true
+        },
+        {
+          "columnNames": [
+            "id",
+            "organization_id"
+          ],
+          "composite": true,
+          "constraint": true,
+          "keyName": "hr_request_id_organization_unique",
+          "primary": false,
+          "unique": true
+        },
+        {
+          "columnNames": [
+            "organization_id",
+            "employee_id",
+            "created_at"
+          ],
+          "composite": true,
+          "constraint": false,
+          "keyName": "hr_request_organization_employee_created_at_idx",
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": [
+            "organization_id",
+            "idempotency_key"
+          ],
+          "composite": true,
+          "constraint": true,
+          "keyName": "hr_request_organization_idempotency_key_unique",
+          "primary": false,
+          "unique": true
+        },
+        {
+          "columnNames": [
+            "organization_id",
+            "status"
+          ],
+          "composite": true,
+          "constraint": false,
+          "keyName": "hr_request_organization_status_idx",
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": [
+            "id"
+          ],
+          "composite": false,
+          "constraint": true,
+          "keyName": "hr_request_pkey",
+          "primary": true,
+          "unique": true
+        }
+      ],
+      "checks": [],
+      "triggers": [],
+      "foreignKeys": {
+        "hr_request_employee_id_organization_id_foreign": {
+          "columnNames": [
+            "employee_id",
+            "organization_id"
+          ],
+          "constraintName": "hr_request_employee_id_organization_id_foreign",
+          "localTableName": "hr.hr_request",
+          "referencedColumnNames": [
+            "id",
+            "organization_id"
+          ],
+          "referencedTableName": "hr.employee",
+          "deleteRule": "restrict"
+        },
+        "hr_request_initiator_employee_id_organization_id_foreign": {
+          "columnNames": [
+            "initiator_employee_id",
+            "organization_id"
+          ],
+          "constraintName": "hr_request_initiator_employee_id_organization_id_foreign",
+          "localTableName": "hr.hr_request",
+          "referencedColumnNames": [
+            "id",
+            "organization_id"
+          ],
+          "referencedTableName": "hr.employee",
+          "deleteRule": "restrict"
+        },
+        "hr_request_related_request_id_employee_id_organi_00bf8_foreign": {
+          "columnNames": [
+            "related_request_id",
+            "employee_id",
+            "organization_id"
+          ],
+          "constraintName": "hr_request_related_request_id_employee_id_organi_00bf8_foreign",
+          "localTableName": "hr.hr_request",
+          "referencedColumnNames": [
+            "id",
+            "employee_id",
+            "organization_id"
+          ],
+          "referencedTableName": "hr.hr_request",
+          "deleteRule": "restrict"
+        },
+        "hr_request_target_position_id_organization_id_foreign": {
+          "columnNames": [
+            "target_position_id",
+            "organization_id"
+          ],
+          "constraintName": "hr_request_target_position_id_organization_id_foreign",
+          "localTableName": "hr.hr_request",
+          "referencedColumnNames": [
+            "id",
+            "organization_id"
+          ],
+          "referencedTableName": "hr.position",
+          "deleteRule": "restrict"
+        }
+      },
+      "comment": null
+    },
+    {
+      "name": "leave_ledger_entry",
+      "schema": "hr",
+      "columns": {
+        "absence_id": {
+          "name": "absence_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "balance_delta": {
+          "name": "balance_delta",
+          "type": "numeric(14,6)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": 14,
+          "scale": 6,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "decimal"
+        },
+        "calculation_snapshot": {
+          "name": "calculation_snapshot",
+          "type": "jsonb",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "json"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz(3)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 3,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "datetime"
+        },
+        "effective_on": {
+          "name": "effective_on",
+          "type": "date",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "date"
+        },
+        "employee_id": {
+          "name": "employee_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "entitlement_period_end": {
+          "name": "entitlement_period_end",
+          "type": "date",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "date"
+        },
+        "entitlement_period_start": {
+          "name": "entitlement_period_start",
+          "type": "date",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "date"
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": true,
+          "nullable": false,
+          "unique": true,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "idempotency_key": {
+          "name": "idempotency_key",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "text"
+        },
+        "kind": {
+          "name": "kind",
+          "type": "hr.ledger_kind",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [
+            "ACCRUAL",
+            "RESERVE",
+            "RELEASE",
+            "CONSUME",
+            "ADJUSTMENT",
+            "REVERSAL"
+          ],
+          "mappedType": "enum",
+          "nativeEnumName": "ledger_kind"
+        },
+        "leave_policy_id": {
+          "name": "leave_policy_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "organization_id": {
+          "name": "organization_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": true,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "pool_code": {
+          "name": "pool_code",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "text"
+        },
+        "reason": {
+          "name": "reason",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "text"
+        },
+        "reserved_delta": {
+          "name": "reserved_delta",
+          "type": "numeric(14,6)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": 14,
+          "scale": 6,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "decimal"
+        },
+        "reverses_entry_id": {
+          "name": "reverses_entry_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": true,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "source_request_id": {
+          "name": "source_request_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "unit": {
+          "name": "unit",
+          "type": "hr.leave_unit",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [
+            "DAY",
+            "MINUTE"
+          ],
+          "mappedType": "unknown"
+        }
+      },
+      "indexes": [
+        {
+          "columnNames": [
+            "organization_id",
+            "employee_id",
+            "pool_code",
+            "unit",
+            "effective_on"
+          ],
+          "composite": true,
+          "constraint": false,
+          "keyName": "leave_ledger_entry_employee_pool_unit_effective_on_idx",
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": [
+            "id",
+            "employee_id",
+            "organization_id",
+            "pool_code",
+            "unit"
+          ],
+          "composite": true,
+          "constraint": true,
+          "keyName": "leave_ledger_entry_id_employee_pool_unit_organization_unique",
+          "primary": false,
+          "unique": true
+        },
+        {
+          "columnNames": [
+            "id",
+            "organization_id"
+          ],
+          "composite": true,
+          "constraint": true,
+          "keyName": "leave_ledger_entry_id_organization_unique",
+          "primary": false,
+          "unique": true
+        },
+        {
+          "columnNames": [
+            "organization_id",
+            "idempotency_key"
+          ],
+          "composite": true,
+          "constraint": true,
+          "keyName": "leave_ledger_entry_organization_idempotency_key_unique",
+          "primary": false,
+          "unique": true
+        },
+        {
+          "columnNames": [
+            "id"
+          ],
+          "composite": false,
+          "constraint": true,
+          "keyName": "leave_ledger_entry_pkey",
+          "primary": true,
+          "unique": true
+        },
+        {
+          "columnNames": [
+            "reverses_entry_id",
+            "employee_id",
+            "pool_code",
+            "unit",
+            "organization_id"
+          ],
+          "composite": true,
+          "constraint": true,
+          "keyName": "leave_ledger_entry_reverses_entry_unique",
+          "primary": false,
+          "unique": true
+        },
+        {
+          "columnNames": [
+            "source_request_id",
+            "employee_id",
+            "organization_id"
+          ],
+          "composite": true,
+          "constraint": false,
+          "keyName": "leave_ledger_entry_source_request_idx",
+          "primary": false,
+          "unique": false
+        }
+      ],
+      "checks": [],
+      "triggers": [],
+      "foreignKeys": {
+        "leave_ledger_entry_absence_id_employee_id_pool_c_d3323_foreign": {
+          "columnNames": [
+            "absence_id",
+            "employee_id",
+            "pool_code",
+            "unit",
+            "organization_id"
+          ],
+          "constraintName": "leave_ledger_entry_absence_id_employee_id_pool_c_d3323_foreign",
+          "localTableName": "hr.leave_ledger_entry",
+          "referencedColumnNames": [
+            "id",
+            "employee_id",
+            "pool_code",
+            "unit",
+            "organization_id"
+          ],
+          "referencedTableName": "hr.absence",
+          "deleteRule": "restrict"
+        },
+        "leave_ledger_entry_employee_id_organization_id_foreign": {
+          "columnNames": [
+            "employee_id",
+            "organization_id"
+          ],
+          "constraintName": "leave_ledger_entry_employee_id_organization_id_foreign",
+          "localTableName": "hr.leave_ledger_entry",
+          "referencedColumnNames": [
+            "id",
+            "organization_id"
+          ],
+          "referencedTableName": "hr.employee",
+          "deleteRule": "restrict"
+        },
+        "leave_ledger_entry_leave_policy_id_organization_id_foreign": {
+          "columnNames": [
+            "leave_policy_id",
+            "organization_id"
+          ],
+          "constraintName": "leave_ledger_entry_leave_policy_id_organization_id_foreign",
+          "localTableName": "hr.leave_ledger_entry",
+          "referencedColumnNames": [
+            "id",
+            "organization_id"
+          ],
+          "referencedTableName": "hr.leave_policy",
+          "deleteRule": "restrict"
+        },
+        "leave_ledger_entry_reverses_entry_id_employee_id_a889c_foreign": {
+          "columnNames": [
+            "reverses_entry_id",
+            "employee_id",
+            "pool_code",
+            "unit",
+            "organization_id"
+          ],
+          "constraintName": "leave_ledger_entry_reverses_entry_id_employee_id_a889c_foreign",
+          "localTableName": "hr.leave_ledger_entry",
+          "referencedColumnNames": [
+            "id",
+            "employee_id",
+            "pool_code",
+            "unit",
+            "organization_id"
+          ],
+          "referencedTableName": "hr.leave_ledger_entry",
+          "deleteRule": "restrict"
+        },
+        "leave_ledger_entry_source_request_id_employee_id_d2bd6_foreign": {
+          "columnNames": [
+            "source_request_id",
+            "employee_id",
+            "organization_id"
+          ],
+          "constraintName": "leave_ledger_entry_source_request_id_employee_id_d2bd6_foreign",
+          "localTableName": "hr.leave_ledger_entry",
+          "referencedColumnNames": [
+            "id",
+            "employee_id",
+            "organization_id"
+          ],
+          "referencedTableName": "hr.hr_request",
+          "deleteRule": "restrict"
+        }
+      },
+      "comment": null
+    },
+    {
+      "name": "leave_policy",
+      "schema": "hr",
+      "columns": {
+        "code": {
+          "name": "code",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "text"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz(3)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 3,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "datetime"
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": true,
+          "nullable": false,
+          "unique": true,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "jurisdiction": {
+          "name": "jurisdiction",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "text"
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "text"
+        },
+        "organization_id": {
+          "name": "organization_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": true,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "revision": {
+          "name": "revision",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "integer"
+        },
+        "rules": {
+          "name": "rules",
+          "type": "jsonb",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "json"
+        },
+        "status": {
+          "name": "status",
+          "type": "hr.record_status",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": "'ACTIVE'",
+          "comment": null,
+          "collation": null,
+          "enumItems": [
+            "ACTIVE",
+            "ARCHIVED"
+          ],
+          "mappedType": "enum",
+          "nativeEnumName": "record_status"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamptz(3)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": 3,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "datetime"
+        },
+        "version": {
+          "name": "version",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": "1",
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "integer"
+        }
+      },
+      "indexes": [
+        {
+          "columnNames": [
+            "id",
+            "organization_id"
+          ],
+          "composite": true,
+          "constraint": true,
+          "keyName": "leave_policy_id_organization_unique",
+          "primary": false,
+          "unique": true
+        },
+        {
+          "columnNames": [
+            "organization_id",
+            "code",
+            "revision"
+          ],
+          "composite": true,
+          "constraint": true,
+          "keyName": "leave_policy_organization_code_revision_unique",
+          "primary": false,
+          "unique": true
+        },
+        {
+          "columnNames": [
+            "id"
+          ],
+          "composite": false,
+          "constraint": true,
+          "keyName": "leave_policy_pkey",
+          "primary": true,
+          "unique": true
+        }
+      ],
+      "checks": [],
+      "triggers": [],
+      "foreignKeys": {},
+      "comment": null
+    },
+    {
+      "name": "position",
+      "schema": "hr",
+      "columns": {
+        "budget_amount": {
+          "name": "budget_amount",
+          "type": "numeric(18,2)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": 18,
+          "scale": 2,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "decimal"
+        },
+        "budget_currency": {
+          "name": "budget_currency",
+          "type": "varchar(3)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": 3,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "string"
+        },
+        "budget_period": {
+          "name": "budget_period",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "text"
+        },
+        "code": {
+          "name": "code",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "text"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz(3)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 3,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "datetime"
+        },
+        "department_id": {
+          "name": "department_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "text"
+        },
+        "grade": {
+          "name": "grade",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "text"
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": true,
+          "nullable": false,
+          "unique": true,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "organization_id": {
+          "name": "organization_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": true,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "planned_fte": {
+          "name": "planned_fte",
+          "type": "numeric(5,4)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": 5,
+          "scale": 4,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "decimal"
+        },
+        "requirements": {
+          "name": "requirements",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "text"
+        },
+        "status": {
+          "name": "status",
+          "type": "hr.record_status",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": "'ACTIVE'",
+          "comment": null,
+          "collation": null,
+          "enumItems": [
+            "ACTIVE",
+            "ARCHIVED"
+          ],
+          "mappedType": "enum",
+          "nativeEnumName": "record_status"
+        },
+        "team_id": {
+          "name": "team_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "text"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamptz(3)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": 3,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "datetime"
+        },
+        "version": {
+          "name": "version",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": "1",
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "integer"
+        }
+      },
+      "indexes": [
+        {
+          "columnNames": [
+            "id",
+            "organization_id"
+          ],
+          "composite": true,
+          "constraint": true,
+          "keyName": "position_id_organization_unique",
+          "primary": false,
+          "unique": true
+        },
+        {
+          "columnNames": [
+            "organization_id",
+            "code"
+          ],
+          "composite": true,
+          "constraint": true,
+          "keyName": "position_organization_code_unique",
+          "primary": false,
+          "unique": true
+        },
+        {
+          "columnNames": [
+            "organization_id",
+            "department_id"
+          ],
+          "composite": true,
+          "constraint": false,
+          "keyName": "position_organization_department_idx",
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": [
+            "organization_id",
+            "team_id"
+          ],
+          "composite": true,
+          "constraint": false,
+          "keyName": "position_organization_team_idx",
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": [
+            "id"
+          ],
+          "composite": false,
+          "constraint": true,
+          "keyName": "position_pkey",
+          "primary": true,
+          "unique": true
+        }
+      ],
+      "checks": [],
+      "triggers": [],
+      "foreignKeys": {},
+      "comment": null
+    },
+    {
+      "name": "position_assignment",
+      "schema": "hr",
+      "columns": {
+        "closed_by_request_id": {
+          "name": "closed_by_request_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz(3)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 3,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "datetime"
+        },
+        "department_id": {
+          "name": "department_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "employee_id": {
+          "name": "employee_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "fte": {
+          "name": "fte",
+          "type": "numeric(5,4)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": 5,
+          "scale": 4,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "decimal"
+        },
+        "grade": {
+          "name": "grade",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "text"
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": true,
+          "nullable": false,
+          "unique": true,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "organization_id": {
+          "name": "organization_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "placement_snapshot": {
+          "name": "placement_snapshot",
+          "type": "jsonb",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "json"
+        },
+        "position_id": {
+          "name": "position_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "position_title": {
+          "name": "position_title",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "text"
+        },
+        "salary_amount": {
+          "name": "salary_amount",
+          "type": "numeric(18,2)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": 18,
+          "scale": 2,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "decimal"
+        },
+        "salary_currency": {
+          "name": "salary_currency",
+          "type": "varchar(3)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": 3,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "string"
+        },
+        "salary_period": {
+          "name": "salary_period",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "text"
+        },
+        "source_request_id": {
+          "name": "source_request_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "status": {
+          "name": "status",
+          "type": "hr.assignment_status",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": "'ACTIVE'",
+          "comment": null,
+          "collation": null,
+          "enumItems": [
+            "ACTIVE",
+            "CLOSED",
+            "VOIDED"
+          ],
+          "mappedType": "enum",
+          "nativeEnumName": "assignment_status"
+        },
+        "team_id": {
+          "name": "team_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamptz(3)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": 3,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "datetime"
+        },
+        "valid_from": {
+          "name": "valid_from",
+          "type": "date",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "date"
+        },
+        "valid_to": {
+          "name": "valid_to",
+          "type": "date",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "date"
+        },
+        "version": {
+          "name": "version",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": "1",
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "integer"
+        }
+      },
+      "indexes": [
+        {
+          "columnNames": [],
+          "composite": false,
+          "constraint": false,
+          "keyName": "position_assignment_active_employee_unique",
+          "primary": false,
+          "unique": false,
+          "expression": "CREATE UNIQUE INDEX \"position_assignment_active_employee_unique\" ON \"hr\".\"position_assignment\" (employee_id) WHERE status = 'ACTIVE'"
+        },
+        {
+          "columnNames": [],
+          "composite": false,
+          "constraint": false,
+          "keyName": "position_assignment_active_position_unique",
+          "primary": false,
+          "unique": false,
+          "expression": "CREATE UNIQUE INDEX \"position_assignment_active_position_unique\" ON \"hr\".\"position_assignment\" (position_id) WHERE status = 'ACTIVE'"
+        },
+        {
+          "columnNames": [
+            "id",
+            "organization_id"
+          ],
+          "composite": true,
+          "constraint": true,
+          "keyName": "position_assignment_id_organization_unique",
+          "primary": false,
+          "unique": true
+        },
+        {
+          "columnNames": [
+            "organization_id",
+            "employee_id",
+            "valid_from"
+          ],
+          "composite": true,
+          "constraint": false,
+          "keyName": "position_assignment_organization_employee_valid_from_idx",
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": [
+            "organization_id",
+            "position_id",
+            "valid_from"
+          ],
+          "composite": true,
+          "constraint": false,
+          "keyName": "position_assignment_organization_position_valid_from_idx",
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": [
+            "id"
+          ],
+          "composite": false,
+          "constraint": true,
+          "keyName": "position_assignment_pkey",
+          "primary": true,
+          "unique": true
+        }
+      ],
+      "checks": [],
+      "triggers": [],
+      "foreignKeys": {
+        "position_assignment_closed_by_request_id_employe_5d1df_foreign": {
+          "columnNames": [
+            "closed_by_request_id",
+            "employee_id",
+            "organization_id"
+          ],
+          "constraintName": "position_assignment_closed_by_request_id_employe_5d1df_foreign",
+          "localTableName": "hr.position_assignment",
+          "referencedColumnNames": [
+            "id",
+            "employee_id",
+            "organization_id"
+          ],
+          "referencedTableName": "hr.hr_request",
+          "deleteRule": "restrict"
+        },
+        "position_assignment_employee_id_organization_id_foreign": {
+          "columnNames": [
+            "employee_id",
+            "organization_id"
+          ],
+          "constraintName": "position_assignment_employee_id_organization_id_foreign",
+          "localTableName": "hr.position_assignment",
+          "referencedColumnNames": [
+            "id",
+            "organization_id"
+          ],
+          "referencedTableName": "hr.employee",
+          "deleteRule": "restrict"
+        },
+        "position_assignment_position_id_organization_id_foreign": {
+          "columnNames": [
+            "position_id",
+            "organization_id"
+          ],
+          "constraintName": "position_assignment_position_id_organization_id_foreign",
+          "localTableName": "hr.position_assignment",
+          "referencedColumnNames": [
+            "id",
+            "organization_id"
+          ],
+          "referencedTableName": "hr.position",
+          "deleteRule": "restrict"
+        },
+        "position_assignment_source_request_id_employee_i_a72cf_foreign": {
+          "columnNames": [
+            "source_request_id",
+            "employee_id",
+            "organization_id"
+          ],
+          "constraintName": "position_assignment_source_request_id_employee_i_a72cf_foreign",
+          "localTableName": "hr.position_assignment",
+          "referencedColumnNames": [
+            "id",
+            "employee_id",
+            "organization_id"
+          ],
+          "referencedTableName": "hr.hr_request",
+          "deleteRule": "restrict"
+        }
+      },
+      "comment": null
+    },
+    {
+      "name": "work_calendar",
+      "schema": "hr",
+      "columns": {
+        "code": {
+          "name": "code",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "text"
+        },
+        "country_code": {
+          "name": "country_code",
+          "type": "varchar(2)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 2,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "string"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz(3)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 3,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "datetime"
+        },
+        "holidays": {
+          "name": "holidays",
+          "type": "jsonb",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "json"
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": true,
+          "nullable": false,
+          "unique": true,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "text"
+        },
+        "organization_id": {
+          "name": "organization_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": true,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "region_code": {
+          "name": "region_code",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "text"
+        },
+        "status": {
+          "name": "status",
+          "type": "hr.record_status",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": "'ACTIVE'",
+          "comment": null,
+          "collation": null,
+          "enumItems": [
+            "ACTIVE",
+            "ARCHIVED"
+          ],
+          "mappedType": "enum",
+          "nativeEnumName": "record_status"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamptz(3)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": 3,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "datetime"
+        },
+        "verified_through": {
+          "name": "verified_through",
+          "type": "date",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "date"
+        },
+        "version": {
+          "name": "version",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": "1",
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "integer"
+        }
+      },
+      "indexes": [
+        {
+          "columnNames": [
+            "id",
+            "organization_id"
+          ],
+          "composite": true,
+          "constraint": true,
+          "keyName": "work_calendar_id_organization_unique",
+          "primary": false,
+          "unique": true
+        },
+        {
+          "columnNames": [
+            "organization_id",
+            "code"
+          ],
+          "composite": true,
+          "constraint": true,
+          "keyName": "work_calendar_organization_code_unique",
+          "primary": false,
+          "unique": true
+        },
+        {
+          "columnNames": [
+            "id"
+          ],
+          "composite": false,
+          "constraint": true,
+          "keyName": "work_calendar_pkey",
+          "primary": true,
+          "unique": true
+        }
+      ],
+      "checks": [],
+      "triggers": [],
+      "foreignKeys": {},
+      "comment": null
+    },
+    {
+      "name": "work_calendar_exception",
+      "schema": "hr",
+      "columns": {
+        "calendar_id": {
+          "name": "calendar_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": true,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz(3)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 3,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "datetime"
+        },
+        "date": {
+          "name": "date",
+          "type": "date",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "date"
+        },
+        "holiday_override": {
+          "name": "holiday_override",
+          "type": "boolean",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "boolean"
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": true,
+          "nullable": false,
+          "unique": true,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "text"
+        },
+        "organization_id": {
+          "name": "organization_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "shortened_by_minutes": {
+          "name": "shortened_by_minutes",
+          "type": "smallint",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "smallint"
+        },
+        "source": {
+          "name": "source",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "text"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamptz(3)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": 3,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "datetime"
+        },
+        "version": {
+          "name": "version",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": "1",
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "integer"
+        },
+        "workday_override": {
+          "name": "workday_override",
+          "type": "hr.day_override",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [
+            "WORKDAY",
+            "DAY_OFF"
+          ],
+          "mappedType": "enum",
+          "nativeEnumName": "day_override"
+        }
+      },
+      "indexes": [
+        {
+          "columnNames": [
+            "calendar_id",
+            "organization_id",
+            "date"
+          ],
+          "composite": true,
+          "constraint": true,
+          "keyName": "work_calendar_exception_calendar_date_unique",
+          "primary": false,
+          "unique": true
+        },
+        {
+          "columnNames": [
+            "id",
+            "organization_id"
+          ],
+          "composite": true,
+          "constraint": true,
+          "keyName": "work_calendar_exception_id_organization_unique",
+          "primary": false,
+          "unique": true
+        },
+        {
+          "columnNames": [
+            "id"
+          ],
+          "composite": false,
+          "constraint": true,
+          "keyName": "work_calendar_exception_pkey",
+          "primary": true,
+          "unique": true
+        }
+      ],
+      "checks": [],
+      "triggers": [],
+      "foreignKeys": {
+        "work_calendar_exception_calendar_id_organization_id_foreign": {
+          "columnNames": [
+            "calendar_id",
+            "organization_id"
+          ],
+          "constraintName": "work_calendar_exception_calendar_id_organization_id_foreign",
+          "localTableName": "hr.work_calendar_exception",
+          "referencedColumnNames": [
+            "id",
+            "organization_id"
+          ],
+          "referencedTableName": "hr.work_calendar",
+          "deleteRule": "restrict"
+        }
+      },
+      "comment": null
+    },
+    {
+      "name": "work_schedule",
+      "schema": "hr",
+      "columns": {
+        "calendar_application": {
+          "name": "calendar_application",
+          "type": "hr.calendar_application",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [
+            "APPLY_OVERRIDES",
+            "KEEP_CYCLE"
+          ],
+          "mappedType": "enum",
+          "nativeEnumName": "calendar_application"
+        },
+        "code": {
+          "name": "code",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "text"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz(3)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 3,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "datetime"
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": true,
+          "nullable": false,
+          "unique": true,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "text"
+        },
+        "organization_id": {
+          "name": "organization_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": true,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "pattern": {
+          "name": "pattern",
+          "type": "jsonb",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "json"
+        },
+        "pattern_type": {
+          "name": "pattern_type",
+          "type": "hr.schedule_pattern",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [
+            "WEEKLY",
+            "CYCLIC"
+          ],
+          "mappedType": "enum",
+          "nativeEnumName": "schedule_pattern"
+        },
+        "revision": {
+          "name": "revision",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "integer"
+        },
+        "status": {
+          "name": "status",
+          "type": "hr.record_status",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": "'ACTIVE'",
+          "comment": null,
+          "collation": null,
+          "enumItems": [
+            "ACTIVE",
+            "ARCHIVED"
+          ],
+          "mappedType": "enum",
+          "nativeEnumName": "record_status"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamptz(3)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": 3,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "datetime"
+        },
+        "version": {
+          "name": "version",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": "1",
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "integer"
+        }
+      },
+      "indexes": [
+        {
+          "columnNames": [
+            "id",
+            "organization_id"
+          ],
+          "composite": true,
+          "constraint": true,
+          "keyName": "work_schedule_id_organization_unique",
+          "primary": false,
+          "unique": true
+        },
+        {
+          "columnNames": [
+            "organization_id",
+            "code",
+            "revision"
+          ],
+          "composite": true,
+          "constraint": true,
+          "keyName": "work_schedule_organization_code_revision_unique",
+          "primary": false,
+          "unique": true
+        },
+        {
+          "columnNames": [
+            "id"
+          ],
+          "composite": false,
+          "constraint": true,
+          "keyName": "work_schedule_pkey",
+          "primary": true,
+          "unique": true
+        }
+      ],
+      "checks": [],
+      "triggers": [],
+      "foreignKeys": {},
+      "comment": null
+    },
     {
       "name": "audit_log",
       "schema": "system",
@@ -729,5 +5720,146 @@
     }
   ],
   "views": [],
-  "nativeEnums": {}
+  "nativeEnums": {
+    "hr.absence_status": {
+      "name": "absence_status",
+      "schema": "hr",
+      "items": [
+        "SCHEDULED",
+        "IN_PROGRESS",
+        "COMPLETED",
+        "CANCELLED"
+      ]
+    },
+    "hr.approval_status": {
+      "name": "approval_status",
+      "schema": "hr",
+      "items": [
+        "WAITING",
+        "ACTIVE",
+        "APPROVED",
+        "REJECTED",
+        "RETURNED",
+        "SKIPPED"
+      ]
+    },
+    "hr.assignment_status": {
+      "name": "assignment_status",
+      "schema": "hr",
+      "items": [
+        "ACTIVE",
+        "CLOSED",
+        "VOIDED"
+      ]
+    },
+    "hr.calendar_application": {
+      "name": "calendar_application",
+      "schema": "hr",
+      "items": [
+        "APPLY_OVERRIDES",
+        "KEEP_CYCLE"
+      ]
+    },
+    "hr.day_override": {
+      "name": "day_override",
+      "schema": "hr",
+      "items": [
+        "WORKDAY",
+        "DAY_OFF"
+      ]
+    },
+    "hr.decision_kind": {
+      "name": "decision_kind",
+      "schema": "hr",
+      "items": [
+        "APPROVE",
+        "REJECT",
+        "RETURN"
+      ]
+    },
+    "hr.employee_status": {
+      "name": "employee_status",
+      "schema": "hr",
+      "items": [
+        "DRAFT",
+        "ACTIVE",
+        "TERMINATED",
+        "ARCHIVED"
+      ]
+    },
+    "hr.execution_status": {
+      "name": "execution_status",
+      "schema": "hr",
+      "items": [
+        "NOT_STARTED",
+        "SCHEDULED",
+        "RUNNING",
+        "APPLIED",
+        "FAILED"
+      ]
+    },
+    "hr.leave_unit": {
+      "name": "leave_unit",
+      "schema": "hr",
+      "items": [
+        "DAY",
+        "MINUTE"
+      ]
+    },
+    "hr.ledger_kind": {
+      "name": "ledger_kind",
+      "schema": "hr",
+      "items": [
+        "ACCRUAL",
+        "RESERVE",
+        "RELEASE",
+        "CONSUME",
+        "ADJUSTMENT",
+        "REVERSAL"
+      ]
+    },
+    "hr.record_status": {
+      "name": "record_status",
+      "schema": "hr",
+      "items": [
+        "ACTIVE",
+        "ARCHIVED"
+      ]
+    },
+    "hr.request_status": {
+      "name": "request_status",
+      "schema": "hr",
+      "items": [
+        "DRAFT",
+        "SUBMITTED",
+        "APPROVED",
+        "REJECTED",
+        "WITHDRAWN",
+        "CANCELLED"
+      ]
+    },
+    "hr.request_type": {
+      "name": "request_type",
+      "schema": "hr",
+      "items": [
+        "HIRE",
+        "REHIRE",
+        "TRANSFER",
+        "CHANGE_TERMS",
+        "TERMINATE",
+        "ABSENCE",
+        "OVERTIME",
+        "CANCEL_REQUEST",
+        "LEAVE_ADJUSTMENT"
+      ]
+    },
+    "hr.schedule_pattern": {
+      "name": "schedule_pattern",
+      "schema": "hr",
+      "items": [
+        "WEEKLY",
+        "CYCLIC"
+      ]
+    }
+  }
 }
