@@ -921,6 +921,24 @@
       },
       "indexes": [
         {
+          "columnNames": [],
+          "composite": false,
+          "constraint": false,
+          "keyName": "employee_employee_number_trgm_idx",
+          "primary": false,
+          "unique": false,
+          "expression": "CREATE INDEX \"employee_employee_number_trgm_idx\" ON \"hr\".\"employee\" USING gin (employee_number gin_trgm_ops)"
+        },
+        {
+          "columnNames": [],
+          "composite": false,
+          "constraint": false,
+          "keyName": "employee_full_name_trgm_idx",
+          "primary": false,
+          "unique": false,
+          "expression": "CREATE INDEX \"employee_full_name_trgm_idx\" ON \"hr\".\"employee\" USING gin ((last_name || ' ' || first_name || coalesce(' ' || middle_name, '')) gin_trgm_ops)"
+        },
+        {
           "columnNames": [
             "hr_bp_employee_id",
             "organization_id"
@@ -3319,6 +3337,15 @@
       },
       "indexes": [
         {
+          "columnNames": [],
+          "composite": false,
+          "constraint": false,
+          "keyName": "leave_policy_code_trgm_idx",
+          "primary": false,
+          "unique": false,
+          "expression": "CREATE INDEX \"leave_policy_code_trgm_idx\" ON \"hr\".\"leave_policy\" USING gin (code gin_trgm_ops)"
+        },
+        {
           "columnNames": [
             "id",
             "organization_id"
@@ -3328,6 +3355,15 @@
           "keyName": "leave_policy_id_organization_unique",
           "primary": false,
           "unique": true
+        },
+        {
+          "columnNames": [],
+          "composite": false,
+          "constraint": false,
+          "keyName": "leave_policy_name_trgm_idx",
+          "primary": false,
+          "unique": false,
+          "expression": "CREATE INDEX \"leave_policy_name_trgm_idx\" ON \"hr\".\"leave_policy\" USING gin (name gin_trgm_ops)"
         },
         {
           "columnNames": [
@@ -3657,6 +3693,15 @@
       },
       "indexes": [
         {
+          "columnNames": [],
+          "composite": false,
+          "constraint": false,
+          "keyName": "position_code_trgm_idx",
+          "primary": false,
+          "unique": false,
+          "expression": "CREATE INDEX \"position_code_trgm_idx\" ON \"hr\".\"position\" USING gin (code gin_trgm_ops)"
+        },
+        {
           "columnNames": [
             "id",
             "organization_id"
@@ -3709,6 +3754,15 @@
           "keyName": "position_pkey",
           "primary": true,
           "unique": true
+        },
+        {
+          "columnNames": [],
+          "composite": false,
+          "constraint": false,
+          "keyName": "position_title_trgm_idx",
+          "primary": false,
+          "unique": false,
+          "expression": "CREATE INDEX \"position_title_trgm_idx\" ON \"hr\".\"position\" USING gin (title gin_trgm_ops)"
         }
       ],
       "checks": [],
@@ -4429,6 +4483,15 @@
       },
       "indexes": [
         {
+          "columnNames": [],
+          "composite": false,
+          "constraint": false,
+          "keyName": "work_calendar_code_trgm_idx",
+          "primary": false,
+          "unique": false,
+          "expression": "CREATE INDEX \"work_calendar_code_trgm_idx\" ON \"hr\".\"work_calendar\" USING gin (code gin_trgm_ops)"
+        },
+        {
           "columnNames": [
             "id",
             "organization_id"
@@ -4438,6 +4501,15 @@
           "keyName": "work_calendar_id_organization_unique",
           "primary": false,
           "unique": true
+        },
+        {
+          "columnNames": [],
+          "composite": false,
+          "constraint": false,
+          "keyName": "work_calendar_name_trgm_idx",
+          "primary": false,
+          "unique": false,
+          "expression": "CREATE INDEX \"work_calendar_name_trgm_idx\" ON \"hr\".\"work_calendar\" USING gin (name gin_trgm_ops)"
         },
         {
           "columnNames": [
@@ -4957,6 +5029,15 @@
       },
       "indexes": [
         {
+          "columnNames": [],
+          "composite": false,
+          "constraint": false,
+          "keyName": "work_schedule_code_trgm_idx",
+          "primary": false,
+          "unique": false,
+          "expression": "CREATE INDEX \"work_schedule_code_trgm_idx\" ON \"hr\".\"work_schedule\" USING gin (code gin_trgm_ops)"
+        },
+        {
           "columnNames": [
             "id",
             "organization_id"
@@ -4966,6 +5047,15 @@
           "keyName": "work_schedule_id_organization_unique",
           "primary": false,
           "unique": true
+        },
+        {
+          "columnNames": [],
+          "composite": false,
+          "constraint": false,
+          "keyName": "work_schedule_name_trgm_idx",
+          "primary": false,
+          "unique": false,
+          "expression": "CREATE INDEX \"work_schedule_name_trgm_idx\" ON \"hr\".\"work_schedule\" USING gin (name gin_trgm_ops)"
         },
         {
           "columnNames": [

@@ -19,6 +19,17 @@ export const LeavePolicySchema = new EntitySchema<LeavePolicy>({
         },
     ],
 
+    indexes: [
+        {
+            name: "leave_policy_name_trgm_idx",
+            expression: 'CREATE INDEX "leave_policy_name_trgm_idx" ON "hr"."leave_policy" USING gin (name gin_trgm_ops)',
+        },
+        {
+            name: "leave_policy_code_trgm_idx",
+            expression: 'CREATE INDEX "leave_policy_code_trgm_idx" ON "hr"."leave_policy" USING gin (code gin_trgm_ops)',
+        },
+    ],
+
     properties: {
         id: { primary: true, type: "uuid" },
 

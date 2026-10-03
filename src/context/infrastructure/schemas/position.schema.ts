@@ -21,6 +21,14 @@ export const PositionSchema = new EntitySchema<Position>({
 
     indexes: [
         {
+            name: "position_title_trgm_idx",
+            expression: 'CREATE INDEX "position_title_trgm_idx" ON "hr"."position" USING gin (title gin_trgm_ops)',
+        },
+        {
+            name: "position_code_trgm_idx",
+            expression: 'CREATE INDEX "position_code_trgm_idx" ON "hr"."position" USING gin (code gin_trgm_ops)',
+        },
+        {
             name: "position_organization_department_idx",
             properties: ["organization", "department"],
         },

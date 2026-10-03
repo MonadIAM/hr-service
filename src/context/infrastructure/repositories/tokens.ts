@@ -1,2 +1,15 @@
+export const WORK_CALENDAR_EXCEPTION_REPOSITORY = Symbol("Repositories.WorkCalendarException.Contract");
+export const HR_APPROVAL_DECISION_REPOSITORY = Symbol("Repositories.HRApprovalDecision.Contract");
+export const POSITION_ASSIGNMENT_REPOSITORY = Symbol("Repositories.PositionAssignment.Contract");
+export const LEAVE_LEDGER_ENTRY_REPOSITORY = Symbol("Repositories.LeaveLedgerEntry.Contract");
+export const HR_APPROVAL_STEP_REPOSITORY = Symbol("Repositories.HRApprovalStep.Contract");
+export const WORK_CALENDAR_REPOSITORY = Symbol("Repositories.WorkCalendar.Contract");
+export const WORK_SCHEDULE_REPOSITORY = Symbol("Repositories.WorkSchedule.Contract");
+export const LEAVE_POLICY_REPOSITORY = Symbol("Repositories.LeavePolicy.Contract");
+export const EMPLOYMENT_REPOSITORY = Symbol("Repositories.Employment.Contract");
+export const HR_REQUEST_REPOSITORY = Symbol("Repositories.HRRequest.Contract");
 export const CHANGE_LOG_REPOSITORY = Symbol("Repositories.ChangeLog.Contract");
 export const AUDIT_LOG_REPOSITORY = Symbol("Repositories.AuditLog.Contract");
+export const POSITION_REPOSITORY = Symbol("Repositories.Position.Contract");
+export const EMPLOYEE_REPOSITORY = Symbol("Repositories.Employee.Contract");
+export const ABSENCE_REPOSITORY = Symbol("Repositories.Absence.Contract");

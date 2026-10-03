@@ -37,12 +37,22 @@ export const EmployeeSchema = new EntitySchema<Employee>({
 
     indexes: [
         {
-            name: "employee_organization_status_idx",
-            properties: ["organization", "status"],
+            name: "employee_full_name_trgm_idx",
+            expression:
+                "CREATE INDEX \"employee_full_name_trgm_idx\" ON \"hr\".\"employee\" USING gin ((last_name || ' ' || first_name || coalesce(' ' || middle_name, '')) gin_trgm_ops)",
+        },
+        {
+            name: "employee_employee_number_trgm_idx",
+            expression:
+                'CREATE INDEX "employee_employee_number_trgm_idx" ON "hr"."employee" USING gin (employee_number gin_trgm_ops)',
         },
         {
             name: "employee_hr_bp_employee_organization_idx",
             properties: ["hrBpEmployee", "organization"],
+        },
+        {
+            name: "employee_organization_status_idx",
+            properties: ["organization", "status"],
         },
     ],
 

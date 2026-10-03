@@ -19,6 +19,17 @@ export const WorkCalendarSchema = new EntitySchema<WorkCalendar>({
         },
     ],
 
+    indexes: [
+        {
+            name: "work_calendar_name_trgm_idx",
+            expression: 'CREATE INDEX "work_calendar_name_trgm_idx" ON "hr"."work_calendar" USING gin (name gin_trgm_ops)',
+        },
+        {
+            name: "work_calendar_code_trgm_idx",
+            expression: 'CREATE INDEX "work_calendar_code_trgm_idx" ON "hr"."work_calendar" USING gin (code gin_trgm_ops)',
+        },
+    ],
+
     properties: {
         id: { primary: true, type: "uuid" },
 
