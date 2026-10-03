@@ -13,5 +13,18 @@
   "vault": {
     "REQUEST_FAILED": "Запрос к Vault Transit завершился ошибкой.",
     "INVALID_SIGNATURE": "Vault Transit вернул недействительную подпись."
+  },
+  "work-schedule": {
+    "STALE_REVISION": "Создавайте новую ревизию на основе последней."
+  },
+  "leave-policy": {
+    "STALE_REVISION": "Создавайте новую ревизию на основе последней."
+  },
+  "leave-ledger-entry": {
+    "INVALID_REVERSAL": "Сторно можно создать только для исходной записи, которая ещё не была сторнирована."
+  },
+  "hr-request": {
+    "EMPTY_APPROVAL_ROUTE": "Нужен хотя бы один шаг согласования.",
+    "ASSIGNEE_NOT_FOUND": "Согласующий для шага согласования не найден."
   }
 }

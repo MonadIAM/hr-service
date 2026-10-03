@@ -1,1 +1,56 @@
-{}
+{
+  "position": {
+    "CREATED": "Created.",
+    "UPDATED": "Updated.",
+    "ARCHIVED": "Archived.",
+    "RESTORED": "Restored.",
+    "PURGED": "Deleted."
+  },
+  "work-calendar": {
+    "CREATED": "Created.",
+    "UPDATED": "Updated.",
+    "ARCHIVED": "Archived.",
+    "RESTORED": "Restored.",
+    "PURGED": "Deleted."
+  },
+  "work-schedule": {
+    "CREATED": "Created.",
+    "REVISION_CREATED": "Revision created.",
+    "ARCHIVED": "Archived.",
+    "RESTORED": "Restored.",
+    "PURGED": "Deleted."
+  },
+  "leave-policy": {
+    "CREATED": "Created.",
+    "REVISION_CREATED": "Revision created.",
+    "ARCHIVED": "Archived.",
+    "RESTORED": "Restored.",
+    "PURGED": "Deleted."
+  },
+  "work-calendar-exception": {
+    "CREATED": "Created.",
+    "UPDATED": "Updated.",
+    "PURGED": "Deleted."
+  },
+  "employee": {
+    "CREATED": "Created.",
+    "UPDATED": "Updated.",
+    "ACCOUNT_LINKED": "Account linked.",
+    "ACCOUNT_UNLINKED": "Account unlinked.",
+    "ARCHIVED": "Archived.",
+    "RESTORED": "Restored.",
+    "HRBP_UPDATED": "HRBP updated."
+  },
+  "hr-request": {
+    "CREATED": "Created.",
+    "UPDATED": "Updated.",
+    "SUBMITTED": "Request submitted for approval.",
+    "WITHDRAWN": "Request withdrawn."
+  },
+  "hr-approval-step": {
+    "REASSIGNED": "Approval step reassigned.",
+    "APPROVED": "Approval recorded.",
+    "REJECTED": "Rejection recorded.",
+    "RETURNED": "Request returned for revision."
+  }
+}

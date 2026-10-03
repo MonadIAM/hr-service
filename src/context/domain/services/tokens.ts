@@ -1,2 +1,15 @@
+export const WORK_CALENDAR_EXCEPTION_SERVICE = Symbol("Services.WorkCalendarException.Contract");
+export const HR_APPROVAL_DECISION_SERVICE = Symbol("Services.HRApprovalDecision.Contract");
+export const POSITION_ASSIGNMENT_SERVICE = Symbol("Services.PositionAssignment.Contract");
+export const LEAVE_LEDGER_ENTRY_SERVICE = Symbol("Services.LeaveLedgerEntry.Contract");
+export const HR_APPROVAL_STEP_SERVICE = Symbol("Services.HRApprovalStep.Contract");
+export const WORK_CALENDAR_SERVICE = Symbol("Services.WorkCalendar.Contract");
+export const WORK_SCHEDULE_SERVICE = Symbol("Services.WorkSchedule.Contract");
+export const LEAVE_POLICY_SERVICE = Symbol("Services.LeavePolicy.Contract");
+export const EMPLOYMENT_SERVICE = Symbol("Services.Employment.Contract");
 export const CHANGE_LOG_SERVICE = Symbol("Services.ChangeLog.Contract");
+export const HR_REQUEST_SERVICE = Symbol("Services.HRRequest.Contract");
 export const AUDIT_LOG_SERVICE = Symbol("Services.AuditLog.Contract");
+export const POSITION_SERVICE = Symbol("Services.Position.Contract");
+export const EMPLOYEE_SERVICE = Symbol("Services.Employee.Contract");
+export const ABSENCE_SERVICE = Symbol("Services.Absence.Contract");

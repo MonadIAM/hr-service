@@ -1,1 +1,56 @@
-{}
+{
+  "position": {
+    "CREATED": "Создано.",
+    "UPDATED": "Обновлено.",
+    "ARCHIVED": "Перенесено в архив.",
+    "RESTORED": "Восстановлено.",
+    "PURGED": "Удалено."
+  },
+  "work-calendar": {
+    "CREATED": "Создано.",
+    "UPDATED": "Обновлено.",
+    "ARCHIVED": "Перенесено в архив.",
+    "RESTORED": "Восстановлено.",
+    "PURGED": "Удалено."
+  },
+  "work-schedule": {
+    "CREATED": "Создано.",
+    "REVISION_CREATED": "Ревизия создана.",
+    "ARCHIVED": "Перенесено в архив.",
+    "RESTORED": "Восстановлено.",
+    "PURGED": "Удалено."
+  },
+  "leave-policy": {
+    "CREATED": "Создано.",
+    "REVISION_CREATED": "Ревизия создана.",
+    "ARCHIVED": "Перенесено в архив.",
+    "RESTORED": "Восстановлено.",
+    "PURGED": "Удалено."
+  },
+  "work-calendar-exception": {
+    "CREATED": "Создано.",
+    "UPDATED": "Обновлено.",
+    "PURGED": "Удалено."
+  },
+  "employee": {
+    "CREATED": "Создано.",
+    "UPDATED": "Обновлено.",
+    "ACCOUNT_LINKED": "Учётная запись привязана.",
+    "ACCOUNT_UNLINKED": "Учётная запись отвязана.",
+    "ARCHIVED": "Перенесено в архив.",
+    "RESTORED": "Восстановлено.",
+    "HRBP_UPDATED": "HRBP изменён."
+  },
+  "hr-request": {
+    "CREATED": "Создано.",
+    "UPDATED": "Обновлено.",
+    "SUBMITTED": "Заявка отправлена на согласование.",
+    "WITHDRAWN": "Заявка отозвана."
+  },
+  "hr-approval-step": {
+    "REASSIGNED": "Согласующий изменён.",
+    "APPROVED": "Согласование записано.",
+    "REJECTED": "Отказ записан.",
+    "RETURNED": "Заявка возвращена на доработку."
+  }
+}

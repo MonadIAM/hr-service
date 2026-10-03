@@ -13,5 +13,18 @@
   "vault": {
     "REQUEST_FAILED": "Vault Transit request failed.",
     "INVALID_SIGNATURE": "Vault Transit returned an invalid signature."
+  },
+  "work-schedule": {
+    "STALE_REVISION": "Create a revision from the latest revision."
+  },
+  "leave-policy": {
+    "STALE_REVISION": "Create a revision from the latest revision."
+  },
+  "leave-ledger-entry": {
+    "INVALID_REVERSAL": "A reversal must be created from an original entry that has not already been reversed."
+  },
+  "hr-request": {
+    "EMPTY_APPROVAL_ROUTE": "At least one approval step is required.",
+    "ASSIGNEE_NOT_FOUND": "The approval step assignee does not exist."
   }
 }

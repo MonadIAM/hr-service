@@ -5,6 +5,62 @@
 import type { Path } from "nestjs-i18n";
 /* prettier-ignore */
 export type I18nTranslations = {
+    "commands": {
+        "position": {
+            "CREATED": string;
+            "UPDATED": string;
+            "ARCHIVED": string;
+            "RESTORED": string;
+            "PURGED": string;
+        };
+        "work-calendar": {
+            "CREATED": string;
+            "UPDATED": string;
+            "ARCHIVED": string;
+            "RESTORED": string;
+            "PURGED": string;
+        };
+        "work-schedule": {
+            "CREATED": string;
+            "REVISION_CREATED": string;
+            "ARCHIVED": string;
+            "RESTORED": string;
+            "PURGED": string;
+        };
+        "leave-policy": {
+            "CREATED": string;
+            "REVISION_CREATED": string;
+            "ARCHIVED": string;
+            "RESTORED": string;
+            "PURGED": string;
+        };
+        "work-calendar-exception": {
+            "CREATED": string;
+            "UPDATED": string;
+            "PURGED": string;
+        };
+        "employee": {
+            "CREATED": string;
+            "UPDATED": string;
+            "ACCOUNT_LINKED": string;
+            "ACCOUNT_UNLINKED": string;
+            "ARCHIVED": string;
+            "RESTORED": string;
+            "HRBP_UPDATED": string;
+        };
+        "hr-request": {
+            "CREATED": string;
+            "UPDATED": string;
+            "SUBMITTED": string;
+            "WITHDRAWN": string;
+        };
+        "hr-approval-step": {
+            "REASSIGNED": string;
+            "APPROVED": string;
+            "REJECTED": string;
+            "RETURNED": string;
+        };
+    };
     "db": {
         "NOT_FOUND": string;
         "UNIQUE_VIOLATION": string;
@@ -153,6 +209,19 @@ export type I18nTranslations = {
         "vault": {
             "REQUEST_FAILED": string;
             "INVALID_SIGNATURE": string;
+        };
+        "work-schedule": {
+            "STALE_REVISION": string;
+        };
+        "leave-policy": {
+            "STALE_REVISION": string;
+        };
+        "leave-ledger-entry": {
+            "INVALID_REVERSAL": string;
+        };
+        "hr-request": {
+            "EMPTY_APPROVAL_ROUTE": string;
+            "ASSIGNEE_NOT_FOUND": string;
         };
     };
     "validator": {
