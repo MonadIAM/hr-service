@@ -1,0 +1,15 @@
+export const WORK_CALENDAR_EXCEPTION_QUERIES = Symbol("Queries.WorkCalendarException.Contract");
+export const HR_APPROVAL_DECISION_QUERIES = Symbol("Queries.HRApprovalDecision.Contract");
+export const POSITION_ASSIGNMENT_QUERIES = Symbol("Queries.PositionAssignment.Contract");
+export const LEAVE_LEDGER_ENTRY_QUERIES = Symbol("Queries.LeaveLedgerEntry.Contract");
+export const HR_APPROVAL_STEP_QUERIES = Symbol("Queries.HRApprovalStep.Contract");
+export const WORK_CALENDAR_QUERIES = Symbol("Queries.WorkCalendar.Contract");
+export const WORK_SCHEDULE_QUERIES = Symbol("Queries.WorkSchedule.Contract");
+export const LEAVE_POLICY_QUERIES = Symbol("Queries.LeavePolicy.Contract");
+export const EMPLOYMENT_QUERIES = Symbol("Queries.Employment.Contract");
+export const HR_REQUEST_QUERIES = Symbol("Queries.HRRequest.Contract");
+export const CHANGE_LOG_QUERIES = Symbol("Queries.ChangeLog.Contract");
+export const AUDIT_LOG_QUERIES = Symbol("Queries.AuditLog.Contract");
+export const POSITION_QUERIES = Symbol("Queries.Position.Contract");
+export const EMPLOYEE_QUERIES = Symbol("Queries.Employee.Contract");
+export const ABSENCE_QUERIES = Symbol("Queries.Absence.Contract");
