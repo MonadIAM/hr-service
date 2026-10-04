@@ -22,7 +22,7 @@ declare namespace Services.HRApprovalStep {
                 dueAt?: Date;
             };
             transaction: ORM.EntityManager;
-            organization: string;
+            organization: Entities.Organization;
         };
 
         type Result = Entities.HRApprovalStep;

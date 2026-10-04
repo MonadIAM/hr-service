@@ -15,7 +15,6 @@ declare global {
                 idempotencyKey: string;
                 kind: LeaveLedgerKind;
                 reservedDelta: string;
-                organization: string;
                 balanceDelta: string;
                 effectiveOn: string;
                 poolCode: string;
@@ -24,6 +23,7 @@ declare global {
 
                 reversedByEntry?: Entities.LeaveLedgerEntry;
                 reversesEntry?: Entities.LeaveLedgerEntry;
+                organization: Entities.Organization;
                 sourceRequest?: Entities.HRRequest;
                 leavePolicy: Entities.LeavePolicy;
                 employee: Entities.Employee;
@@ -39,7 +39,6 @@ declare global {
                 idempotencyKey: string;
                 kind: LeaveLedgerKind;
                 reservedDelta: string;
-                organization: string;
                 balanceDelta: string;
                 effectiveOn: string;
                 poolCode: string;
@@ -47,6 +46,7 @@ declare global {
                 reason: string;
 
                 reversesEntry?: Entities.LeaveLedgerEntry;
+                organization: Entities.Organization;
                 sourceRequest?: Entities.HRRequest;
                 leavePolicy: Entities.LeavePolicy;
                 employee: Entities.Employee;

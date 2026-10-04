@@ -1,6 +1,6 @@
 import { EntitySchema } from "@mikro-orm/core";
 
-import { WorkCalendarException, WorkCalendar } from "~context/domain/entities";
+import { WorkCalendarException, WorkCalendar, Organization } from "~context/domain/entities";
 import { DayOverride } from "~context/enums";
 
 export const WorkCalendarExceptionSchema = new EntitySchema<WorkCalendarException>({
@@ -19,10 +19,15 @@ export const WorkCalendarExceptionSchema = new EntitySchema<WorkCalendarExceptio
         },
     ],
 
+    indexes: [
+        {
+            name: "work_calendar_exception_organization_idx",
+            properties: ["organization"],
+        },
+    ],
+
     properties: {
         id: { primary: true, type: "uuid" },
-
-        organization: { type: "uuid", fieldName: "organization_id" },
 
         workdayOverride: {
             enum: true,
@@ -37,6 +42,12 @@ export const WorkCalendarExceptionSchema = new EntitySchema<WorkCalendarExceptio
         name: { type: "text", nullable: true },
         date: { type: "date" },
 
+        organization: {
+            kind: "m:1",
+            entity: () => Organization,
+            fieldName: "organization_id",
+            deleteRule: "cascade",
+        },
         calendar: {
             kind: "m:1",
             entity: () => WorkCalendar,
@@ -44,7 +55,7 @@ export const WorkCalendarExceptionSchema = new EntitySchema<WorkCalendarExceptio
             columnTypes: ["uuid", "uuid"],
             referencedColumnNames: ["id", "organization_id"],
             ownColumns: ["calendar_id"],
-            deleteRule: "restrict",
+            deleteRule: "no action",
         },
 
         updatedAt: { type: "timestamptz", length: 3, nullable: true },

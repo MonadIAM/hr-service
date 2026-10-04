@@ -14,11 +14,11 @@ export class WorkCalendarException implements Entities.WorkCalendarException.Con
     public workdayOverride?: DayOverride;
     public shortenedByMinutes?: number;
     public holidayOverride?: boolean;
-    public organization: string;
     public source?: string;
     public name?: string;
     public date: string;
 
+    public organization: Entities.Organization;
     public calendar: Entities.WorkCalendar;
 
     public constructor(props: Entities.WorkCalendarException.ConstructorProps) {
@@ -28,11 +28,11 @@ export class WorkCalendarException implements Entities.WorkCalendarException.Con
         this.shortenedByMinutes = props.shortenedByMinutes;
         this.holidayOverride = props.holidayOverride;
         this.workdayOverride = props.workdayOverride;
-        this.organization = props.organization;
         this.source = props.source;
         this.date = props.date;
         this.name = props.name;
 
+        this.organization = props.organization;
         this.calendar = props.calendar;
     }
 
@@ -60,7 +60,7 @@ export class WorkCalendarException implements Entities.WorkCalendarException.Con
     }
 
     public canCreate(): void {
-        if (this.calendar.organization !== this.organization) {
+        if (this.calendar.organization.id !== this.organization.id) {
             throw Exception.invariantViolation({
                 messageKey: `${WorkCalendarException.dictionaryPath}.ORGANIZATION_MISMATCH`,
             });

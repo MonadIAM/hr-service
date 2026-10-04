@@ -8,6 +8,7 @@ import {
     HRApprovalStep,
     WorkCalendar,
     WorkSchedule,
+    Organization,
     LeavePolicy,
     Employment,
     HRRequest,
@@ -60,7 +61,6 @@ export const EmployeeSchema = new EntitySchema<Employee>({
         id: { primary: true, type: "uuid" },
 
         account: { type: "uuid", fieldName: "account_id", nullable: true },
-        organization: { type: "uuid", fieldName: "organization_id" },
 
         status: {
             enum: true,
@@ -83,6 +83,12 @@ export const EmployeeSchema = new EntitySchema<Employee>({
         firstName: { type: "text" },
         lastName: { type: "text" },
 
+        organization: {
+            kind: "m:1",
+            entity: () => Organization,
+            fieldName: "organization_id",
+            deleteRule: "cascade",
+        },
         workCalendar: {
             kind: "m:1",
             entity: () => WorkCalendar,
@@ -90,7 +96,7 @@ export const EmployeeSchema = new EntitySchema<Employee>({
             columnTypes: ["uuid", "uuid"],
             referencedColumnNames: ["id", "organization_id"],
             ownColumns: ["work_calendar_id"],
-            deleteRule: "restrict",
+            deleteRule: "no action",
             nullable: true,
         },
         workSchedule: {
@@ -100,7 +106,7 @@ export const EmployeeSchema = new EntitySchema<Employee>({
             columnTypes: ["uuid", "uuid"],
             referencedColumnNames: ["id", "organization_id"],
             ownColumns: ["work_schedule_id"],
-            deleteRule: "restrict",
+            deleteRule: "no action",
             nullable: true,
         },
         leavePolicy: {
@@ -110,7 +116,7 @@ export const EmployeeSchema = new EntitySchema<Employee>({
             columnTypes: ["uuid", "uuid"],
             referencedColumnNames: ["id", "organization_id"],
             ownColumns: ["leave_policy_id"],
-            deleteRule: "restrict",
+            deleteRule: "no action",
             nullable: true,
         },
         hrBpEmployee: {
@@ -120,7 +126,7 @@ export const EmployeeSchema = new EntitySchema<Employee>({
             columnTypes: ["uuid", "uuid"],
             referencedColumnNames: ["id", "organization_id"],
             ownColumns: ["hr_bp_employee_id"],
-            deleteRule: "restrict",
+            deleteRule: "no action",
             nullable: true,
         },
 

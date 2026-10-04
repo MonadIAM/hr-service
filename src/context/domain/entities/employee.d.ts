@@ -21,7 +21,6 @@ declare global {
                 employeeNumber: string;
                 contractType?: string;
                 termsRevision: number;
-                organization: string;
                 middleName?: string;
                 workEmail?: string;
                 firstName: string;
@@ -30,6 +29,7 @@ declare global {
 
                 workCalendar?: Entities.WorkCalendar;
                 workSchedule?: Entities.WorkSchedule;
+                organization: Entities.Organization;
                 leavePolicy?: Entities.LeavePolicy;
                 hrBpEmployee?: Entities.Employee;
 
@@ -68,7 +68,6 @@ declare global {
                 employeeNumber: string;
                 contractType?: string;
                 termsRevision: number;
-                organization: string;
                 middleName?: string;
                 workEmail?: string;
                 firstName: string;
@@ -77,6 +76,7 @@ declare global {
 
                 workCalendar?: Entities.WorkCalendar;
                 workSchedule?: Entities.WorkSchedule;
+                organization: Entities.Organization;
                 leavePolicy?: Entities.LeavePolicy;
                 hrBpEmployee?: Entities.Employee;
             };

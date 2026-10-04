@@ -17,7 +17,6 @@ declare global {
                 salaryCurrency?: string;
                 positionTitle: string;
                 salaryAmount?: string;
-                organization: string;
                 department: string;
                 validFrom: string;
                 validTo?: string;
@@ -26,6 +25,7 @@ declare global {
                 fte: string;
 
                 closedByRequest?: Entities.HRRequest;
+                organization: Entities.Organization;
                 sourceRequest?: Entities.HRRequest;
                 employee: Entities.Employee;
                 position: Entities.Position;
@@ -42,7 +42,6 @@ declare global {
                 salaryCurrency?: string;
                 positionTitle: string;
                 salaryAmount?: string;
-                organization: string;
                 department: string;
                 validFrom: string;
                 validTo?: string;
@@ -51,6 +50,7 @@ declare global {
                 fte: string;
 
                 closedByRequest?: Entities.HRRequest;
+                organization: Entities.Organization;
                 sourceRequest?: Entities.HRRequest;
                 employee: Entities.Employee;
                 position: Entities.Position;

@@ -16,7 +16,7 @@ declare namespace Services.Position {
             organization: string;
         };
 
-        type Result = Entities.Position;
+        type Result = Promise<Entities.Position>;
 
         type Signature = (props: Props) => Result;
     }

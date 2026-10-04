@@ -5,6 +5,7 @@ import {
     PositionAssignment,
     LeaveLedgerEntry,
     HRApprovalStep,
+    Organization,
     Employment,
     HRRequest,
     Employee,
@@ -51,7 +52,6 @@ export const HRRequestSchema = new EntitySchema<HRRequest>({
         id: { primary: true, type: "uuid" },
 
         initiatorAccount: { type: "uuid", fieldName: "initiator_account_id" },
-        organization: { type: "uuid", fieldName: "organization_id" },
 
         type: { enum: true, items: () => HRRequestType, nativeEnumName: "request_type" },
         executionStatus: {
@@ -78,6 +78,12 @@ export const HRRequestSchema = new EntitySchema<HRRequest>({
         revision: { type: "int" },
         payload: { type: "json" },
 
+        organization: {
+            kind: "m:1",
+            entity: () => Organization,
+            fieldName: "organization_id",
+            deleteRule: "cascade",
+        },
         employee: {
             kind: "m:1",
             entity: () => Employee,
@@ -85,7 +91,7 @@ export const HRRequestSchema = new EntitySchema<HRRequest>({
             columnTypes: ["uuid", "uuid"],
             referencedColumnNames: ["id", "organization_id"],
             ownColumns: ["employee_id"],
-            deleteRule: "restrict",
+            deleteRule: "no action",
         },
         initiatorEmployee: {
             kind: "m:1",
@@ -94,7 +100,7 @@ export const HRRequestSchema = new EntitySchema<HRRequest>({
             columnTypes: ["uuid", "uuid"],
             referencedColumnNames: ["id", "organization_id"],
             ownColumns: ["initiator_employee_id"],
-            deleteRule: "restrict",
+            deleteRule: "no action",
             nullable: true,
         },
         targetPosition: {
@@ -104,7 +110,7 @@ export const HRRequestSchema = new EntitySchema<HRRequest>({
             columnTypes: ["uuid", "uuid"],
             referencedColumnNames: ["id", "organization_id"],
             ownColumns: ["target_position_id"],
-            deleteRule: "restrict",
+            deleteRule: "no action",
             nullable: true,
         },
         relatedRequest: {
@@ -114,7 +120,7 @@ export const HRRequestSchema = new EntitySchema<HRRequest>({
             columnTypes: ["uuid", "uuid", "uuid"],
             referencedColumnNames: ["id", "employee_id", "organization_id"],
             ownColumns: ["related_request_id"],
-            deleteRule: "restrict",
+            deleteRule: "no action",
             nullable: true,
         },
 

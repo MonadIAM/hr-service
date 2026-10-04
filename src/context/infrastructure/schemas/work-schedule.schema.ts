@@ -1,7 +1,7 @@
 import { EntitySchema } from "@mikro-orm/core";
 
 import { CalendarApplication, SchedulePattern, RecordStatus } from "~context/enums";
-import { WorkSchedule, Employment, Employee } from "~context/domain/entities";
+import { WorkSchedule, Organization, Employment, Employee } from "~context/domain/entities";
 
 export const WorkScheduleSchema = new EntitySchema<WorkSchedule>({
     class: WorkSchedule,
@@ -33,8 +33,6 @@ export const WorkScheduleSchema = new EntitySchema<WorkSchedule>({
     properties: {
         id: { primary: true, type: "uuid" },
 
-        organization: { type: "uuid", fieldName: "organization_id" },
-
         status: {
             enum: true,
             items: () => RecordStatus,
@@ -58,6 +56,12 @@ export const WorkScheduleSchema = new EntitySchema<WorkSchedule>({
             nativeEnumName: "calendar_application",
         },
 
+        organization: {
+            kind: "m:1",
+            entity: () => Organization,
+            fieldName: "organization_id",
+            deleteRule: "cascade",
+        },
         employees: {
             kind: "1:m",
             entity: () => Employee,

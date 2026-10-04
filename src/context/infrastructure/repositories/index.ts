@@ -7,6 +7,7 @@ import { LeaveLedgerEntryRepository } from "./leave-ledger-entry.repository";
 import { HRApprovalStepRepository } from "./hr-approval-step.repository";
 import { WorkCalendarRepository } from "./work-calendar.repository";
 import { WorkScheduleRepository } from "./work-schedule.repository";
+import { OrganizationRepository } from "./organization.repository";
 import { LeavePolicyRepository } from "./leave-policy.repository";
 import { EmploymentRepository } from "./employment.repository";
 import { HRRequestRepository } from "./hr-request.repository";
@@ -23,6 +24,7 @@ import {
     HR_APPROVAL_STEP_REPOSITORY,
     WORK_CALENDAR_REPOSITORY,
     WORK_SCHEDULE_REPOSITORY,
+    ORGANIZATION_REPOSITORY,
     LEAVE_POLICY_REPOSITORY,
     CHANGE_LOG_REPOSITORY,
     EMPLOYMENT_REPOSITORY,
@@ -61,6 +63,10 @@ export const REPOSITORIES: ClassProvider[] = [
     {
         provide: WORK_CALENDAR_REPOSITORY,
         useClass: WorkCalendarRepository,
+    },
+    {
+        provide: ORGANIZATION_REPOSITORY,
+        useClass: OrganizationRepository,
     },
     {
         provide: LEAVE_POLICY_REPOSITORY,
@@ -104,6 +110,7 @@ export {
     HR_APPROVAL_STEP_REPOSITORY,
     WORK_CALENDAR_REPOSITORY,
     WORK_SCHEDULE_REPOSITORY,
+    ORGANIZATION_REPOSITORY,
     LEAVE_POLICY_REPOSITORY,
     CHANGE_LOG_REPOSITORY,
     EMPLOYMENT_REPOSITORY,

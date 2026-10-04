@@ -62,6 +62,20 @@ declare global {
             }
         }
 
+        namespace Organization {
+            type Filters = {
+                id?: StringFilterDTO;
+                realm?: LinkFilterDTO;
+            };
+
+            type Sort = Record<string, never>;
+
+            interface Types {
+                Filters: Filters;
+                Sort: Sort;
+            }
+        }
+
         namespace Absence {
             type Filters = {
                 id?: StringFilterDTO;

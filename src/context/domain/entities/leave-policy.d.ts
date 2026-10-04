@@ -13,11 +13,12 @@ declare global {
 
                 status: RecordStatus;
                 jurisdiction: string;
-                organization: string;
                 revision: number;
                 rules: Rule[];
                 code: string;
                 name: string;
+
+                organization: Entities.Organization;
 
                 leaveLedgerEntries: ORM.Collection<Entities.LeaveLedgerEntry>;
                 employmentHistory: ORM.Collection<Entities.Employment>;
@@ -37,7 +38,8 @@ declare global {
                 status?: RecordStatus;
                 jurisdiction: string;
                 rules: Rule[];
-                organization: string;
+
+                organization: Entities.Organization;
             };
 
             type Rule = {

@@ -1,6 +1,6 @@
 import { EntitySchema } from "@mikro-orm/core";
 
-import { LeaveLedgerEntry, LeavePolicy, Employment, Employee, Absence } from "~context/domain/entities";
+import { LeaveLedgerEntry, Organization, LeavePolicy, Employment, Employee, Absence } from "~context/domain/entities";
 import { RecordStatus } from "~context/enums";
 
 export const LeavePolicySchema = new EntitySchema<LeavePolicy>({
@@ -33,8 +33,6 @@ export const LeavePolicySchema = new EntitySchema<LeavePolicy>({
     properties: {
         id: { primary: true, type: "uuid" },
 
-        organization: { type: "uuid", fieldName: "organization_id" },
-
         status: {
             enum: true,
             items: () => RecordStatus,
@@ -48,6 +46,12 @@ export const LeavePolicySchema = new EntitySchema<LeavePolicy>({
         code: { type: "text" },
         name: { type: "text" },
 
+        organization: {
+            kind: "m:1",
+            entity: () => Organization,
+            fieldName: "organization_id",
+            deleteRule: "cascade",
+        },
         employees: {
             kind: "1:m",
             entity: () => Employee,

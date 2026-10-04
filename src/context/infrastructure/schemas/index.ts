@@ -5,6 +5,7 @@ export { LeaveLedgerEntrySchema } from "./leave-ledger-entry.schema";
 export { HRApprovalStepSchema } from "./hr-approval-step.schema";
 export { WorkCalendarSchema } from "./work-calendar.schema";
 export { WorkScheduleSchema } from "./work-schedule.schema";
+export { OrganizationSchema } from "./organization.schema";
 export { LeavePolicySchema } from "./leave-policy.schema";
 export { EmploymentSchema } from "./employment.schema";
 export { HRRequestSchema } from "./hr-request.schema";

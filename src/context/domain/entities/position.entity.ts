@@ -16,7 +16,6 @@ export class Position implements Entities.Position.Contract {
     public budgetCurrency?: string;
     public budgetAmount?: string;
     public requirements?: string;
-    public organization: string;
     public description?: string;
     public status: RecordStatus;
     public department: string;
@@ -25,6 +24,8 @@ export class Position implements Entities.Position.Contract {
     public title: string;
     public team?: string;
     public code: string;
+
+    public organization: Entities.Organization;
 
     public positionAssignments = new Collection<Entities.PositionAssignment>(this);
     public targetedHRRequests = new Collection<Entities.HRRequest>(this);
@@ -39,7 +40,6 @@ export class Position implements Entities.Position.Contract {
         this.budgetCurrency = props.budgetCurrency;
         this.budgetAmount = props.budgetAmount;
         this.budgetPeriod = props.budgetPeriod;
-        this.organization = props.organization;
         this.requirements = props.requirements;
         this.description = props.description;
         this.department = props.department;
@@ -47,6 +47,8 @@ export class Position implements Entities.Position.Contract {
         this.grade = props.grade;
         this.code = props.code;
         this.team = props.team;
+
+        this.organization = props.organization;
     }
 
     public update({ patch }: Entities.Position.ChangeDataProps): void {

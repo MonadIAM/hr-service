@@ -15,7 +15,6 @@ export class Absence implements Entities.Absence.Contract {
     public calculationSnapshot: UnknownObject;
     public status: AbsenceStatus;
     public sourceItemKey: string;
-    public organization: string;
     public startDate?: string;
     public poolCode: string;
     public quantity: string;
@@ -26,6 +25,7 @@ export class Absence implements Entities.Absence.Contract {
     public endsAt?: Date;
 
     public cancelledByRequest?: Entities.HRRequest;
+    public organization: Entities.Organization;
     public leavePolicy: Entities.LeavePolicy;
     public sourceRequest: Entities.HRRequest;
     public employee: Entities.Employee;
@@ -40,7 +40,6 @@ export class Absence implements Entities.Absence.Contract {
         this.sourceItemKey = props.sourceItemKey ?? "main";
 
         this.calculationSnapshot = props.calculationSnapshot;
-        this.organization = props.organization;
         this.startDate = props.startDate;
         this.quantity = props.quantity;
         this.startsAt = props.startsAt;
@@ -50,6 +49,7 @@ export class Absence implements Entities.Absence.Contract {
         this.endsAt = props.endsAt;
         this.unit = props.unit;
 
+        this.organization = props.organization;
         this.cancelledByRequest = props.cancelledByRequest;
         this.sourceRequest = props.sourceRequest;
         this.leavePolicy = props.leavePolicy;
@@ -125,7 +125,7 @@ export class Absence implements Entities.Absence.Contract {
 
     private hasCancellationRequestMismatch(request: Entities.HRRequest): boolean {
         return (
-            request.organization !== this.organization ||
+            request.organization.id !== this.organization.id ||
             request.employee.id !== this.employee.id ||
             request.type !== HRRequestType.CANCEL_REQUEST ||
             request.relatedRequest?.id !== this.sourceRequest.id
@@ -134,7 +134,7 @@ export class Absence implements Entities.Absence.Contract {
 
     private hasOrganizationMismatch(): boolean {
         return [this.employee, this.leavePolicy, this.sourceRequest, this.cancelledByRequest].some(
-            (record) => record && record.organization !== this.organization,
+            (record) => record && record.organization.id !== this.organization.id,
         );
     }
 

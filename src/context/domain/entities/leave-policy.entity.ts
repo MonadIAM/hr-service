@@ -18,8 +18,8 @@ export class LeavePolicy implements Entities.LeavePolicy.Contract {
     public revision: number;
     public status: RecordStatus;
     public jurisdiction: string;
-    public organization: string;
 
+    public organization: Entities.Organization;
     public rules: Entities.LeavePolicy.Rule[];
 
     public leaveLedgerEntries = new Collection<Entities.LeaveLedgerEntry>(this);
@@ -35,11 +35,12 @@ export class LeavePolicy implements Entities.LeavePolicy.Contract {
         this.revision = props.revision ?? 1;
 
         this.jurisdiction = props.jurisdiction;
-        this.organization = props.organization;
         this.code = props.code;
         this.name = props.name;
 
         this.rules = props.rules;
+
+        this.organization = props.organization;
     }
 
     public archive(): void {

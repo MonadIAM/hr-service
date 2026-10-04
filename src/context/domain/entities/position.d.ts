@@ -15,7 +15,6 @@ declare global {
                 budgetCurrency?: string;
                 budgetAmount?: string;
                 requirements?: string;
-                organization: string;
                 description?: string;
                 status: RecordStatus;
                 department: string;
@@ -24,6 +23,8 @@ declare global {
                 title: string;
                 team?: string;
                 code: string;
+
+                organization: Entities.Organization;
 
                 positionAssignments: ORM.Collection<Entities.PositionAssignment>;
                 targetedHRRequests: ORM.Collection<Entities.HRRequest>;
@@ -54,7 +55,6 @@ declare global {
                 budgetCurrency?: string;
                 budgetAmount?: string;
                 requirements?: string;
-                organization: string;
                 description?: string;
                 status: RecordStatus;
                 department: string;
@@ -63,6 +63,8 @@ declare global {
                 title: string;
                 team?: string;
                 code: string;
+
+                organization: Entities.Organization;
             };
 
             type ChangeDataProps = {

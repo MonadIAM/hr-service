@@ -1,6 +1,6 @@
 import { DecimalType, EntitySchema } from "@mikro-orm/core";
 
-import { LeaveLedgerEntry, LeavePolicy, HRRequest, Employee, Absence } from "~context/domain/entities";
+import { LeaveLedgerEntry, Organization, LeavePolicy, HRRequest, Employee, Absence } from "~context/domain/entities";
 import { AbsenceStatus, LeaveUnit } from "~context/enums";
 
 export const AbsenceSchema = new EntitySchema<Absence>({
@@ -37,8 +37,6 @@ export const AbsenceSchema = new EntitySchema<Absence>({
     properties: {
         id: { primary: true, type: "uuid" },
 
-        organization: { type: "uuid", fieldName: "organization_id" },
-
         unit: { enum: true, items: () => LeaveUnit, nativeEnumName: "leave_unit" },
         status: {
             enum: true,
@@ -55,6 +53,12 @@ export const AbsenceSchema = new EntitySchema<Absence>({
         poolCode: { type: "text" },
         timezone: { type: "text" },
 
+        organization: {
+            kind: "m:1",
+            entity: () => Organization,
+            fieldName: "organization_id",
+            deleteRule: "cascade",
+        },
         employee: {
             kind: "m:1",
             entity: () => Employee,
@@ -62,7 +66,7 @@ export const AbsenceSchema = new EntitySchema<Absence>({
             columnTypes: ["uuid", "uuid"],
             referencedColumnNames: ["id", "organization_id"],
             ownColumns: ["employee_id"],
-            deleteRule: "restrict",
+            deleteRule: "no action",
         },
         sourceRequest: {
             kind: "m:1",
@@ -71,7 +75,7 @@ export const AbsenceSchema = new EntitySchema<Absence>({
             columnTypes: ["uuid", "uuid", "uuid"],
             referencedColumnNames: ["id", "employee_id", "organization_id"],
             ownColumns: ["source_request_id"],
-            deleteRule: "restrict",
+            deleteRule: "no action",
         },
         leavePolicy: {
             kind: "m:1",
@@ -80,7 +84,7 @@ export const AbsenceSchema = new EntitySchema<Absence>({
             columnTypes: ["uuid", "uuid"],
             referencedColumnNames: ["id", "organization_id"],
             ownColumns: ["leave_policy_id"],
-            deleteRule: "restrict",
+            deleteRule: "no action",
         },
         cancelledByRequest: {
             kind: "m:1",
@@ -89,7 +93,7 @@ export const AbsenceSchema = new EntitySchema<Absence>({
             columnTypes: ["uuid", "uuid", "uuid"],
             referencedColumnNames: ["id", "employee_id", "organization_id"],
             ownColumns: ["cancelled_by_request_id"],
-            deleteRule: "restrict",
+            deleteRule: "no action",
             nullable: true,
         },
 

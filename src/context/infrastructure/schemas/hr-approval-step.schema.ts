@@ -1,6 +1,6 @@
 import { EntitySchema } from "@mikro-orm/core";
 
-import { HRApprovalDecision, HRApprovalStep, HRRequest, Employee } from "~context/domain/entities";
+import { HRApprovalDecision, HRApprovalStep, Organization, HRRequest, Employee } from "~context/domain/entities";
 import { HRApprovalStatus } from "~context/enums";
 
 export const HRApprovalStepSchema = new EntitySchema<HRApprovalStep>({
@@ -33,8 +33,6 @@ export const HRApprovalStepSchema = new EntitySchema<HRApprovalStep>({
     properties: {
         id: { primary: true, type: "uuid" },
 
-        organization: { type: "uuid", fieldName: "organization_id" },
-
         status: {
             enum: true,
             items: () => HRApprovalStatus,
@@ -46,6 +44,12 @@ export const HRApprovalStepSchema = new EntitySchema<HRApprovalStep>({
         ordinal: { type: "int" },
         name: { type: "text" },
 
+        organization: {
+            kind: "m:1",
+            entity: () => Organization,
+            fieldName: "organization_id",
+            deleteRule: "cascade",
+        },
         request: {
             kind: "m:1",
             entity: () => HRRequest,
@@ -53,7 +57,7 @@ export const HRApprovalStepSchema = new EntitySchema<HRApprovalStep>({
             columnTypes: ["uuid", "uuid"],
             referencedColumnNames: ["id", "organization_id"],
             ownColumns: ["request_id"],
-            deleteRule: "restrict",
+            deleteRule: "no action",
         },
         assigneeEmployee: {
             kind: "m:1",
@@ -62,7 +66,7 @@ export const HRApprovalStepSchema = new EntitySchema<HRApprovalStep>({
             columnTypes: ["uuid", "uuid"],
             referencedColumnNames: ["id", "organization_id"],
             ownColumns: ["assignee_employee_id"],
-            deleteRule: "restrict",
+            deleteRule: "no action",
         },
 
         decision: {

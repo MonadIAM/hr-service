@@ -1,6 +1,6 @@
 import { EntitySchema } from "@mikro-orm/core";
 
-import { WorkCalendarException, WorkCalendar, Employment, Employee } from "~context/domain/entities";
+import { WorkCalendarException, WorkCalendar, Organization, Employment, Employee } from "~context/domain/entities";
 import { RecordStatus } from "~context/enums";
 
 export const WorkCalendarSchema = new EntitySchema<WorkCalendar>({
@@ -33,8 +33,6 @@ export const WorkCalendarSchema = new EntitySchema<WorkCalendar>({
     properties: {
         id: { primary: true, type: "uuid" },
 
-        organization: { type: "uuid", fieldName: "organization_id" },
-
         status: {
             enum: true,
             items: () => RecordStatus,
@@ -49,6 +47,12 @@ export const WorkCalendarSchema = new EntitySchema<WorkCalendar>({
         code: { type: "text" },
         name: { type: "text" },
 
+        organization: {
+            kind: "m:1",
+            entity: () => Organization,
+            fieldName: "organization_id",
+            deleteRule: "cascade",
+        },
         employees: {
             kind: "1:m",
             entity: () => Employee,

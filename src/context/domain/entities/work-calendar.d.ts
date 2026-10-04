@@ -12,13 +12,14 @@ declare global {
                 updatedAt?: Date;
 
                 verifiedThrough?: string;
-                organization: string;
                 status: RecordStatus;
                 countryCode: string;
                 regionCode?: string;
                 holidays: Holiday[];
                 code: string;
                 name: string;
+
+                organization: Entities.Organization;
 
                 exceptions: ORM.Collection<Entities.WorkCalendarException>;
                 employmentHistory: ORM.Collection<Entities.Employment>;
@@ -37,13 +38,14 @@ declare global {
 
             type ConstructorProps = {
                 verifiedThrough?: string;
-                organization: string;
                 status: RecordStatus;
                 countryCode: string;
                 regionCode?: string;
                 holidays: Holiday[];
                 code: string;
                 name: string;
+
+                organization: Entities.Organization;
             };
 
             type Holiday = {

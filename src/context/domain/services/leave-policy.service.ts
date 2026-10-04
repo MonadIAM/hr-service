@@ -1,7 +1,7 @@
 import { Injectable, Inject, Scope } from "@nestjs/common";
 import { LockMode } from "@mikro-orm/core";
 
-import { LEAVE_POLICY_REPOSITORY } from "~context/infrastructure/repositories";
+import { LEAVE_POLICY_REPOSITORY, ORGANIZATION_REPOSITORY } from "~context/infrastructure/repositories";
 import { Exception } from "~common/exceptions";
 import { RecordStatus } from "~context/enums";
 
@@ -12,94 +12,101 @@ export class LeavePolicyService implements Services.LeavePolicy.Contract {
     private readonly dictionaryPath = "services.leave-policy";
 
     public constructor(
+        @Inject(ORGANIZATION_REPOSITORY)
+        private readonly organizationRepository: Repositories.Organization.Contract,
         @Inject(LEAVE_POLICY_REPOSITORY)
         private readonly leavePolicyRepository: Repositories.LeavePolicy.Contract,
     ) {}
 
-    public create(props: Services.LeavePolicy.Create.Props): Services.LeavePolicy.Create.Result {
+    public async create(props: Services.LeavePolicy.Create.Props): Services.LeavePolicy.Create.Result {
         const { transaction, organization, input } = props;
 
-        const entity = new LeavePolicy({
-            ...input,
-            status: RecordStatus.ACTIVE,
-            organization,
-            revision: 1,
+        const organizationEntity = await this.organizationRepository.findUniqueOrThrow({
+            where: { id: organization },
+            transaction,
         });
 
-        transaction.persist(entity);
+        const policyEntity = new LeavePolicy({
+            organization: organizationEntity,
+            status: RecordStatus.ACTIVE,
+            revision: 1,
+            ...input,
+        });
 
-        return entity;
+        transaction.persist(policyEntity);
+
+        return policyEntity;
     }
 
     public async createRevision(
         props: Services.LeavePolicy.CreateRevision.Props,
     ): Services.LeavePolicy.CreateRevision.Result {
         const { transaction, organization, input, id } = props;
-        const entity = await this.leavePolicyRepository.findUniqueOrThrow({
+        const policyEntity = await this.leavePolicyRepository.findUniqueOrThrow({
             options: { lockMode: LockMode.PESSIMISTIC_WRITE },
             where: { organization, id },
             transaction,
         });
 
-        const latest = await this.leavePolicyRepository.find({
+        const latestRevisionEntities = await this.leavePolicyRepository.find({
             options: {
                 orderBy: { revision: "DESC" },
                 fields: ["id"],
                 limit: 1,
             },
-            where: { code: entity.code, organization },
+            where: { code: policyEntity.code, organization },
             transaction,
         });
 
-        if (latest[0]?.id !== entity.id) {
+        if (latestRevisionEntities[0]?.id !== policyEntity.id) {
             throw Exception.invariantViolation({ messageKey: `${this.dictionaryPath}.STALE_REVISION` });
         }
 
-        const revision = entity.createRevision(input);
+        const revisionEntity = policyEntity.createRevision(input);
 
-        transaction.persist(revision);
+        transaction.persist(revisionEntity);
 
-        return revision;
+        return revisionEntity;
     }
 
     public async archive(props: Services.LeavePolicy.Archive.Props): Services.LeavePolicy.Archive.Result {
         const { transaction, organization, id } = props;
-        const entity = await this.leavePolicyRepository.findUniqueOrThrow({
+        const policyEntity = await this.leavePolicyRepository.findUniqueOrThrow({
             options: { lockMode: LockMode.PESSIMISTIC_WRITE },
             where: { organization, id },
             transaction,
         });
 
-        entity.archive();
+        policyEntity.archive();
 
-        return entity;
+        return policyEntity;
     }
 
     public async restore(props: Services.LeavePolicy.Restore.Props): Services.LeavePolicy.Restore.Result {
         const { transaction, organization, id } = props;
-        const entity = await this.leavePolicyRepository.findUniqueOrThrow({
+        const policyEntity = await this.leavePolicyRepository.findUniqueOrThrow({
             options: { lockMode: LockMode.PESSIMISTIC_WRITE },
             where: { organization, id },
             transaction,
         });
 
-        entity.restore();
+        policyEntity.restore();
 
-        return entity;
+        return policyEntity;
     }
 
     public async purge(props: Services.LeavePolicy.Purge.Props): Services.LeavePolicy.Purge.Result {
         const { transaction, organization, id } = props;
-        const entity = await this.leavePolicyRepository.findUniqueOrThrow({
+        const policyEntity = await this.leavePolicyRepository.findUniqueOrThrow({
             options: { lockMode: LockMode.PESSIMISTIC_WRITE },
             where: { organization, id },
             transaction,
         });
 
-        entity.canPurge();
+        policyEntity.canPurge();
 
-        transaction.remove(entity);
+        transaction.remove(policyEntity);
 
-        return entity;
+        return policyEntity;
     }
 }

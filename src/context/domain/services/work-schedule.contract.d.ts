@@ -16,7 +16,7 @@ declare namespace Services.WorkSchedule {
             organization: string;
         };
 
-        type Result = Entities.WorkSchedule;
+        type Result = Promise<Entities.WorkSchedule>;
 
         type Signature = (props: Props) => Result;
     }

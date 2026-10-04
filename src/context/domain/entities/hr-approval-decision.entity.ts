@@ -11,12 +11,12 @@ export class HRApprovalDecision implements Entities.HRApprovalDecision.Contract 
 
     public decision: HRDecisionKind;
     public requestRevision: number;
-    public organization: string;
     public actorAccount: string;
     public comment?: string;
     public request: string;
     public decidedAt: Date;
 
+    public organization: Entities.Organization;
     public actorEmployee: Entities.Employee;
     public step: Entities.HRApprovalStep;
 
@@ -28,17 +28,20 @@ export class HRApprovalDecision implements Entities.HRApprovalDecision.Contract 
 
         this.requestRevision = props.requestRevision;
         this.actorAccount = props.actorAccount;
-        this.organization = props.organization;
         this.decision = props.decision;
         this.comment = props.comment;
         this.request = props.request;
 
+        this.organization = props.organization;
         this.actorEmployee = props.actorEmployee;
         this.step = props.step;
     }
 
     public canCreate(): void {
-        if (this.step.organization !== this.organization || this.actorEmployee.organization !== this.organization) {
+        if (
+            this.step.organization.id !== this.organization.id ||
+            this.actorEmployee.organization.id !== this.organization.id
+        ) {
             throw Exception.invariantViolation({
                 messageKey: `${HRApprovalDecision.dictionaryPath}.ORGANIZATION_MISMATCH`,
             });

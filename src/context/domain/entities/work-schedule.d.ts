@@ -13,12 +13,13 @@ declare global {
 
                 calendarApplication: CalendarApplication;
                 patternType: SchedulePattern;
-                organization: string;
                 status: RecordStatus;
                 pattern: Pattern;
                 revision: number;
                 code: string;
                 name: string;
+
+                organization: Entities.Organization;
 
                 employmentHistory: ORM.Collection<Entities.Employment>;
                 employees: ORM.Collection<Entities.Employee>;
@@ -37,7 +38,8 @@ declare global {
                 patternType: SchedulePattern;
                 pattern: Pattern;
                 calendarApplication: CalendarApplication;
-                organization: string;
+
+                organization: Entities.Organization;
             };
 
             type Pattern = Pattern.Weekly | Pattern.Cyclic;

@@ -8,7 +8,7 @@ declare namespace Services.HRApprovalDecision {
     namespace Create {
         type Props = {
             transaction: ORM.EntityManager;
-            organization: string;
+            organization: Entities.Organization;
             input: Omit<
                 Entities.HRApprovalDecision.ConstructorProps,
                 "organization" | "request" | "requestRevision" | "decidedAt"

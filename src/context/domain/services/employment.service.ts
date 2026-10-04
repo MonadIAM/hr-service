@@ -7,12 +7,15 @@ export class EmploymentService implements Services.Employment.Contract {
     public create(props: Services.Employment.Create.Props): Services.Employment.Create.Result {
         const { transaction, organization, input } = props;
 
-        const entity = new Employment({ ...input, organization });
+        const employmentEntity = new Employment({
+            organization,
+            ...input,
+        });
 
-        entity.canCreate();
+        employmentEntity.canCreate();
 
-        transaction.persist(entity);
+        transaction.persist(employmentEntity);
 
-        return entity;
+        return employmentEntity;
     }
 }

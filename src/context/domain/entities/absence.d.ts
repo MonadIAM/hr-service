@@ -14,7 +14,6 @@ declare global {
                 calculationSnapshot: UnknownObject;
                 status: AbsenceStatus;
                 sourceItemKey: string;
-                organization: string;
                 startDate?: string;
                 poolCode: string;
                 quantity: string;
@@ -25,6 +24,7 @@ declare global {
                 endsAt?: Date;
 
                 cancelledByRequest?: Entities.HRRequest;
+                organization: Entities.Organization;
                 leavePolicy: Entities.LeavePolicy;
                 sourceRequest: Entities.HRRequest;
                 employee: Entities.Employee;
@@ -40,7 +40,6 @@ declare global {
                 calculationSnapshot: UnknownObject;
                 status: AbsenceStatus;
                 sourceItemKey: string;
-                organization: string;
                 startDate?: string;
                 poolCode: string;
                 quantity: string;
@@ -51,6 +50,7 @@ declare global {
                 endsAt?: Date;
 
                 cancelledByRequest?: Entities.HRRequest;
+                organization: Entities.Organization;
                 leavePolicy: Entities.LeavePolicy;
                 sourceRequest: Entities.HRRequest;
                 employee: Entities.Employee;

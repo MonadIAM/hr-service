@@ -1,6 +1,6 @@
 import { DecimalType, EntitySchema } from "@mikro-orm/core";
 
-import { PositionAssignment, HRRequest, Position } from "~context/domain/entities";
+import { PositionAssignment, Organization, HRRequest, Position } from "~context/domain/entities";
 import { RecordStatus } from "~context/enums";
 
 export const PositionSchema = new EntitySchema<Position>({
@@ -42,7 +42,6 @@ export const PositionSchema = new EntitySchema<Position>({
         id: { primary: true, type: "uuid" },
 
         team: { type: "uuid", fieldName: "team_id", nullable: true },
-        organization: { type: "uuid", fieldName: "organization_id" },
         department: { type: "uuid", fieldName: "department_id" },
 
         status: {
@@ -68,6 +67,12 @@ export const PositionSchema = new EntitySchema<Position>({
         title: { type: "text" },
         code: { type: "text" },
 
+        organization: {
+            kind: "m:1",
+            entity: () => Organization,
+            fieldName: "organization_id",
+            deleteRule: "cascade",
+        },
         positionAssignments: {
             kind: "1:m",
             entity: () => PositionAssignment,

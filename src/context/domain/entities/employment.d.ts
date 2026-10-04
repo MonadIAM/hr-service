@@ -8,13 +8,13 @@ declare namespace Entities {
 
             termsSnapshot: UnknownObject;
             termsRevision: number;
-            organization: string;
             validFrom: string;
             validTo: string;
 
             replacedByRequest?: Entities.HRRequest;
             workCalendar?: Entities.WorkCalendar;
             workSchedule?: Entities.WorkSchedule;
+            organization: Entities.Organization;
             leavePolicy?: Entities.LeavePolicy;
             employee: Entities.Employee;
 
@@ -24,13 +24,13 @@ declare namespace Entities {
         type ConstructorProps = {
             termsSnapshot: UnknownObject;
             termsRevision: number;
-            organization: string;
             validFrom: string;
             validTo: string;
 
             replacedByRequest?: Entities.HRRequest;
             workCalendar?: Entities.WorkCalendar;
             workSchedule?: Entities.WorkSchedule;
+            organization: Entities.Organization;
             leavePolicy?: Entities.LeavePolicy;
             employee: Entities.Employee;
         };

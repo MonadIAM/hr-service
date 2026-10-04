@@ -22,7 +22,6 @@ declare global {
                 payload: UnknownObject;
                 result?: UnknownObject;
                 workflowCode?: string;
-                organization: string;
                 type: HRRequestType;
                 effectiveAt?: Date;
                 submittedAt?: Date;
@@ -32,6 +31,7 @@ declare global {
                 failure?: string;
 
                 initiatorEmployee?: Entities.Employee;
+                organization: Entities.Organization;
                 relatedRequest?: Entities.HRRequest;
                 targetPosition?: Entities.Position;
                 employee: Entities.Employee;
@@ -77,7 +77,6 @@ declare global {
                 payload: UnknownObject;
                 result?: UnknownObject;
                 workflowCode?: string;
-                organization: string;
                 type: HRRequestType;
                 effectiveAt?: Date;
                 submittedAt?: Date;
@@ -87,6 +86,7 @@ declare global {
                 failure?: string;
 
                 initiatorEmployee?: Entities.Employee;
+                organization: Entities.Organization;
                 relatedRequest?: Entities.HRRequest;
                 targetPosition?: Entities.Position;
                 employee: Entities.Employee;

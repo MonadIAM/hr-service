@@ -5,6 +5,7 @@ export const LEAVE_LEDGER_ENTRY_REPOSITORY = Symbol("Repositories.LeaveLedgerEnt
 export const HR_APPROVAL_STEP_REPOSITORY = Symbol("Repositories.HRApprovalStep.Contract");
 export const WORK_CALENDAR_REPOSITORY = Symbol("Repositories.WorkCalendar.Contract");
 export const WORK_SCHEDULE_REPOSITORY = Symbol("Repositories.WorkSchedule.Contract");
+export const ORGANIZATION_REPOSITORY = Symbol("Repositories.Organization.Contract");
 export const LEAVE_POLICY_REPOSITORY = Symbol("Repositories.LeavePolicy.Contract");
 export const EMPLOYMENT_REPOSITORY = Symbol("Repositories.Employment.Contract");
 export const HR_REQUEST_REPOSITORY = Symbol("Repositories.HRRequest.Contract");

@@ -1,6 +1,6 @@
 import { EntitySchema } from "@mikro-orm/core";
 
-import { HRApprovalDecision, HRApprovalStep, Employee } from "~context/domain/entities";
+import { HRApprovalDecision, HRApprovalStep, Organization, Employee } from "~context/domain/entities";
 import { HRDecisionKind } from "~context/enums";
 
 export const HRApprovalDecisionSchema = new EntitySchema<HRApprovalDecision>({
@@ -19,11 +19,17 @@ export const HRApprovalDecisionSchema = new EntitySchema<HRApprovalDecision>({
         },
     ],
 
+    indexes: [
+        {
+            name: "hr_approval_decision_organization_idx",
+            properties: ["organization"],
+        },
+    ],
+
     properties: {
         id: { primary: true, type: "uuid" },
 
         actorAccount: { type: "uuid", fieldName: "actor_account_id" },
-        organization: { type: "uuid", fieldName: "organization_id" },
         request: { type: "uuid", fieldName: "request_id" },
 
         decision: { enum: true, items: () => HRDecisionKind, nativeEnumName: "decision_kind" },
@@ -31,6 +37,12 @@ export const HRApprovalDecisionSchema = new EntitySchema<HRApprovalDecision>({
         comment: { type: "text", nullable: true },
         requestRevision: { type: "int" },
 
+        organization: {
+            kind: "m:1",
+            entity: () => Organization,
+            fieldName: "organization_id",
+            deleteRule: "cascade",
+        },
         step: {
             kind: "1:1",
             owner: true,
@@ -40,7 +52,7 @@ export const HRApprovalDecisionSchema = new EntitySchema<HRApprovalDecision>({
             columnTypes: ["uuid", "uuid", "integer", "uuid"],
             referencedColumnNames: ["id", "request_id", "request_revision", "organization_id"],
             ownColumns: ["step_id"],
-            deleteRule: "restrict",
+            deleteRule: "no action",
         },
         actorEmployee: {
             kind: "m:1",
@@ -49,7 +61,7 @@ export const HRApprovalDecisionSchema = new EntitySchema<HRApprovalDecision>({
             columnTypes: ["uuid", "uuid"],
             referencedColumnNames: ["id", "organization_id"],
             ownColumns: ["actor_employee_id"],
-            deleteRule: "restrict",
+            deleteRule: "no action",
         },
 
         createdAt: { type: "timestamptz", length: 3 },

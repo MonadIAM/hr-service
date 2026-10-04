@@ -16,7 +16,7 @@ declare namespace Services.LeavePolicy {
             organization: string;
         };
 
-        type Result = Entities.LeavePolicy;
+        type Result = Promise<Entities.LeavePolicy>;
 
         type Signature = (props: Props) => Result;
     }

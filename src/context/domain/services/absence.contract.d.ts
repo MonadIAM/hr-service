@@ -14,7 +14,7 @@ declare namespace Services.Absence {
             organization: string;
         };
 
-        type Result = Entities.Absence;
+        type Result = Promise<Entities.Absence>;
 
         type Signature = (props: Props) => Result;
     }

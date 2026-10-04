@@ -13,13 +13,13 @@ export class HRApprovalStep implements Entities.HRApprovalStep.Contract {
 
     public status: HRApprovalStatus;
     public requestRevision: number;
-    public organization: string;
     public resolvedAt?: Date;
     public ordinal: number;
     public dueAt?: Date;
     public name: string;
 
     public decision?: Entities.HRApprovalDecision;
+    public organization: Entities.Organization;
     public assigneeEmployee: Entities.Employee;
     public request: Entities.HRRequest;
 
@@ -35,13 +35,13 @@ export class HRApprovalStep implements Entities.HRApprovalStep.Contract {
         this.dueAt = props.dueAt;
         this.name = props.name;
 
-        this.assigneeEmployee = props.assigneeEmployee;
         this.organization = props.organization;
+        this.assigneeEmployee = props.assigneeEmployee;
         this.request = props.request;
     }
 
     public activate(): void {
-        if (this.request.organization !== this.organization) {
+        if (this.request.organization.id !== this.organization.id) {
             throw Exception.invariantViolation({ messageKey: `${HRApprovalStep.dictionaryPath}.ORGANIZATION_MISMATCH` });
         } else if (this.requestRevision !== this.request.revision) {
             throw Exception.invariantViolation({ messageKey: `${HRApprovalStep.dictionaryPath}.STALE_REVISION` });
@@ -58,7 +58,7 @@ export class HRApprovalStep implements Entities.HRApprovalStep.Contract {
     }
 
     public reassign({ employee }: Entities.HRApprovalStep.Reassign.Props): void {
-        if (this.request.organization !== this.organization) {
+        if (this.request.organization.id !== this.organization.id) {
             throw Exception.invariantViolation({ messageKey: `${HRApprovalStep.dictionaryPath}.ORGANIZATION_MISMATCH` });
         } else if (this.requestRevision !== this.request.revision) {
             throw Exception.invariantViolation({ messageKey: `${HRApprovalStep.dictionaryPath}.STALE_REVISION` });
@@ -68,7 +68,7 @@ export class HRApprovalStep implements Entities.HRApprovalStep.Contract {
             throw Exception.invariantViolation({ messageKey: `${HRApprovalStep.dictionaryPath}.INVALID_STATUS` });
         } else if (employee.id === this.assigneeEmployee.id) {
             throw Exception.invariantViolation({ messageKey: `${HRApprovalStep.dictionaryPath}.NO_CHANGES_DETECTED` });
-        } else if (employee.organization !== this.organization) {
+        } else if (employee.organization.id !== this.organization.id) {
             throw Exception.invariantViolation({ messageKey: `${HRApprovalStep.dictionaryPath}.ORGANIZATION_MISMATCH` });
         } else if (employee.status === EmployeeStatus.ACTIVE) {
             this.assigneeEmployee = employee;
@@ -79,7 +79,7 @@ export class HRApprovalStep implements Entities.HRApprovalStep.Contract {
     }
 
     public approve(): void {
-        if (this.request.organization !== this.organization) {
+        if (this.request.organization.id !== this.organization.id) {
             throw Exception.invariantViolation({ messageKey: `${HRApprovalStep.dictionaryPath}.ORGANIZATION_MISMATCH` });
         } else if (this.requestRevision !== this.request.revision) {
             throw Exception.invariantViolation({ messageKey: `${HRApprovalStep.dictionaryPath}.STALE_REVISION` });
@@ -98,7 +98,7 @@ export class HRApprovalStep implements Entities.HRApprovalStep.Contract {
     }
 
     public reject(): void {
-        if (this.request.organization !== this.organization) {
+        if (this.request.organization.id !== this.organization.id) {
             throw Exception.invariantViolation({ messageKey: `${HRApprovalStep.dictionaryPath}.ORGANIZATION_MISMATCH` });
         } else if (this.requestRevision !== this.request.revision) {
             throw Exception.invariantViolation({ messageKey: `${HRApprovalStep.dictionaryPath}.STALE_REVISION` });
@@ -117,7 +117,7 @@ export class HRApprovalStep implements Entities.HRApprovalStep.Contract {
     }
 
     public returnForRevision(): void {
-        if (this.request.organization !== this.organization) {
+        if (this.request.organization.id !== this.organization.id) {
             throw Exception.invariantViolation({ messageKey: `${HRApprovalStep.dictionaryPath}.ORGANIZATION_MISMATCH` });
         } else if (this.requestRevision !== this.request.revision) {
             throw Exception.invariantViolation({ messageKey: `${HRApprovalStep.dictionaryPath}.STALE_REVISION` });
@@ -147,7 +147,10 @@ export class HRApprovalStep implements Entities.HRApprovalStep.Contract {
     }
 
     public canCreate(): void {
-        if (this.request.organization !== this.organization || this.assigneeEmployee.organization !== this.organization) {
+        if (
+            this.request.organization.id !== this.organization.id ||
+            this.assigneeEmployee.organization.id !== this.organization.id
+        ) {
             throw Exception.invariantViolation({ messageKey: `${HRApprovalStep.dictionaryPath}.ORGANIZATION_MISMATCH` });
         } else if (this.requestRevision !== this.request.revision) {
             throw Exception.invariantViolation({ messageKey: `${HRApprovalStep.dictionaryPath}.STALE_REVISION` });

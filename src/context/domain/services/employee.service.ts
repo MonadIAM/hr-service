@@ -7,6 +7,7 @@ import {
     WORK_CALENDAR_REPOSITORY,
     WORK_SCHEDULE_REPOSITORY,
     LEAVE_POLICY_REPOSITORY,
+    ORGANIZATION_REPOSITORY,
     HR_REQUEST_REPOSITORY,
     EMPLOYEE_REPOSITORY,
 } from "~context/infrastructure/repositories";
@@ -25,6 +26,8 @@ export class EmployeeService implements Services.Employee.Contract {
         private readonly workCalendarRepository: Repositories.WorkCalendar.Contract,
         @Inject(WORK_SCHEDULE_REPOSITORY)
         private readonly workScheduleRepository: Repositories.WorkSchedule.Contract,
+        @Inject(ORGANIZATION_REPOSITORY)
+        private readonly organizationRepository: Repositories.Organization.Contract,
         @Inject(LEAVE_POLICY_REPOSITORY)
         private readonly leavePolicyRepository: Repositories.LeavePolicy.Contract,
         @Inject(HR_REQUEST_REPOSITORY)
@@ -33,91 +36,96 @@ export class EmployeeService implements Services.Employee.Contract {
         private readonly employeeRepository: Repositories.Employee.Contract,
     ) {}
 
-    public create(props: Services.Employee.Create.Props): Services.Employee.Create.Result {
-        const { transaction, organization, input } = props;
+    public async create(props: Services.Employee.Create.Props): Services.Employee.Create.Result {
+        const { transaction, input } = props;
 
-        const entity = new Employee({
-            ...input,
-            organization,
-            status: EmployeeStatus.DRAFT,
-            termsRevision: 1,
+        const organizationEntity = await this.organizationRepository.findUniqueOrThrow({
+            where: { id: props.organization },
+            transaction,
         });
 
-        entity.canCreate();
+        const employeeEntity = new Employee({
+            status: EmployeeStatus.DRAFT,
+            termsRevision: 1,
+            organization: organizationEntity,
+            ...input,
+        });
 
-        transaction.persist(entity);
+        employeeEntity.canCreate();
 
-        return entity;
+        transaction.persist(employeeEntity);
+
+        return employeeEntity;
     }
 
     public async update(props: Services.Employee.Update.Props): Services.Employee.Update.Result {
         const { transaction, organization, patch, id } = props;
-        const entity = await this.employeeRepository.findUniqueOrThrow({
+        const employeeEntity = await this.employeeRepository.findUniqueOrThrow({
             options: { lockMode: LockMode.PESSIMISTIC_WRITE },
             where: { organization, id },
             transaction,
         });
 
-        entity.update({ patch });
+        employeeEntity.update({ patch });
 
-        return entity;
+        return employeeEntity;
     }
 
     public async linkAccount(props: Services.Employee.LinkAccount.Props): Services.Employee.LinkAccount.Result {
         const { transaction, organization, account, id } = props;
-        const entity = await this.employeeRepository.findUniqueOrThrow({
+        const employeeEntity = await this.employeeRepository.findUniqueOrThrow({
             options: { lockMode: LockMode.PESSIMISTIC_WRITE },
             where: { organization, id },
             transaction,
         });
 
-        entity.linkAccount({ account });
+        employeeEntity.linkAccount({ account });
 
-        return entity;
+        return employeeEntity;
     }
 
     public async unlinkAccount(props: Services.Employee.UnlinkAccount.Props): Services.Employee.UnlinkAccount.Result {
         const { transaction, organization, id } = props;
-        const entity = await this.employeeRepository.findUniqueOrThrow({
+        const employeeEntity = await this.employeeRepository.findUniqueOrThrow({
             options: { lockMode: LockMode.PESSIMISTIC_WRITE },
             where: { organization, id },
             transaction,
         });
 
-        entity.unlinkAccount();
+        employeeEntity.unlinkAccount();
 
-        return entity;
+        return employeeEntity;
     }
 
     public async archive(props: Services.Employee.Archive.Props): Services.Employee.Archive.Result {
         const { transaction, organization, id } = props;
-        const entity = await this.employeeRepository.findUniqueOrThrow({
+        const employeeEntity = await this.employeeRepository.findUniqueOrThrow({
             options: { lockMode: LockMode.PESSIMISTIC_WRITE },
             where: { organization, id },
             transaction,
         });
 
-        entity.archive();
+        employeeEntity.archive();
 
-        return entity;
+        return employeeEntity;
     }
 
     public async restore(props: Services.Employee.Restore.Props): Services.Employee.Restore.Result {
         const { transaction, organization, id } = props;
-        const entity = await this.employeeRepository.findUniqueOrThrow({
+        const employeeEntity = await this.employeeRepository.findUniqueOrThrow({
             options: { lockMode: LockMode.PESSIMISTIC_WRITE },
             where: { organization, id },
             transaction,
         });
 
-        entity.restore();
+        employeeEntity.restore();
 
-        return entity;
+        return employeeEntity;
     }
 
     public async setHRBP(props: Services.Employee.SetHRBP.Props): Services.Employee.SetHRBP.Result {
         const { transaction, organization, id } = props;
-        const [entity, employee] = await Promise.all([
+        const [employeeEntity, hrBpEmployeeEntity] = await Promise.all([
             this.employeeRepository.findUniqueOrThrow({
                 options: { lockMode: LockMode.PESSIMISTIC_WRITE },
                 where: { organization, id },
@@ -131,17 +139,17 @@ export class EmployeeService implements Services.Employee.Contract {
                 : undefined,
         ]);
 
-        if (employee) {
-            entity.setHRBP({ employee });
+        if (hrBpEmployeeEntity) {
+            employeeEntity.setHRBP({ employee: hrBpEmployeeEntity });
         }
 
-        return entity;
+        return employeeEntity;
     }
 
     public async hire(props: Services.Employee.Hire.Props): Services.Employee.Hire.Result {
         const { transaction, organization, input, id } = props;
 
-        const [entity, workCalendar, workSchedule, leavePolicy] = await Promise.all([
+        const [employeeEntity, workCalendarEntity, workScheduleEntity, leavePolicyEntity] = await Promise.all([
             this.employeeRepository.findUniqueOrThrow({
                 options: { lockMode: LockMode.PESSIMISTIC_WRITE },
                 where: { organization, id },
@@ -161,15 +169,31 @@ export class EmployeeService implements Services.Employee.Contract {
             }),
         ]);
 
-        entity.hire({ ...input, workCalendar, workSchedule, leavePolicy });
+        employeeEntity.hire({
+            ...input,
+            workCalendar: workCalendarEntity,
+            workSchedule: workScheduleEntity,
+            leavePolicy: leavePolicyEntity,
+        });
 
-        return entity;
+        return employeeEntity;
     }
 
     public async changeTerms(props: Services.Employee.ChangeTerms.Props): Services.Employee.ChangeTerms.Result {
         const { transaction, organization, input, id } = props;
 
-        const [entity, workCalendar, workSchedule, leavePolicy, replacedByRequest] = await Promise.all([
+        const [
+            organizationEntity,
+            employeeEntity,
+            workCalendarEntity,
+            workScheduleEntity,
+            leavePolicyEntity,
+            replacedByRequestEntity,
+        ] = await Promise.all([
+            this.organizationRepository.findUniqueOrThrow({
+                where: { id: organization },
+                transaction,
+            }),
             this.employeeRepository.findUniqueOrThrow({
                 where: { organization, id },
                 transaction,
@@ -204,37 +228,50 @@ export class EmployeeService implements Services.Employee.Contract {
         ]);
 
         const previous = {
-            termsRevision: entity.termsRevision,
-            validFrom: entity.termsValidFrom!,
-            workCalendar: entity.workCalendar,
-            workSchedule: entity.workSchedule,
-            leavePolicy: entity.leavePolicy,
+            termsRevision: employeeEntity.termsRevision,
+            replacedByRequest: replacedByRequestEntity,
+            workCalendar: employeeEntity.workCalendar,
+            workSchedule: employeeEntity.workSchedule,
+            validFrom: employeeEntity.termsValidFrom!,
+            leavePolicy: employeeEntity.leavePolicy,
             validTo: input.termsValidFrom,
-            replacedByRequest,
-            employee: entity,
+            employee: employeeEntity,
             organization,
             termsSnapshot: {
-                employmentStartedOn: entity.employmentStartedOn,
-                scheduleAnchorDate: entity.scheduleAnchorDate,
-                employmentEndedOn: entity.employmentEndedOn,
-                scheduleTimezone: entity.scheduleTimezone,
-                contractEndsOn: entity.contractEndsOn,
-                contractType: entity.contractType,
-                status: entity.status,
+                employmentStartedOn: employeeEntity.employmentStartedOn,
+                scheduleAnchorDate: employeeEntity.scheduleAnchorDate,
+                employmentEndedOn: employeeEntity.employmentEndedOn,
+                scheduleTimezone: employeeEntity.scheduleTimezone,
+                contractEndsOn: employeeEntity.contractEndsOn,
+                contractType: employeeEntity.contractType,
+                status: employeeEntity.status,
             },
         };
 
-        entity.changeTerms({ ...input, workCalendar, workSchedule, leavePolicy });
+        employeeEntity.changeTerms({
+            ...input,
+            workCalendar: workCalendarEntity,
+            workSchedule: workScheduleEntity,
+            leavePolicy: leavePolicyEntity,
+        });
 
-        this.employmentService.create({ input: previous, organization, transaction });
+        this.employmentService.create({
+            organization: organizationEntity,
+            input: previous,
+            transaction,
+        });
 
-        return entity;
+        return employeeEntity;
     }
 
     public async terminate(props: Services.Employee.Terminate.Props): Services.Employee.Terminate.Result {
         const { transaction, organization, input, id } = props;
 
-        const [entity, assignments, replacedByRequest] = await Promise.all([
+        const [organizationEntity, employeeEntity, assignmentEntities, replacedByRequestEntity] = await Promise.all([
+            this.organizationRepository.findUniqueOrThrow({
+                where: { id: organization },
+                transaction,
+            }),
             this.employeeRepository.findUniqueOrThrow({
                 where: { organization, id },
                 transaction,
@@ -266,41 +303,41 @@ export class EmployeeService implements Services.Employee.Contract {
         ]);
 
         const previous = {
+            termsRevision: employeeEntity.termsRevision,
+            replacedByRequest: replacedByRequestEntity,
+            workCalendar: employeeEntity.workCalendar,
+            workSchedule: employeeEntity.workSchedule,
+            validFrom: employeeEntity.termsValidFrom!,
+            leavePolicy: employeeEntity.leavePolicy,
             validTo: props.input.employmentEndedOn,
-            termsRevision: entity.termsRevision,
-            validFrom: entity.termsValidFrom!,
-            workCalendar: entity.workCalendar,
-            workSchedule: entity.workSchedule,
-            leavePolicy: entity.leavePolicy,
-            replacedByRequest,
-            employee: entity,
+            employee: employeeEntity,
             organization,
             termsSnapshot: {
-                employmentStartedOn: entity.employmentStartedOn,
-                scheduleAnchorDate: entity.scheduleAnchorDate,
-                employmentEndedOn: entity.employmentEndedOn,
-                scheduleTimezone: entity.scheduleTimezone,
-                contractEndsOn: entity.contractEndsOn,
-                contractType: entity.contractType,
-                status: entity.status,
+                employmentStartedOn: employeeEntity.employmentStartedOn,
+                scheduleAnchorDate: employeeEntity.scheduleAnchorDate,
+                employmentEndedOn: employeeEntity.employmentEndedOn,
+                scheduleTimezone: employeeEntity.scheduleTimezone,
+                contractEndsOn: employeeEntity.contractEndsOn,
+                contractType: employeeEntity.contractType,
+                status: employeeEntity.status,
             },
         };
 
-        entity.terminate(input);
+        employeeEntity.terminate(input);
 
         this.employmentService.create({
+            organization: organizationEntity,
             input: previous,
-            organization,
             transaction,
         });
 
-        for (const assignment of assignments) {
-            assignment.close({
+        for (const assignmentEntity of assignmentEntities) {
+            assignmentEntity.close({
                 validTo: input.employmentEndedOn,
-                request: replacedByRequest,
+                request: replacedByRequestEntity,
             });
         }
 
-        return entity;
+        return employeeEntity;
     }
 }

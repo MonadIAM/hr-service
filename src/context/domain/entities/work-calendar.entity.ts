@@ -14,12 +14,13 @@ export class WorkCalendar implements Entities.WorkCalendar.Contract {
 
     public holidays: Entities.WorkCalendar.Holiday[];
     public verifiedThrough?: string;
-    public organization: string;
     public status: RecordStatus;
     public countryCode: string;
     public regionCode?: string;
     public code: string;
     public name: string;
+
+    public organization: Entities.Organization;
 
     public exceptions = new Collection<Entities.WorkCalendarException>(this);
     public employmentHistory = new Collection<Entities.Employment>(this);
@@ -33,11 +34,12 @@ export class WorkCalendar implements Entities.WorkCalendar.Contract {
         this.holidays = props.holidays ?? [];
 
         this.verifiedThrough = props.verifiedThrough;
-        this.organization = props.organization;
         this.countryCode = props.countryCode;
         this.regionCode = props.regionCode;
         this.code = props.code;
         this.name = props.name;
+
+        this.organization = props.organization;
     }
 
     public update({ patch }: Entities.WorkCalendar.ChangeDataProps): void {

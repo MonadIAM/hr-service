@@ -11,12 +11,12 @@ declare global {
 
                 decision: HRDecisionKind;
                 requestRevision: number;
-                organization: string;
                 actorAccount: string;
                 comment?: string;
                 decidedAt: Date;
                 request: string;
 
+                organization: Entities.Organization;
                 actorEmployee: Entities.Employee;
                 step: Entities.HRApprovalStep;
 
@@ -26,12 +26,12 @@ declare global {
             type ConstructorProps = {
                 decision: HRDecisionKind;
                 requestRevision: number;
-                organization: string;
                 actorAccount: string;
                 comment?: string;
                 decidedAt: Date;
                 request: string;
 
+                organization: Entities.Organization;
                 actorEmployee: Entities.Employee;
                 step: Entities.HRApprovalStep;
             };

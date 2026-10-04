@@ -23,7 +23,6 @@ export class HRRequest implements Entities.HRRequest.Contract {
     public payload: UnknownObject;
     public result?: UnknownObject;
     public workflowCode?: string;
-    public organization: string;
     public type: HRRequestType;
     public effectiveAt?: Date;
     public submittedAt?: Date;
@@ -33,6 +32,7 @@ export class HRRequest implements Entities.HRRequest.Contract {
     public failure?: string;
 
     public initiatorEmployee?: Entities.Employee;
+    public organization: Entities.Organization;
     public relatedRequest?: Entities.HRRequest;
     public targetPosition?: Entities.Position;
     public employee: Entities.Employee;
@@ -61,7 +61,6 @@ export class HRRequest implements Entities.HRRequest.Contract {
         this.workflowVersion = props.workflowVersion;
         this.appliedRevision = props.appliedRevision;
         this.idempotencyKey = props.idempotencyKey;
-        this.organization = props.organization;
         this.workflowCode = props.workflowCode;
         this.effectiveAt = props.effectiveAt;
         this.submittedAt = props.submittedAt;
@@ -71,6 +70,7 @@ export class HRRequest implements Entities.HRRequest.Contract {
         this.result = props.result;
         this.type = props.type;
 
+        this.organization = props.organization;
         this.initiatorEmployee = props.initiatorEmployee;
         this.targetPosition = props.targetPosition;
         this.relatedRequest = props.relatedRequest;
@@ -80,7 +80,7 @@ export class HRRequest implements Entities.HRRequest.Contract {
     public update({ patch }: Entities.HRRequest.ChangeDataProps): void {
         if (this.status !== HRRequestStatus.DRAFT || this.executionStatus !== HRExecutionStatus.NOT_STARTED) {
             throw Exception.invariantViolation({ messageKey: `${HRRequest.dictionaryPath}.INVALID_STATUS` });
-        } else if (patch.targetPosition && patch.targetPosition.organization !== this.organization) {
+        } else if (patch.targetPosition && patch.targetPosition.organization.id !== this.organization.id) {
             throw Exception.invariantViolation({ messageKey: `${HRRequest.dictionaryPath}.ORGANIZATION_MISMATCH` });
         } else if (this.hasRelatedRequestMismatch(patch.relatedRequest)) {
             throw Exception.invariantViolation({ messageKey: `${HRRequest.dictionaryPath}.REQUEST_MISMATCH` });
@@ -259,7 +259,7 @@ export class HRRequest implements Entities.HRRequest.Contract {
             throw Exception.invariantViolation({ messageKey: `${HRRequest.dictionaryPath}.INVALID_EXECUTION_STATUS` });
         } else if (this.hasEmployeeOrganizationMismatch()) {
             throw Exception.invariantViolation({ messageKey: `${HRRequest.dictionaryPath}.ORGANIZATION_MISMATCH` });
-        } else if (this.targetPosition && this.targetPosition.organization !== this.organization) {
+        } else if (this.targetPosition && this.targetPosition.organization.id !== this.organization.id) {
             throw Exception.invariantViolation({ messageKey: `${HRRequest.dictionaryPath}.ORGANIZATION_MISMATCH` });
         } else if (this.hasRelatedRequestMismatch(this.relatedRequest)) {
             throw Exception.invariantViolation({ messageKey: `${HRRequest.dictionaryPath}.REQUEST_MISMATCH` });
@@ -270,7 +270,7 @@ export class HRRequest implements Entities.HRRequest.Contract {
         return (
             !!request &&
             (request.id === this.id ||
-                request.organization !== this.organization ||
+                request.organization.id !== this.organization.id ||
                 request.employee.id !== this.employee.id)
         );
     }
@@ -285,7 +285,7 @@ export class HRRequest implements Entities.HRRequest.Contract {
 
     private hasEmployeeOrganizationMismatch(): boolean {
         return [this.employee, this.initiatorEmployee].some(
-            (employee) => employee && employee.organization !== this.organization,
+            (employee) => employee && employee.organization.id !== this.organization.id,
         );
     }
 }

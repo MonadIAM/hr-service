@@ -4,6 +4,7 @@ import { LockMode } from "@mikro-orm/core";
 import { PositionAssignmentStatus } from "~context/enums";
 import {
     POSITION_ASSIGNMENT_REPOSITORY,
+    ORGANIZATION_REPOSITORY,
     HR_REQUEST_REPOSITORY,
     EMPLOYEE_REPOSITORY,
     POSITION_REPOSITORY,
@@ -16,6 +17,8 @@ export class PositionAssignmentService implements Services.PositionAssignment.Co
     public constructor(
         @Inject(POSITION_ASSIGNMENT_REPOSITORY)
         private readonly positionAssignmentRepository: Repositories.PositionAssignment.Contract,
+        @Inject(ORGANIZATION_REPOSITORY)
+        private readonly organizationRepository: Repositories.Organization.Contract,
         @Inject(HR_REQUEST_REPOSITORY)
         private readonly hrRequestRepository: Repositories.HRRequest.Contract,
         @Inject(EMPLOYEE_REPOSITORY)
@@ -26,7 +29,11 @@ export class PositionAssignmentService implements Services.PositionAssignment.Co
 
     public async create(props: Services.PositionAssignment.Create.Props): Services.PositionAssignment.Create.Result {
         const { transaction, organization, input } = props;
-        const [employee, position, sourceRequest] = await Promise.all([
+        const [organizationEntity, employeeEntity, positionEntity, sourceRequestEntity] = await Promise.all([
+            this.organizationRepository.findUniqueOrThrow({
+                where: { id: organization },
+                transaction,
+            }),
             this.employeeRepository.findUniqueOrThrow({
                 options: { lockMode: LockMode.PESSIMISTIC_WRITE },
                 where: { id: input.employee, organization },
@@ -49,36 +56,36 @@ export class PositionAssignmentService implements Services.PositionAssignment.Co
                 : undefined,
         ]);
 
-        const entity = new PositionAssignment({
+        const assignmentEntity = new PositionAssignment({
             ...input,
+            organization: organizationEntity,
             placementSnapshot: {
-                department: position.department,
-                title: position.title,
-                grade: position.grade,
-                code: position.code,
-                team: position.team,
+                department: positionEntity.department,
+                title: positionEntity.title,
+                grade: positionEntity.grade,
+                code: positionEntity.code,
+                team: positionEntity.team,
             },
             status: PositionAssignmentStatus.ACTIVE,
-            department: position.department,
-            positionTitle: position.title,
-            grade: position.grade,
-            team: position.team,
-            sourceRequest,
-            organization,
-            employee,
-            position,
+            department: positionEntity.department,
+            positionTitle: positionEntity.title,
+            grade: positionEntity.grade,
+            team: positionEntity.team,
+            sourceRequest: sourceRequestEntity,
+            employee: employeeEntity,
+            position: positionEntity,
         });
 
-        entity.canCreate();
+        assignmentEntity.canCreate();
 
-        transaction.persist(entity);
+        transaction.persist(assignmentEntity);
 
-        return entity;
+        return assignmentEntity;
     }
 
     public async close(props: Services.PositionAssignment.Close.Props): Services.PositionAssignment.Close.Result {
         const { transaction, organization, id } = props;
-        const [entity, request] = await Promise.all([
+        const [assignmentEntity, requestEntity] = await Promise.all([
             this.positionAssignmentRepository.findUniqueOrThrow({
                 options: { lockMode: LockMode.PESSIMISTIC_WRITE },
                 where: { organization, id },
@@ -92,92 +99,97 @@ export class PositionAssignmentService implements Services.PositionAssignment.Co
                 : undefined,
         ]);
 
-        entity.close({
+        assignmentEntity.close({
             validTo: props.validTo,
-            request,
+            request: requestEntity,
         });
 
-        return entity;
+        return assignmentEntity;
     }
 
     public async void(props: Services.PositionAssignment.Void.Props): Services.PositionAssignment.Void.Result {
         const { transaction, organization, id } = props;
-        const entity = await this.positionAssignmentRepository.findUniqueOrThrow({
+        const assignmentEntity = await this.positionAssignmentRepository.findUniqueOrThrow({
             options: { lockMode: LockMode.PESSIMISTIC_WRITE },
             where: { organization, id },
             transaction,
         });
 
-        entity.void();
+        assignmentEntity.void();
 
-        return entity;
+        return assignmentEntity;
     }
 
     public async transfer(props: Services.PositionAssignment.Transfer.Props): Services.PositionAssignment.Transfer.Result {
         const { transaction, organization, input, id } = props;
-        const [employee, position, current, sourceRequest] = await Promise.all([
-            this.employeeRepository.findUniqueOrThrow({
-                options: { lockMode: LockMode.PESSIMISTIC_WRITE },
-                where: { id: input.employee, organization },
-                transaction,
-            }),
-            this.positionRepository.findUniqueOrThrow({
-                options: { lockMode: LockMode.PESSIMISTIC_WRITE },
-                where: { id: input.position, organization },
-                transaction,
-            }),
-            this.positionAssignmentRepository.findUniqueOrThrow({
-                options: { lockMode: LockMode.PESSIMISTIC_WRITE },
-                where: {
-                    employee: { id: input.employee },
-                    organization,
-                    id,
-                },
-                transaction,
-            }),
-            input.sourceRequest
-                ? this.hrRequestRepository.findUniqueOrThrow({
-                      where: {
-                          employee: { id: input.employee },
-                          id: input.sourceRequest,
-                          organization,
-                      },
-                      transaction,
-                  })
-                : undefined,
-        ]);
+        const [organizationEntity, employeeEntity, positionEntity, currentAssignmentEntity, sourceRequestEntity] =
+            await Promise.all([
+                this.organizationRepository.findUniqueOrThrow({
+                    where: { id: organization },
+                    transaction,
+                }),
+                this.employeeRepository.findUniqueOrThrow({
+                    options: { lockMode: LockMode.PESSIMISTIC_WRITE },
+                    where: { id: input.employee, organization },
+                    transaction,
+                }),
+                this.positionRepository.findUniqueOrThrow({
+                    options: { lockMode: LockMode.PESSIMISTIC_WRITE },
+                    where: { id: input.position, organization },
+                    transaction,
+                }),
+                this.positionAssignmentRepository.findUniqueOrThrow({
+                    options: { lockMode: LockMode.PESSIMISTIC_WRITE },
+                    where: {
+                        employee: { id: input.employee },
+                        organization,
+                        id,
+                    },
+                    transaction,
+                }),
+                input.sourceRequest
+                    ? this.hrRequestRepository.findUniqueOrThrow({
+                          where: {
+                              employee: { id: input.employee },
+                              id: input.sourceRequest,
+                              organization,
+                          },
+                          transaction,
+                      })
+                    : undefined,
+            ]);
 
-        current.close({
+        currentAssignmentEntity.close({
             validTo: input.validFrom,
-            request: sourceRequest,
+            request: sourceRequestEntity,
         });
 
         await transaction.flush();
 
-        const entity = new PositionAssignment({
+        const assignmentEntity = new PositionAssignment({
             ...input,
+            organization: organizationEntity,
             placementSnapshot: {
-                department: position.department,
-                title: position.title,
-                grade: position.grade,
-                code: position.code,
-                team: position.team,
+                department: positionEntity.department,
+                title: positionEntity.title,
+                grade: positionEntity.grade,
+                code: positionEntity.code,
+                team: positionEntity.team,
             },
             status: PositionAssignmentStatus.ACTIVE,
-            department: position.department,
-            positionTitle: position.title,
-            grade: position.grade,
-            team: position.team,
-            sourceRequest,
-            organization,
-            employee,
-            position,
+            department: positionEntity.department,
+            positionTitle: positionEntity.title,
+            sourceRequest: sourceRequestEntity,
+            grade: positionEntity.grade,
+            team: positionEntity.team,
+            employee: employeeEntity,
+            position: positionEntity,
         });
 
-        entity.canCreate();
+        assignmentEntity.canCreate();
 
-        transaction.persist(entity);
+        transaction.persist(assignmentEntity);
 
-        return entity;
+        return assignmentEntity;
     }
 }

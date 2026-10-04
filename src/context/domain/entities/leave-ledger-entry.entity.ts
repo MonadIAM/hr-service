@@ -15,7 +15,6 @@ export class LeaveLedgerEntry implements Entities.LeaveLedgerEntry.Contract {
     public idempotencyKey: string;
     public kind: LeaveLedgerKind;
     public reservedDelta: string;
-    public organization: string;
     public balanceDelta: string;
     public effectiveOn: string;
     public poolCode: string;
@@ -24,6 +23,7 @@ export class LeaveLedgerEntry implements Entities.LeaveLedgerEntry.Contract {
 
     public reversedByEntry?: Entities.LeaveLedgerEntry;
     public reversesEntry?: Entities.LeaveLedgerEntry;
+    public organization: Entities.Organization;
     public sourceRequest?: Entities.HRRequest;
     public leavePolicy: Entities.LeavePolicy;
     public employee: Entities.Employee;
@@ -40,13 +40,13 @@ export class LeaveLedgerEntry implements Entities.LeaveLedgerEntry.Contract {
         this.entitlementPeriodStart = props.entitlementPeriodStart;
         this.entitlementPeriodEnd = props.entitlementPeriodEnd;
         this.idempotencyKey = props.idempotencyKey;
-        this.organization = props.organization;
         this.effectiveOn = props.effectiveOn;
         this.poolCode = props.poolCode;
         this.reason = props.reason;
         this.unit = props.unit;
         this.kind = props.kind;
 
+        this.organization = props.organization;
         this.sourceRequest = props.sourceRequest;
         this.reversesEntry = props.reversesEntry;
         this.leavePolicy = props.leavePolicy;
@@ -82,7 +82,7 @@ export class LeaveLedgerEntry implements Entities.LeaveLedgerEntry.Contract {
 
     private hasOrganizationMismatch(): boolean {
         return [this.employee, this.leavePolicy, this.sourceRequest, this.absence, this.reversesEntry].some(
-            (record) => record && record.organization !== this.organization,
+            (record) => record && record.organization.id !== this.organization.id,
         );
     }
 

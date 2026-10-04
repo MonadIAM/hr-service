@@ -1,14 +1,15 @@
 import { Injectable, Inject, Scope } from "@nestjs/common";
 import { LockMode } from "@mikro-orm/core";
 
+import { HRExecutionStatus, HRApprovalStatus, HRRequestStatus } from "~context/enums";
+import { Exception } from "~common/exceptions";
 import {
     HR_APPROVAL_STEP_REPOSITORY,
+    ORGANIZATION_REPOSITORY,
     HR_REQUEST_REPOSITORY,
     EMPLOYEE_REPOSITORY,
     POSITION_REPOSITORY,
 } from "~context/infrastructure/repositories";
-import { HRExecutionStatus, HRApprovalStatus, HRRequestStatus } from "~context/enums";
-import { Exception } from "~common/exceptions";
 
 import { HR_APPROVAL_STEP_SERVICE } from "./tokens";
 import { HRRequest } from "../entities";
@@ -22,6 +23,8 @@ export class HRRequestService implements Services.HRRequest.Contract {
         private readonly hrApprovalStepService: Services.HRApprovalStep.ServiceContract,
         @Inject(HR_APPROVAL_STEP_REPOSITORY)
         private readonly hrApprovalStepRepository: Repositories.HRApprovalStep.Contract,
+        @Inject(ORGANIZATION_REPOSITORY)
+        private readonly organizationRepository: Repositories.Organization.Contract,
         @Inject(HR_REQUEST_REPOSITORY)
         private readonly hrRequestRepository: Repositories.HRRequest.Contract,
         @Inject(EMPLOYEE_REPOSITORY)
@@ -32,61 +35,66 @@ export class HRRequestService implements Services.HRRequest.Contract {
 
     public async create(props: Services.HRRequest.Create.Props): Services.HRRequest.Create.Result {
         const { transaction, organization, input } = props;
-        const [employee, initiatorEmployee, targetPosition, relatedRequest] = await Promise.all([
-            this.employeeRepository.findUniqueOrThrow({
-                where: { id: input.employee, organization },
-                transaction,
-            }),
-            input.initiatorEmployee
-                ? this.employeeRepository.findUniqueOrThrow({
-                      where: {
-                          account: input.initiatorAccount,
-                          id: input.initiatorEmployee,
-                          organization,
-                      },
-                      transaction,
-                  })
-                : undefined,
-            input.targetPosition
-                ? this.positionRepository.findUniqueOrThrow({
-                      where: { id: input.targetPosition, organization },
-                      transaction,
-                  })
-                : undefined,
-            input.relatedRequest
-                ? this.hrRequestRepository.findUniqueOrThrow({
-                      where: {
-                          employee: { id: input.employee },
-                          id: input.relatedRequest,
-                          organization,
-                      },
-                      transaction,
-                  })
-                : undefined,
-        ]);
+        const [organizationEntity, employeeEntity, initiatorEmployeeEntity, targetPositionEntity, relatedRequestEntity] =
+            await Promise.all([
+                this.organizationRepository.findUniqueOrThrow({
+                    where: { id: organization },
+                    transaction,
+                }),
+                this.employeeRepository.findUniqueOrThrow({
+                    where: { id: input.employee, organization },
+                    transaction,
+                }),
+                input.initiatorEmployee
+                    ? this.employeeRepository.findUniqueOrThrow({
+                          where: {
+                              account: input.initiatorAccount,
+                              id: input.initiatorEmployee,
+                              organization,
+                          },
+                          transaction,
+                      })
+                    : undefined,
+                input.targetPosition
+                    ? this.positionRepository.findUniqueOrThrow({
+                          where: { id: input.targetPosition, organization },
+                          transaction,
+                      })
+                    : undefined,
+                input.relatedRequest
+                    ? this.hrRequestRepository.findUniqueOrThrow({
+                          where: {
+                              employee: { id: input.employee },
+                              id: input.relatedRequest,
+                              organization,
+                          },
+                          transaction,
+                      })
+                    : undefined,
+            ]);
 
-        const entity = new HRRequest({
+        const requestEntity = new HRRequest({
             ...input,
             executionStatus: HRExecutionStatus.NOT_STARTED,
             status: HRRequestStatus.DRAFT,
-            initiatorEmployee,
-            targetPosition,
-            relatedRequest,
-            organization,
+            initiatorEmployee: initiatorEmployeeEntity,
+            targetPosition: targetPositionEntity,
+            relatedRequest: relatedRequestEntity,
+            organization: organizationEntity,
+            employee: employeeEntity,
             revision: 1,
-            employee,
         });
 
-        entity.canCreate();
+        requestEntity.canCreate();
 
-        transaction.persist(entity);
+        transaction.persist(requestEntity);
 
-        return entity;
+        return requestEntity;
     }
 
     public async update(props: Services.HRRequest.Update.Props): Services.HRRequest.Update.Result {
         const { transaction, organization, patch, id } = props;
-        const [entity, targetPosition, relatedRequest] = await Promise.all([
+        const [requestEntity, targetPositionEntity, relatedRequestEntity] = await Promise.all([
             this.hrRequestRepository.findUniqueOrThrow({
                 options: { lockMode: LockMode.PESSIMISTIC_WRITE },
                 where: { organization, id },
@@ -106,15 +114,15 @@ export class HRRequestService implements Services.HRRequest.Contract {
                 : undefined,
         ]);
 
-        entity.update({
+        requestEntity.update({
             patch: {
                 ...patch,
-                targetPosition,
-                relatedRequest,
+                targetPosition: targetPositionEntity,
+                relatedRequest: relatedRequestEntity,
             },
         });
 
-        return entity;
+        return requestEntity;
     }
 
     public async submit(props: Services.HRRequest.Submit.Props): Services.HRRequest.Submit.Result {
@@ -124,7 +132,11 @@ export class HRRequestService implements Services.HRRequest.Contract {
             throw Exception.invariantViolation({ messageKey: `${this.dictionaryPath}.EMPTY_APPROVAL_ROUTE` });
         }
 
-        const [entity, employees] = await Promise.all([
+        const [organizationEntity, requestEntity, employeeEntities] = await Promise.all([
+            this.organizationRepository.findUniqueOrThrow({
+                where: { id: organization },
+                transaction,
+            }),
             this.hrRequestRepository.findUniqueOrThrow({
                 where: { organization, id },
                 transaction,
@@ -143,171 +155,171 @@ export class HRRequestService implements Services.HRRequest.Contract {
             }),
         ]);
 
-        const assignees = new Map(employees.map((employee) => [employee.id, employee]));
+        const assignees = new Map(employeeEntities.map((employeeEntity) => [employeeEntity.id, employeeEntity]));
 
-        entity.submit(input);
+        requestEntity.submit(input);
 
         for (const [index, step] of input.steps.entries()) {
-            const assigneeEmployee = assignees.get(step.assigneeEmployee);
+            const assigneeEmployeeEntity = assignees.get(step.assigneeEmployee);
 
-            if (!assigneeEmployee) {
+            if (!assigneeEmployeeEntity) {
                 throw Exception.notFound({ messageKey: `${this.dictionaryPath}.ASSIGNEE_NOT_FOUND` });
             }
 
-            const created = this.hrApprovalStepService.create({
+            const stepEntity = this.hrApprovalStepService.create({
                 input: {
                     ...step,
+                    assigneeEmployee: assigneeEmployeeEntity,
+                    request: requestEntity,
                     ordinal: index + 1,
-                    request: entity,
-                    assigneeEmployee,
                 },
-                organization,
+                organization: organizationEntity,
                 transaction,
             });
 
             if (index === 0) {
-                created.activate();
+                stepEntity.activate();
             }
         }
 
-        return entity;
+        return requestEntity;
     }
 
     public async withdraw(props: Services.HRRequest.Withdraw.Props): Services.HRRequest.Withdraw.Result {
         const { transaction, organization, id } = props;
-        const entity = await this.hrRequestRepository.findUniqueOrThrow({
+        const requestEntity = await this.hrRequestRepository.findUniqueOrThrow({
             options: { lockMode: LockMode.PESSIMISTIC_WRITE },
             where: { organization, id },
             transaction,
         });
 
-        const pending = await this.hrApprovalStepRepository.find({
+        const pendingStepEntities = await this.hrApprovalStepRepository.find({
             options: { refresh: true },
             transaction,
             where: {
                 status: { $in: [HRApprovalStatus.WAITING, HRApprovalStatus.ACTIVE] },
-                requestRevision: entity.revision,
+                requestRevision: requestEntity.revision,
                 request: { id },
                 organization,
             },
         });
 
-        entity.withdraw();
+        requestEntity.withdraw();
 
-        for (const step of pending) {
-            step.skip();
+        for (const stepEntity of pendingStepEntities) {
+            stepEntity.skip();
         }
 
-        return entity;
+        return requestEntity;
     }
 
     public async approve(props: Services.HRRequest.Approve.Props): Services.HRRequest.Approve.Result {
         const { transaction, organization, id } = props;
-        const entity = await this.hrRequestRepository.findUniqueOrThrow({
+        const requestEntity = await this.hrRequestRepository.findUniqueOrThrow({
             options: { lockMode: LockMode.PESSIMISTIC_WRITE },
             where: { organization, id },
             transaction,
         });
 
-        entity.approve();
+        requestEntity.approve();
 
-        return entity;
+        return requestEntity;
     }
 
     public async reject(props: Services.HRRequest.Reject.Props): Services.HRRequest.Reject.Result {
         const { transaction, organization, id } = props;
-        const entity = await this.hrRequestRepository.findUniqueOrThrow({
+        const requestEntity = await this.hrRequestRepository.findUniqueOrThrow({
             options: { lockMode: LockMode.PESSIMISTIC_WRITE },
             where: { organization, id },
             transaction,
         });
 
-        entity.reject();
+        requestEntity.reject();
 
-        return entity;
+        return requestEntity;
     }
 
     public async returnForRevision(
         props: Services.HRRequest.ReturnForRevision.Props,
     ): Services.HRRequest.ReturnForRevision.Result {
         const { transaction, organization, id } = props;
-        const entity = await this.hrRequestRepository.findUniqueOrThrow({
+        const requestEntity = await this.hrRequestRepository.findUniqueOrThrow({
             options: { lockMode: LockMode.PESSIMISTIC_WRITE },
             where: { organization, id },
             transaction,
         });
 
-        entity.returnForRevision();
+        requestEntity.returnForRevision();
 
-        return entity;
+        return requestEntity;
     }
 
     public async cancel(props: Services.HRRequest.Cancel.Props): Services.HRRequest.Cancel.Result {
         const { transaction, organization, id } = props;
-        const entity = await this.hrRequestRepository.findUniqueOrThrow({
+        const requestEntity = await this.hrRequestRepository.findUniqueOrThrow({
             options: { lockMode: LockMode.PESSIMISTIC_WRITE },
             where: { organization, id },
             transaction,
         });
 
-        entity.cancel();
+        requestEntity.cancel();
 
-        return entity;
+        return requestEntity;
     }
 
     public async scheduleApplication(
         props: Services.HRRequest.ScheduleApplication.Props,
     ): Services.HRRequest.ScheduleApplication.Result {
         const { transaction, organization, input, id } = props;
-        const entity = await this.hrRequestRepository.findUniqueOrThrow({
+        const requestEntity = await this.hrRequestRepository.findUniqueOrThrow({
             options: { lockMode: LockMode.PESSIMISTIC_WRITE },
             where: { organization, id },
             transaction,
         });
 
-        entity.scheduleApplication(input);
+        requestEntity.scheduleApplication(input);
 
-        return entity;
+        return requestEntity;
     }
 
     public async beginApplication(
         props: Services.HRRequest.BeginApplication.Props,
     ): Services.HRRequest.BeginApplication.Result {
         const { transaction, organization, id } = props;
-        const entity = await this.hrRequestRepository.findUniqueOrThrow({
+        const requestEntity = await this.hrRequestRepository.findUniqueOrThrow({
             options: { lockMode: LockMode.PESSIMISTIC_WRITE },
             where: { organization, id },
             transaction,
         });
 
-        entity.beginApplication();
+        requestEntity.beginApplication();
 
-        return entity;
+        return requestEntity;
     }
 
     public async markApplied(props: Services.HRRequest.MarkApplied.Props): Services.HRRequest.MarkApplied.Result {
         const { transaction, organization, input, id } = props;
-        const entity = await this.hrRequestRepository.findUniqueOrThrow({
+        const requestEntity = await this.hrRequestRepository.findUniqueOrThrow({
             options: { lockMode: LockMode.PESSIMISTIC_WRITE },
             where: { organization, id },
             transaction,
         });
 
-        entity.markApplied(input);
+        requestEntity.markApplied(input);
 
-        return entity;
+        return requestEntity;
     }
 
     public async markFailed(props: Services.HRRequest.MarkFailed.Props): Services.HRRequest.MarkFailed.Result {
         const { transaction, organization, input, id } = props;
-        const entity = await this.hrRequestRepository.findUniqueOrThrow({
+        const requestEntity = await this.hrRequestRepository.findUniqueOrThrow({
             options: { lockMode: LockMode.PESSIMISTIC_WRITE },
             where: { organization, id },
             transaction,
         });
 
-        entity.markFailed(input);
+        requestEntity.markFailed(input);
 
-        return entity;
+        return requestEntity;
     }
 }

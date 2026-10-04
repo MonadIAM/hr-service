@@ -7,7 +7,7 @@ export class HRApprovalDecisionService implements Services.HRApprovalDecision.Co
     public create(props: Services.HRApprovalDecision.Create.Props): Services.HRApprovalDecision.Create.Result {
         const { transaction, organization, input } = props;
 
-        const entity = new HRApprovalDecision({
+        const decisionEntity = new HRApprovalDecision({
             ...input,
             requestRevision: input.step.requestRevision,
             request: input.step.request.id,
@@ -15,10 +15,10 @@ export class HRApprovalDecisionService implements Services.HRApprovalDecision.Co
             organization,
         });
 
-        entity.canCreate();
+        decisionEntity.canCreate();
 
-        transaction.persist(entity);
+        transaction.persist(decisionEntity);
 
-        return entity;
+        return decisionEntity;
     }
 }

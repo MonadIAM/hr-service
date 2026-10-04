@@ -5,6 +5,7 @@ export { LeaveLedgerEntry } from "./leave-ledger-entry.entity";
 export { HRApprovalStep } from "./hr-approval-step.entity";
 export { WorkCalendar } from "./work-calendar.entity";
 export { WorkSchedule } from "./work-schedule.entity";
+export { Organization } from "./organization.entity";
 export { LeavePolicy } from "./leave-policy.entity";
 export { Employment } from "./employment.entity";
 export { HRRequest } from "./hr-request.entity";

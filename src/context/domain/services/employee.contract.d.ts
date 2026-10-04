@@ -24,7 +24,7 @@ declare namespace Services.Employee {
             organization: string;
         };
 
-        type Result = Entities.Employee;
+        type Result = Promise<Entities.Employee>;
 
         type Signature = (props: Props) => Result;
     }

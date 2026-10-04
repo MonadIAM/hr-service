@@ -13,7 +13,7 @@ declare namespace Services.LeaveLedgerEntry {
             organization: string;
         };
 
-        type Result = Entities.LeaveLedgerEntry;
+        type Result = Promise<Entities.LeaveLedgerEntry>;
 
         type Signature = (props: Props) => Result;
     }

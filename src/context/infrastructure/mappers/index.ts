@@ -5,6 +5,7 @@ export { LeaveLedgerEntryMapper } from "./leave-ledger-entry.mapper";
 export { HRApprovalStepMapper } from "./hr-approval-step.mapper";
 export { WorkCalendarMapper } from "./work-calendar.mapper";
 export { WorkScheduleMapper } from "./work-schedule.mapper";
+export { OrganizationMapper } from "./organization.mapper";
 export { LeavePolicyMapper } from "./leave-policy.mapper";
 export { EmploymentMapper } from "./employment.mapper";
 export { ChangeLogMapper } from "./change-log.mapper";

@@ -17,7 +17,6 @@ export class PositionAssignment implements Entities.PositionAssignment.Contract 
     public salaryCurrency?: string;
     public positionTitle: string;
     public salaryAmount?: string;
-    public organization: string;
     public department: string;
     public validFrom: string;
     public validTo?: string;
@@ -26,6 +25,7 @@ export class PositionAssignment implements Entities.PositionAssignment.Contract 
     public fte: string;
 
     public closedByRequest?: Entities.HRRequest;
+    public organization: Entities.Organization;
     public sourceRequest?: Entities.HRRequest;
     public employee: Entities.Employee;
     public position: Entities.Position;
@@ -40,7 +40,6 @@ export class PositionAssignment implements Entities.PositionAssignment.Contract 
 
         this.salaryCurrency = props.salaryCurrency;
         this.positionTitle = props.positionTitle;
-        this.organization = props.organization;
         this.salaryAmount = props.salaryAmount;
         this.salaryPeriod = props.salaryPeriod;
         this.department = props.department;
@@ -49,6 +48,7 @@ export class PositionAssignment implements Entities.PositionAssignment.Contract 
         this.grade = props.grade;
         this.team = props.team;
 
+        this.organization = props.organization;
         this.closedByRequest = props.closedByRequest;
         this.sourceRequest = props.sourceRequest;
         this.employee = props.employee;
@@ -60,7 +60,10 @@ export class PositionAssignment implements Entities.PositionAssignment.Contract 
             throw Exception.invariantViolation({ messageKey: `${PositionAssignment.dictionaryPath}.INVALID_STATUS` });
         } else if (validTo < this.validFrom) {
             throw Exception.invariantViolation({ messageKey: `${PositionAssignment.dictionaryPath}.INVALID_PERIOD` });
-        } else if (request && (request.organization !== this.organization || request.employee.id !== this.employee.id)) {
+        } else if (
+            request &&
+            (request.organization.id !== this.organization.id || request.employee.id !== this.employee.id)
+        ) {
             throw Exception.invariantViolation({ messageKey: `${PositionAssignment.dictionaryPath}.REQUEST_MISMATCH` });
         } else {
             this.validTo = validTo;
@@ -80,7 +83,10 @@ export class PositionAssignment implements Entities.PositionAssignment.Contract 
     }
 
     public canCreate(): void {
-        if (this.employee.organization !== this.organization || this.position.organization !== this.organization) {
+        if (
+            this.employee.organization.id !== this.organization.id ||
+            this.position.organization.id !== this.organization.id
+        ) {
             throw Exception.invariantViolation({
                 messageKey: `${PositionAssignment.dictionaryPath}.ORGANIZATION_MISMATCH`,
             });
@@ -101,7 +107,7 @@ export class PositionAssignment implements Entities.PositionAssignment.Contract 
 
     private hasRequestMismatch(): boolean {
         return [this.sourceRequest, this.closedByRequest].some(
-            (req) => req && (req.organization !== this.organization || req.employee.id !== this.employee.id),
+            (req) => req && (req.organization.id !== this.organization.id || req.employee.id !== this.employee.id),
         );
     }
 }

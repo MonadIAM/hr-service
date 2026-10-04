@@ -9,7 +9,7 @@ declare namespace Services.Employment {
         type Props = {
             input: Omit<Entities.Employment.ConstructorProps, "organization">;
             transaction: ORM.EntityManager;
-            organization: string;
+            organization: Entities.Organization;
         };
 
         type Result = Entities.Employment;

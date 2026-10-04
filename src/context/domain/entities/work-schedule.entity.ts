@@ -17,10 +17,11 @@ export class WorkSchedule implements Entities.WorkSchedule.Contract {
     public pattern: Entities.WorkSchedule.Pattern;
     public patternType: SchedulePattern;
     public status: RecordStatus;
-    public organization: string;
     public revision: number;
     public code: string;
     public name: string;
+
+    public organization: Entities.Organization;
 
     public employmentHistory = new Collection<Entities.Employment>(this);
     public employees = new Collection<Entities.Employee>(this);
@@ -33,11 +34,12 @@ export class WorkSchedule implements Entities.WorkSchedule.Contract {
         this.revision = props.revision ?? 1;
 
         this.calendarApplication = props.calendarApplication;
-        this.organization = props.organization;
         this.patternType = props.patternType;
         this.pattern = props.pattern;
         this.code = props.code;
         this.name = props.name;
+
+        this.organization = props.organization;
     }
 
     public archive(): void {

@@ -1,7 +1,11 @@
 import { Injectable, Inject, Scope } from "@nestjs/common";
 import { LockMode } from "@mikro-orm/core";
 
-import { WORK_CALENDAR_EXCEPTION_REPOSITORY, WORK_CALENDAR_REPOSITORY } from "~context/infrastructure/repositories";
+import {
+    WORK_CALENDAR_EXCEPTION_REPOSITORY,
+    WORK_CALENDAR_REPOSITORY,
+    ORGANIZATION_REPOSITORY,
+} from "~context/infrastructure/repositories";
 
 import { WorkCalendarException } from "../entities";
 
@@ -10,53 +14,61 @@ export class WorkCalendarExceptionService implements Services.WorkCalendarExcept
     public constructor(
         @Inject(WORK_CALENDAR_EXCEPTION_REPOSITORY)
         private readonly workCalendarExceptionRepository: Repositories.WorkCalendarException.Contract,
+        @Inject(ORGANIZATION_REPOSITORY)
+        private readonly organizationRepository: Repositories.Organization.Contract,
         @Inject(WORK_CALENDAR_REPOSITORY)
         private readonly workCalendarRepository: Repositories.WorkCalendar.Contract,
     ) {}
 
     public async create(props: Services.WorkCalendarException.Create.Props): Services.WorkCalendarException.Create.Result {
         const { transaction, organization, input } = props;
-        const calendar = await this.workCalendarRepository.findUniqueOrThrow({
-            where: { id: input.calendar, organization },
-            transaction,
-        });
+        const [organizationEntity, calendarEntity] = await Promise.all([
+            this.organizationRepository.findUniqueOrThrow({
+                where: { id: organization },
+                transaction,
+            }),
+            this.workCalendarRepository.findUniqueOrThrow({
+                where: { id: input.calendar, organization },
+                transaction,
+            }),
+        ]);
 
-        const entity = new WorkCalendarException({
+        const exceptionEntity = new WorkCalendarException({
             ...input,
-            organization,
-            calendar,
+            organization: organizationEntity,
+            calendar: calendarEntity,
         });
 
-        entity.canCreate();
+        exceptionEntity.canCreate();
 
-        transaction.persist(entity);
+        transaction.persist(exceptionEntity);
 
-        return entity;
+        return exceptionEntity;
     }
 
     public async update(props: Services.WorkCalendarException.Update.Props): Services.WorkCalendarException.Update.Result {
         const { transaction, organization, patch, id } = props;
-        const entity = await this.workCalendarExceptionRepository.findUniqueOrThrow({
+        const exceptionEntity = await this.workCalendarExceptionRepository.findUniqueOrThrow({
             options: { lockMode: LockMode.PESSIMISTIC_WRITE },
             where: { organization, id },
             transaction,
         });
 
-        entity.update({ patch });
+        exceptionEntity.update({ patch });
 
-        return entity;
+        return exceptionEntity;
     }
 
     public async purge(props: Services.WorkCalendarException.Purge.Props): Services.WorkCalendarException.Purge.Result {
         const { transaction, organization, id } = props;
-        const entity = await this.workCalendarExceptionRepository.findUniqueOrThrow({
+        const exceptionEntity = await this.workCalendarExceptionRepository.findUniqueOrThrow({
             options: { lockMode: LockMode.PESSIMISTIC_WRITE },
             where: { organization, id },
             transaction,
         });
 
-        transaction.remove(entity);
+        transaction.remove(exceptionEntity);
 
-        return entity;
+        return exceptionEntity;
     }
 }

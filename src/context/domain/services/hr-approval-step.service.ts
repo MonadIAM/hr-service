@@ -4,6 +4,7 @@ import { LockMode } from "@mikro-orm/core";
 import { HRApprovalStatus, HRDecisionKind } from "~context/enums";
 import {
     HR_APPROVAL_STEP_REPOSITORY,
+    ORGANIZATION_REPOSITORY,
     HR_REQUEST_REPOSITORY,
     EMPLOYEE_REPOSITORY,
 } from "~context/infrastructure/repositories";
@@ -18,6 +19,8 @@ export class HRApprovalStepService implements Services.HRApprovalStep.Contract {
         private readonly hrApprovalDecisionService: Services.HRApprovalDecision.ServiceContract,
         @Inject(HR_APPROVAL_STEP_REPOSITORY)
         private readonly hrApprovalStepRepository: Repositories.HRApprovalStep.Contract,
+        @Inject(ORGANIZATION_REPOSITORY)
+        private readonly organizationRepository: Repositories.Organization.Contract,
         @Inject(HR_REQUEST_REPOSITORY)
         private readonly hrRequestRepository: Repositories.HRRequest.Contract,
         @Inject(EMPLOYEE_REPOSITORY)
@@ -25,25 +28,25 @@ export class HRApprovalStepService implements Services.HRApprovalStep.Contract {
     ) {}
 
     public create(props: Services.HRApprovalStep.Create.Props): Services.HRApprovalStep.Create.Result {
-        const { transaction, organization, input } = props;
+        const { transaction, organization: organizationEntity, input } = props;
 
-        const entity = new HRApprovalStep({
-            ...input,
+        const stepEntity = new HRApprovalStep({
             requestRevision: input.request.revision,
             status: HRApprovalStatus.WAITING,
-            organization,
+            organization: organizationEntity,
+            ...input,
         });
 
-        entity.canCreate();
+        stepEntity.canCreate();
 
-        transaction.persist(entity);
+        transaction.persist(stepEntity);
 
-        return entity;
+        return stepEntity;
     }
 
     public async reassign(props: Services.HRApprovalStep.Reassign.Props): Services.HRApprovalStep.Reassign.Result {
         const { transaction, organization, id } = props;
-        const [_, employee] = await Promise.all([
+        const [_, employeeEntity] = await Promise.all([
             this.hrRequestRepository.findUniqueOrThrow({
                 options: {
                     lockMode: LockMode.PESSIMISTIC_WRITE,
@@ -61,7 +64,7 @@ export class HRApprovalStepService implements Services.HRApprovalStep.Contract {
             }),
         ]);
 
-        const entity = await this.hrApprovalStepRepository.findUniqueOrThrow({
+        const stepEntity = await this.hrApprovalStepRepository.findUniqueOrThrow({
             options: {
                 populate: ["assigneeEmployee"],
                 strategy: "select-in",
@@ -71,15 +74,15 @@ export class HRApprovalStepService implements Services.HRApprovalStep.Contract {
             transaction,
         });
 
-        entity.reassign({ employee });
+        stepEntity.reassign({ employee: employeeEntity });
 
-        return entity;
+        return stepEntity;
     }
 
     public async activate(props: Services.HRApprovalStep.Activate.Props): Services.HRApprovalStep.Activate.Result {
         const { transaction, organization, id } = props;
 
-        const [_, entity] = await Promise.all([
+        const [_, stepEntity] = await Promise.all([
             this.hrRequestRepository.findUniqueOrThrow({
                 options: {
                     lockMode: LockMode.PESSIMISTIC_WRITE,
@@ -102,15 +105,15 @@ export class HRApprovalStepService implements Services.HRApprovalStep.Contract {
             }),
         ]);
 
-        entity.activate();
+        stepEntity.activate();
 
-        return entity;
+        return stepEntity;
     }
 
     public async skip(props: Services.HRApprovalStep.Skip.Props): Services.HRApprovalStep.Skip.Result {
         const { transaction, organization, id } = props;
 
-        const [_, entity] = await Promise.all([
+        const [_, stepEntity] = await Promise.all([
             this.hrRequestRepository.findUniqueOrThrow({
                 options: {
                     lockMode: LockMode.PESSIMISTIC_WRITE,
@@ -129,14 +132,18 @@ export class HRApprovalStepService implements Services.HRApprovalStep.Contract {
             }),
         ]);
 
-        entity.skip();
+        stepEntity.skip();
 
-        return entity;
+        return stepEntity;
     }
 
     public async decide(props: Services.HRApprovalStep.Decide.Props): Services.HRApprovalStep.Decide.Result {
         const { transaction, organization, decision, id } = props;
-        const [request, actorEmployee] = await Promise.all([
+        const [organizationEntity, requestEntity, actorEmployeeEntity] = await Promise.all([
+            this.organizationRepository.findUniqueOrThrow({
+                where: { id: organization },
+                transaction,
+            }),
             this.hrRequestRepository.findUniqueOrThrow({
                 options: {
                     lockMode: LockMode.PESSIMISTIC_WRITE,
@@ -154,7 +161,7 @@ export class HRApprovalStepService implements Services.HRApprovalStep.Contract {
             }),
         ]);
 
-        const [entity, pending] = await Promise.all([
+        const [stepEntity, pendingStepEntities] = await Promise.all([
             this.hrApprovalStepRepository.findUniqueOrThrow({
                 options: {
                     populate: ["assigneeEmployee"],
@@ -174,8 +181,8 @@ export class HRApprovalStepService implements Services.HRApprovalStep.Contract {
                 },
                 where: {
                     status: { $in: [HRApprovalStatus.WAITING, HRApprovalStatus.ACTIVE] },
-                    requestRevision: request.revision,
-                    request: { id: request.id },
+                    requestRevision: requestEntity.revision,
+                    request: { id: requestEntity.id },
                     id: { $ne: id },
                     organization,
                 },
@@ -185,41 +192,41 @@ export class HRApprovalStepService implements Services.HRApprovalStep.Contract {
 
         this.hrApprovalDecisionService.create({
             input: {
+                actorEmployee: actorEmployeeEntity,
                 actorAccount: props.actorAccount,
                 comment: props.comment,
-                actorEmployee,
-                step: entity,
+                step: stepEntity,
                 decision,
             },
-            organization,
+            organization: organizationEntity,
             transaction,
         });
 
         switch (decision) {
             case HRDecisionKind.APPROVE:
-                entity.approve();
-                if (pending.length) {
-                    pending[0].activate();
+                stepEntity.approve();
+                if (pendingStepEntities.length) {
+                    pendingStepEntities[0].activate();
                 } else {
-                    request.approve();
+                    requestEntity.approve();
                 }
                 break;
             case HRDecisionKind.REJECT:
-                for (const step of pending) {
-                    step.skip();
+                for (const pendingStepEntity of pendingStepEntities) {
+                    pendingStepEntity.skip();
                 }
-                entity.reject();
-                request.reject();
+                stepEntity.reject();
+                requestEntity.reject();
                 break;
             case HRDecisionKind.RETURN:
-                for (const step of pending) {
-                    step.skip();
+                for (const pendingStepEntity of pendingStepEntities) {
+                    pendingStepEntity.skip();
                 }
-                entity.returnForRevision();
-                request.returnForRevision();
+                stepEntity.returnForRevision();
+                requestEntity.returnForRevision();
                 break;
         }
 
-        return entity;
+        return stepEntity;
     }
 }

@@ -22,7 +22,6 @@ export class Employee implements Entities.Employee.Contract {
     public employeeNumber: string;
     public contractType?: string;
     public termsRevision: number;
-    public organization: string;
     public middleName?: string;
     public workEmail?: string;
     public firstName: string;
@@ -31,6 +30,7 @@ export class Employee implements Entities.Employee.Contract {
 
     public workCalendar?: Entities.WorkCalendar;
     public workSchedule?: Entities.WorkSchedule;
+    public organization: Entities.Organization;
     public leavePolicy?: Entities.LeavePolicy;
     public hrBpEmployee?: Entities.Employee;
 
@@ -58,7 +58,6 @@ export class Employee implements Entities.Employee.Contract {
         this.employeeNumber = props.employeeNumber;
         this.contractEndsOn = props.contractEndsOn;
         this.termsValidFrom = props.termsValidFrom;
-        this.organization = props.organization;
         this.contractType = props.contractType;
         this.middleName = props.middleName;
         this.workEmail = props.workEmail;
@@ -66,6 +65,7 @@ export class Employee implements Entities.Employee.Contract {
         this.lastName = props.lastName;
         this.account = props.account;
 
+        this.organization = props.organization;
         this.hrBpEmployee = props.hrBpEmployee;
         this.workCalendar = props.workCalendar;
         this.workSchedule = props.workSchedule;
@@ -230,7 +230,7 @@ export class Employee implements Entities.Employee.Contract {
     private isInvalidHRBP(employee?: Entities.Employee): boolean {
         return (
             !!employee &&
-            (employee.organization !== this.organization ||
+            (employee.organization.id !== this.organization.id ||
                 employee.id === this.id ||
                 employee.status !== EmployeeStatus.ACTIVE)
         );
@@ -238,7 +238,7 @@ export class Employee implements Entities.Employee.Contract {
 
     private hasTermsOrganizationMismatch(props: Entities.Employee.ChangeTerms.Props): boolean {
         return [props.workCalendar, props.workSchedule, props.leavePolicy].some(
-            (record) => record.organization !== this.organization,
+            (record) => record.organization.id !== this.organization.id,
         );
     }
 
@@ -250,7 +250,7 @@ export class Employee implements Entities.Employee.Contract {
 
     private hasOrganizationMismatch(): boolean {
         return [this.workCalendar, this.workSchedule, this.leavePolicy].some(
-            (record) => record && record.organization !== this.organization,
+            (record) => record && record.organization.id !== this.organization.id,
         );
     }
 }

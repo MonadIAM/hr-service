@@ -14,11 +14,11 @@ declare global {
                 workdayOverride?: DayOverride;
                 shortenedByMinutes?: number;
                 holidayOverride?: boolean;
-                organization: string;
                 source?: string;
                 name?: string;
                 date: string;
 
+                organization: Entities.Organization;
                 calendar: Entities.WorkCalendar;
 
                 update(props: ChangeDataProps): void;
@@ -37,8 +37,8 @@ declare global {
                 workdayOverride?: DayOverride;
                 shortenedByMinutes?: number;
                 source?: string;
-                organization: string;
 
+                organization: Entities.Organization;
                 calendar: Entities.WorkCalendar;
             };
 

@@ -12,16 +12,16 @@ export class ChangeLogService implements Services.ChangeLog.Contract {
     public async purgeExpired(props: Services.ChangeLog.PurgeExpired.Props): Services.ChangeLog.PurgeExpired.Result {
         const { transaction, expirationDate, batchSize } = props;
 
-        const expired = await this.changeLogRepository.find({
+        const expiredEntities = await this.changeLogRepository.find({
             where: { createdAt: { $lt: expirationDate } },
             options: { limit: batchSize },
             transaction,
         });
 
-        for (const entry of expired) {
-            transaction.remove(entry);
+        for (const entryEntity of expiredEntities) {
+            transaction.remove(entryEntity);
         }
 
-        return expired;
+        return expiredEntities;
     }
 }

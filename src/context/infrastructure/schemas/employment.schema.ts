@@ -1,6 +1,14 @@
 import { EntitySchema } from "@mikro-orm/core";
 
-import { WorkCalendar, WorkSchedule, LeavePolicy, Employment, HRRequest, Employee } from "~context/domain/entities";
+import {
+    WorkCalendar,
+    WorkSchedule,
+    Organization,
+    LeavePolicy,
+    Employment,
+    HRRequest,
+    Employee,
+} from "~context/domain/entities";
 
 export const EmploymentSchema = new EntitySchema<Employment>({
     class: Employment,
@@ -18,16 +26,27 @@ export const EmploymentSchema = new EntitySchema<Employment>({
         },
     ],
 
+    indexes: [
+        {
+            name: "employment_organization_idx",
+            properties: ["organization"],
+        },
+    ],
+
     properties: {
         id: { primary: true, type: "uuid" },
-
-        organization: { type: "uuid", fieldName: "organization_id" },
 
         termsSnapshot: { type: "json" },
         termsRevision: { type: "int" },
         validFrom: { type: "date" },
         validTo: { type: "date" },
 
+        organization: {
+            kind: "m:1",
+            entity: () => Organization,
+            fieldName: "organization_id",
+            deleteRule: "cascade",
+        },
         employee: {
             kind: "m:1",
             entity: () => Employee,
@@ -35,7 +54,7 @@ export const EmploymentSchema = new EntitySchema<Employment>({
             columnTypes: ["uuid", "uuid"],
             referencedColumnNames: ["id", "organization_id"],
             ownColumns: ["employee_id"],
-            deleteRule: "restrict",
+            deleteRule: "no action",
         },
         workCalendar: {
             kind: "m:1",
@@ -44,7 +63,7 @@ export const EmploymentSchema = new EntitySchema<Employment>({
             columnTypes: ["uuid", "uuid"],
             referencedColumnNames: ["id", "organization_id"],
             ownColumns: ["work_calendar_id"],
-            deleteRule: "restrict",
+            deleteRule: "no action",
             nullable: true,
         },
         workSchedule: {
@@ -54,7 +73,7 @@ export const EmploymentSchema = new EntitySchema<Employment>({
             columnTypes: ["uuid", "uuid"],
             referencedColumnNames: ["id", "organization_id"],
             ownColumns: ["work_schedule_id"],
-            deleteRule: "restrict",
+            deleteRule: "no action",
             nullable: true,
         },
         leavePolicy: {
@@ -64,7 +83,7 @@ export const EmploymentSchema = new EntitySchema<Employment>({
             columnTypes: ["uuid", "uuid"],
             referencedColumnNames: ["id", "organization_id"],
             ownColumns: ["leave_policy_id"],
-            deleteRule: "restrict",
+            deleteRule: "no action",
             nullable: true,
         },
         replacedByRequest: {
@@ -74,7 +93,7 @@ export const EmploymentSchema = new EntitySchema<Employment>({
             columnTypes: ["uuid", "uuid", "uuid"],
             referencedColumnNames: ["id", "employee_id", "organization_id"],
             ownColumns: ["replaced_by_request_id"],
-            deleteRule: "restrict",
+            deleteRule: "no action",
             nullable: true,
         },
 

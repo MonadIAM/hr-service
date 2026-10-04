@@ -16,7 +16,7 @@ declare namespace Services.WorkCalendar {
             organization: string;
         };
 
-        type Result = Entities.WorkCalendar;
+        type Result = Promise<Entities.WorkCalendar>;
 
         type Signature = (props: Props) => Result;
     }

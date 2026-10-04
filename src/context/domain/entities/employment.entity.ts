@@ -10,13 +10,13 @@ export class Employment implements Entities.Employment.Contract {
 
     public termsSnapshot: UnknownObject;
     public termsRevision: number;
-    public organization: string;
     public validFrom: string;
     public validTo: string;
 
     public replacedByRequest?: Entities.HRRequest;
     public workCalendar?: Entities.WorkCalendar;
     public workSchedule?: Entities.WorkSchedule;
+    public organization: Entities.Organization;
     public leavePolicy?: Entities.LeavePolicy;
     public employee: Entities.Employee;
 
@@ -26,10 +26,10 @@ export class Employment implements Entities.Employment.Contract {
 
         this.termsRevision = props.termsRevision;
         this.termsSnapshot = props.termsSnapshot;
-        this.organization = props.organization;
         this.validFrom = props.validFrom;
         this.validTo = props.validTo;
 
+        this.organization = props.organization;
         this.replacedByRequest = props.replacedByRequest;
         this.workCalendar = props.workCalendar;
         this.workSchedule = props.workSchedule;
@@ -47,7 +47,7 @@ export class Employment implements Entities.Employment.Contract {
 
     private hasOrganizationMismatch(): boolean {
         return [this.employee, this.workCalendar, this.workSchedule, this.leavePolicy, this.replacedByRequest].some(
-            (record) => record && record.organization !== this.organization,
+            (record) => record && record.organization.id !== this.organization.id,
         );
     }
 }

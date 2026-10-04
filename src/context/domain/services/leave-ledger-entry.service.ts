@@ -1,7 +1,7 @@
 import { Injectable, Inject, Scope } from "@nestjs/common";
 import { LockMode } from "@mikro-orm/core";
 
-import { LEAVE_LEDGER_ENTRY_REPOSITORY } from "~context/infrastructure/repositories";
+import { LEAVE_LEDGER_ENTRY_REPOSITORY, ORGANIZATION_REPOSITORY } from "~context/infrastructure/repositories";
 import { LeaveLedgerKind } from "~context/enums";
 import { Exception } from "~common/exceptions";
 
@@ -14,69 +14,82 @@ export class LeaveLedgerEntryService implements Services.LeaveLedgerEntry.Contra
     public constructor(
         @Inject(LEAVE_LEDGER_ENTRY_REPOSITORY)
         private readonly leaveLedgerEntryRepository: Repositories.LeaveLedgerEntry.Contract,
+        @Inject(ORGANIZATION_REPOSITORY)
+        private readonly organizationRepository: Repositories.Organization.Contract,
     ) {}
 
-    public create(props: Services.LeaveLedgerEntry.Create.Props): Services.LeaveLedgerEntry.Create.Result {
+    public async create(props: Services.LeaveLedgerEntry.Create.Props): Services.LeaveLedgerEntry.Create.Result {
         const { transaction, organization, input } = props;
 
         if (input.kind === LeaveLedgerKind.REVERSAL) {
             throw Exception.invariantViolation({ messageKey: `${this.dictionaryPath}.INVALID_REVERSAL` });
         }
 
-        const entity = new LeaveLedgerEntry({
-            ...input,
-            organization,
+        const organizationEntity = await this.organizationRepository.findUniqueOrThrow({
+            where: { id: organization },
+            transaction,
         });
 
-        entity.canCreate();
+        const entryEntity = new LeaveLedgerEntry({
+            organization: organizationEntity,
+            ...input,
+        });
 
-        transaction.persist(entity);
+        entryEntity.canCreate();
 
-        return entity;
+        transaction.persist(entryEntity);
+
+        return entryEntity;
     }
 
     public async reverse(props: Services.LeaveLedgerEntry.Reverse.Props): Services.LeaveLedgerEntry.Reverse.Result {
         const { transaction, organization, input, id } = props;
-        const entity = await this.leaveLedgerEntryRepository.findUniqueOrThrow({
-            where: { organization, id },
-            transaction,
-            options: {
-                populate: ["employee", "leavePolicy", "absence", "reversedByEntry"],
-                lockMode: LockMode.PESSIMISTIC_WRITE,
-                strategy: "select-in",
-            },
-        });
+        const [organizationEntity, entryEntity] = await Promise.all([
+            this.organizationRepository.findUniqueOrThrow({
+                where: { id: organization },
+                transaction,
+            }),
+            this.leaveLedgerEntryRepository.findUniqueOrThrow({
+                where: { organization, id },
+                transaction,
+                options: {
+                    populate: ["employee", "leavePolicy", "absence", "reversedByEntry"],
+                    lockMode: LockMode.PESSIMISTIC_WRITE,
+                    strategy: "select-in",
+                },
+            }),
+        ]);
 
-        if (entity.reversedByEntry || entity.kind === LeaveLedgerKind.REVERSAL) {
+        if (entryEntity.reversedByEntry || entryEntity.kind === LeaveLedgerKind.REVERSAL) {
             throw Exception.invariantViolation({ messageKey: `${this.dictionaryPath}.INVALID_REVERSAL` });
         }
 
         const reverseDelta = (value: string): string =>
             /^-?0(?:\.0+)?$/.test(value) ? "0" : value.startsWith("-") ? value.slice(1) : `-${value}`;
 
-        const reversal = new LeaveLedgerEntry({
+        const reversalEntity = new LeaveLedgerEntry({
             ...input,
-            entitlementPeriodStart: entity.entitlementPeriodStart,
-            entitlementPeriodEnd: entity.entitlementPeriodEnd,
-            reservedDelta: reverseDelta(entity.reservedDelta),
-            calculationSnapshot: { reversedEntry: entity.id },
-            balanceDelta: reverseDelta(entity.balanceDelta),
-            leavePolicy: entity.leavePolicy,
+            organization: organizationEntity,
+            entitlementPeriodStart: entryEntity.entitlementPeriodStart,
+            entitlementPeriodEnd: entryEntity.entitlementPeriodEnd,
+            reservedDelta: reverseDelta(entryEntity.reservedDelta),
+            calculationSnapshot: { reversedEntry: entryEntity.id },
+            balanceDelta: reverseDelta(entryEntity.balanceDelta),
+            leavePolicy: entryEntity.leavePolicy,
             kind: LeaveLedgerKind.REVERSAL,
-            employee: entity.employee,
-            poolCode: entity.poolCode,
-            absence: entity.absence,
-            reversesEntry: entity,
-            unit: entity.unit,
-            organization,
+            employee: entryEntity.employee,
+            poolCode: entryEntity.poolCode,
+            absence: entryEntity.absence,
+            reversesEntry: entryEntity,
+            unit: entryEntity.unit,
         });
 
-        reversal.canCreate();
+        reversalEntity.canCreate();
 
-        entity.reversedByEntry = reversal;
+        entryEntity.reversedByEntry = reversalEntity;
 
-        transaction.persist(reversal);
+        transaction.persist(reversalEntity);
 
-        return reversal;
+        return reversalEntity;
     }
 }

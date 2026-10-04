@@ -13,13 +13,13 @@ declare global {
 
                 status: HRApprovalStatus;
                 requestRevision: number;
-                organization: string;
                 resolvedAt?: Date;
                 ordinal: number;
                 name: string;
                 dueAt?: Date;
 
                 decision?: Entities.HRApprovalDecision;
+                organization: Entities.Organization;
                 assigneeEmployee: Entities.Employee;
                 request: Entities.HRRequest;
 
@@ -35,12 +35,12 @@ declare global {
             type ConstructorProps = {
                 status: HRApprovalStatus;
                 requestRevision: number;
-                organization: string;
                 resolvedAt?: Date;
                 ordinal: number;
                 name: string;
                 dueAt?: Date;
 
+                organization: Entities.Organization;
                 assigneeEmployee: Entities.Employee;
                 request: Entities.HRRequest;
             };

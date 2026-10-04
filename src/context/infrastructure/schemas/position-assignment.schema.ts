@@ -1,6 +1,6 @@
 import { DecimalType, EntitySchema } from "@mikro-orm/core";
 
-import { PositionAssignment, HRRequest, Employee, Position } from "~context/domain/entities";
+import { PositionAssignment, Organization, HRRequest, Employee, Position } from "~context/domain/entities";
 import { PositionAssignmentStatus } from "~context/enums";
 
 export const PositionAssignmentSchema = new EntitySchema<PositionAssignment>({
@@ -40,7 +40,6 @@ export const PositionAssignmentSchema = new EntitySchema<PositionAssignment>({
         id: { primary: true, type: "uuid" },
 
         team: { type: "uuid", fieldName: "team_id", nullable: true },
-        organization: { type: "uuid", fieldName: "organization_id" },
         department: { type: "uuid", fieldName: "department_id" },
 
         status: {
@@ -66,6 +65,12 @@ export const PositionAssignmentSchema = new EntitySchema<PositionAssignment>({
         positionTitle: { type: "text" },
         validFrom: { type: "date" },
 
+        organization: {
+            kind: "m:1",
+            entity: () => Organization,
+            fieldName: "organization_id",
+            deleteRule: "cascade",
+        },
         employee: {
             kind: "m:1",
             entity: () => Employee,
@@ -73,7 +78,7 @@ export const PositionAssignmentSchema = new EntitySchema<PositionAssignment>({
             columnTypes: ["uuid", "uuid"],
             referencedColumnNames: ["id", "organization_id"],
             ownColumns: ["employee_id"],
-            deleteRule: "restrict",
+            deleteRule: "no action",
         },
         position: {
             kind: "m:1",
@@ -82,7 +87,7 @@ export const PositionAssignmentSchema = new EntitySchema<PositionAssignment>({
             columnTypes: ["uuid", "uuid"],
             referencedColumnNames: ["id", "organization_id"],
             ownColumns: ["position_id"],
-            deleteRule: "restrict",
+            deleteRule: "no action",
         },
         sourceRequest: {
             kind: "m:1",
@@ -91,7 +96,7 @@ export const PositionAssignmentSchema = new EntitySchema<PositionAssignment>({
             columnTypes: ["uuid", "uuid", "uuid"],
             referencedColumnNames: ["id", "employee_id", "organization_id"],
             ownColumns: ["source_request_id"],
-            deleteRule: "restrict",
+            deleteRule: "no action",
             nullable: true,
         },
         closedByRequest: {
@@ -101,7 +106,7 @@ export const PositionAssignmentSchema = new EntitySchema<PositionAssignment>({
             columnTypes: ["uuid", "uuid", "uuid"],
             referencedColumnNames: ["id", "employee_id", "organization_id"],
             ownColumns: ["closed_by_request_id"],
-            deleteRule: "restrict",
+            deleteRule: "no action",
             nullable: true,
         },
 
