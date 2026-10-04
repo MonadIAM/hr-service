@@ -8,7 +8,7 @@ export class AbsenceMapper implements Repositories.Mappers.Contract<Entities.Abs
         filters: Repositories.Mappers.Absence.Filters,
         basic: ORM.ObjectQuery<Entities.Absence> = {},
     ): ORM.ObjectQuery<Entities.Absence> {
-        const where: ORM.ObjectQuery<Entities.Absence> = {};
+        const where: ORM.ObjectQuery<Entities.Absence> = basic;
 
         if (filters.id) {
             where.id = ORMAdapter.applyStringFilter(filters.id);
@@ -78,7 +78,7 @@ export class AbsenceMapper implements Repositories.Mappers.Contract<Entities.Abs
             };
         }
 
-        return Object.keys(basic).length ? { $and: [basic, where] } : where;
+        return where;
     }
 
     public buildOptionsORM<P extends string = never, F extends string = "*">(

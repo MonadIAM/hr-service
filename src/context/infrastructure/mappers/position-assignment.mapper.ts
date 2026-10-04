@@ -11,7 +11,7 @@ export class PositionAssignmentMapper implements Repositories.Mappers.Contract<
         filters: Repositories.Mappers.PositionAssignment.Filters,
         basic: ORM.ObjectQuery<Entities.PositionAssignment> = {},
     ): ORM.ObjectQuery<Entities.PositionAssignment> {
-        const where: ORM.ObjectQuery<Entities.PositionAssignment> = {};
+        const where: ORM.ObjectQuery<Entities.PositionAssignment> = basic;
 
         if (filters.id) {
             where.id = ORMAdapter.applyStringFilter(filters.id);
@@ -84,7 +84,7 @@ export class PositionAssignmentMapper implements Repositories.Mappers.Contract<
             };
         }
 
-        return Object.keys(basic).length ? { $and: [basic, where] } : where;
+        return where;
     }
 
     public buildOptionsORM<P extends string = never, F extends string = "*">(

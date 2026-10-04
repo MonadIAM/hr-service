@@ -11,7 +11,7 @@ export class LeavePolicyMapper implements Repositories.Mappers.Contract<
         filters: Repositories.Mappers.LeavePolicy.Filters,
         basic: ORM.ObjectQuery<Entities.LeavePolicy> = {},
     ): ORM.ObjectQuery<Entities.LeavePolicy> {
-        const where: ORM.ObjectQuery<Entities.LeavePolicy> = {};
+        const where: ORM.ObjectQuery<Entities.LeavePolicy> = basic;
 
         if (filters.id) {
             where.id = ORMAdapter.applyStringFilter(filters.id);
@@ -45,7 +45,7 @@ export class LeavePolicyMapper implements Repositories.Mappers.Contract<
             where.version = ORMAdapter.applyOrdinalFilter<number>(filters.version);
         }
 
-        return Object.keys(basic).length ? { $and: [basic, where] } : where;
+        return where;
     }
 
     public buildOptionsORM<P extends string = never, F extends string = "*">(

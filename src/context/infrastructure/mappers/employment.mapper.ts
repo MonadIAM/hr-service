@@ -10,7 +10,7 @@ export class EmploymentMapper implements Repositories.Mappers.Contract<
         filters: Repositories.Mappers.Employment.Filters,
         basic: ORM.ObjectQuery<Entities.Employment> = {},
     ): ORM.ObjectQuery<Entities.Employment> {
-        const where: ORM.ObjectQuery<Entities.Employment> = {};
+        const where: ORM.ObjectQuery<Entities.Employment> = basic;
 
         if (filters.id) {
             where.id = ORMAdapter.applyStringFilter(filters.id);
@@ -58,7 +58,7 @@ export class EmploymentMapper implements Repositories.Mappers.Contract<
             };
         }
 
-        return Object.keys(basic).length ? { $and: [basic, where] } : where;
+        return where;
     }
 
     public buildOptionsORM<P extends string = never, F extends string = "*">(

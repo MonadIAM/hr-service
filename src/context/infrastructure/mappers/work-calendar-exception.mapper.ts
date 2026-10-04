@@ -11,7 +11,7 @@ export class WorkCalendarExceptionMapper implements Repositories.Mappers.Contrac
         filters: Repositories.Mappers.WorkCalendarException.Filters,
         basic: ORM.ObjectQuery<Entities.WorkCalendarException> = {},
     ): ORM.ObjectQuery<Entities.WorkCalendarException> {
-        const where: ORM.ObjectQuery<Entities.WorkCalendarException> = {};
+        const where: ORM.ObjectQuery<Entities.WorkCalendarException> = basic;
 
         if (filters.id) {
             where.id = ORMAdapter.applyStringFilter(filters.id);
@@ -55,7 +55,7 @@ export class WorkCalendarExceptionMapper implements Repositories.Mappers.Contrac
             };
         }
 
-        return Object.keys(basic).length ? { $and: [basic, where] } : where;
+        return where;
     }
 
     public buildOptionsORM<P extends string = never, F extends string = "*">(

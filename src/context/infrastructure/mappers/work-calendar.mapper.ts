@@ -11,7 +11,7 @@ export class WorkCalendarMapper implements Repositories.Mappers.Contract<
         filters: Repositories.Mappers.WorkCalendar.Filters,
         basic: ORM.ObjectQuery<Entities.WorkCalendar> = {},
     ): ORM.ObjectQuery<Entities.WorkCalendar> {
-        const where: ORM.ObjectQuery<Entities.WorkCalendar> = {};
+        const where: ORM.ObjectQuery<Entities.WorkCalendar> = basic;
 
         if (filters.id) {
             where.id = ORMAdapter.applyStringFilter(filters.id);
@@ -48,7 +48,7 @@ export class WorkCalendarMapper implements Repositories.Mappers.Contract<
             where.version = ORMAdapter.applyOrdinalFilter<number>(filters.version);
         }
 
-        return Object.keys(basic).length ? { $and: [basic, where] } : where;
+        return where;
     }
 
     public buildOptionsORM<P extends string = never, F extends string = "*">(

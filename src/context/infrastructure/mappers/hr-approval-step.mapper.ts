@@ -11,7 +11,7 @@ export class HRApprovalStepMapper implements Repositories.Mappers.Contract<
         filters: Repositories.Mappers.HRApprovalStep.Filters,
         basic: ORM.ObjectQuery<Entities.HRApprovalStep> = {},
     ): ORM.ObjectQuery<Entities.HRApprovalStep> {
-        const where: ORM.ObjectQuery<Entities.HRApprovalStep> = {};
+        const where: ORM.ObjectQuery<Entities.HRApprovalStep> = basic;
 
         if (filters.id) {
             where.id = ORMAdapter.applyStringFilter(filters.id);
@@ -64,7 +64,7 @@ export class HRApprovalStepMapper implements Repositories.Mappers.Contract<
             };
         }
 
-        return Object.keys(basic).length ? { $and: [basic, where] } : where;
+        return where;
     }
 
     public buildOptionsORM<P extends string = never, F extends string = "*">(

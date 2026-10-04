@@ -11,7 +11,7 @@ export class HRRequestMapper implements Repositories.Mappers.Contract<
         filters: Repositories.Mappers.HRRequest.Filters,
         basic: ORM.ObjectQuery<Entities.HRRequest> = {},
     ): ORM.ObjectQuery<Entities.HRRequest> {
-        const where: ORM.ObjectQuery<Entities.HRRequest> = {};
+        const where: ORM.ObjectQuery<Entities.HRRequest> = basic;
 
         if (filters.id) {
             where.id = ORMAdapter.applyStringFilter(filters.id);
@@ -99,7 +99,7 @@ export class HRRequestMapper implements Repositories.Mappers.Contract<
             };
         }
 
-        return Object.keys(basic).length ? { $and: [basic, where] } : where;
+        return where;
     }
 
     public buildOptionsORM<P extends string = never, F extends string = "*">(
