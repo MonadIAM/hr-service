@@ -279,10 +279,10 @@
           "comment": null,
           "collation": null,
           "enumItems": [
-            "SCHEDULED",
             "IN_PROGRESS",
             "COMPLETED",
-            "CANCELLED"
+            "CANCELLED",
+            "SCHEDULED"
           ],
           "mappedType": "enum",
           "nativeEnumName": "absence_status"
@@ -319,8 +319,8 @@
           "comment": null,
           "collation": null,
           "enumItems": [
-            "DAY",
-            "MINUTE"
+            "MINUTE",
+            "DAY"
           ],
           "mappedType": "enum",
           "nativeEnumName": "leave_unit"
@@ -450,8 +450,7 @@
             "employee_id",
             "organization_id"
           ],
-          "referencedTableName": "hr.hr_request",
-          "deleteRule": "restrict"
+          "referencedTableName": "hr.hr_request"
         },
         "absence_employee_id_organization_id_foreign": {
           "columnNames": [
@@ -464,8 +463,7 @@
             "id",
             "organization_id"
           ],
-          "referencedTableName": "hr.employee",
-          "deleteRule": "restrict"
+          "referencedTableName": "hr.employee"
         },
         "absence_leave_policy_id_organization_id_foreign": {
           "columnNames": [
@@ -478,8 +476,19 @@
             "id",
             "organization_id"
           ],
-          "referencedTableName": "hr.leave_policy",
-          "deleteRule": "restrict"
+          "referencedTableName": "hr.leave_policy"
+        },
+        "absence_organization_id_foreign": {
+          "columnNames": [
+            "organization_id"
+          ],
+          "constraintName": "absence_organization_id_foreign",
+          "localTableName": "hr.absence",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "hr.organization",
+          "deleteRule": "cascade"
         },
         "absence_source_request_id_employee_id_organization_id_foreign": {
           "columnNames": [
@@ -494,8 +503,7 @@
             "employee_id",
             "organization_id"
           ],
-          "referencedTableName": "hr.hr_request",
-          "deleteRule": "restrict"
+          "referencedTableName": "hr.hr_request"
         }
       },
       "comment": null
@@ -791,10 +799,10 @@
           "comment": null,
           "collation": null,
           "enumItems": [
-            "DRAFT",
-            "ACTIVE",
             "TERMINATED",
-            "ARCHIVED"
+            "ARCHIVED",
+            "ACTIVE",
+            "DRAFT"
           ],
           "mappedType": "enum",
           "nativeEnumName": "employee_status"
@@ -1018,8 +1026,7 @@
             "id",
             "organization_id"
           ],
-          "referencedTableName": "hr.employee",
-          "deleteRule": "restrict"
+          "referencedTableName": "hr.employee"
         },
         "employee_leave_policy_id_organization_id_foreign": {
           "columnNames": [
@@ -1032,8 +1039,19 @@
             "id",
             "organization_id"
           ],
-          "referencedTableName": "hr.leave_policy",
-          "deleteRule": "restrict"
+          "referencedTableName": "hr.leave_policy"
+        },
+        "employee_organization_id_foreign": {
+          "columnNames": [
+            "organization_id"
+          ],
+          "constraintName": "employee_organization_id_foreign",
+          "localTableName": "hr.employee",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "hr.organization",
+          "deleteRule": "cascade"
         },
         "employee_work_calendar_id_organization_id_foreign": {
           "columnNames": [
@@ -1046,8 +1064,7 @@
             "id",
             "organization_id"
           ],
-          "referencedTableName": "hr.work_calendar",
-          "deleteRule": "restrict"
+          "referencedTableName": "hr.work_calendar"
         },
         "employee_work_schedule_id_organization_id_foreign": {
           "columnNames": [
@@ -1060,8 +1077,7 @@
             "id",
             "organization_id"
           ],
-          "referencedTableName": "hr.work_schedule",
-          "deleteRule": "restrict"
+          "referencedTableName": "hr.work_schedule"
         }
       },
       "comment": null
@@ -1301,6 +1317,16 @@
         },
         {
           "columnNames": [
+            "organization_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "keyName": "employment_organization_idx",
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": [
             "id"
           ],
           "composite": false,
@@ -1324,8 +1350,7 @@
             "id",
             "organization_id"
           ],
-          "referencedTableName": "hr.employee",
-          "deleteRule": "restrict"
+          "referencedTableName": "hr.employee"
         },
         "employment_leave_policy_id_organization_id_foreign": {
           "columnNames": [
@@ -1338,8 +1363,19 @@
             "id",
             "organization_id"
           ],
-          "referencedTableName": "hr.leave_policy",
-          "deleteRule": "restrict"
+          "referencedTableName": "hr.leave_policy"
+        },
+        "employment_organization_id_foreign": {
+          "columnNames": [
+            "organization_id"
+          ],
+          "constraintName": "employment_organization_id_foreign",
+          "localTableName": "hr.employment",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "hr.organization",
+          "deleteRule": "cascade"
         },
         "employment_replaced_by_request_id_employee_id_or_98fa4_foreign": {
           "columnNames": [
@@ -1354,8 +1390,7 @@
             "employee_id",
             "organization_id"
           ],
-          "referencedTableName": "hr.hr_request",
-          "deleteRule": "restrict"
+          "referencedTableName": "hr.hr_request"
         },
         "employment_work_calendar_id_organization_id_foreign": {
           "columnNames": [
@@ -1368,8 +1403,7 @@
             "id",
             "organization_id"
           ],
-          "referencedTableName": "hr.work_calendar",
-          "deleteRule": "restrict"
+          "referencedTableName": "hr.work_calendar"
         },
         "employment_work_schedule_id_organization_id_foreign": {
           "columnNames": [
@@ -1382,8 +1416,7 @@
             "id",
             "organization_id"
           ],
-          "referencedTableName": "hr.work_schedule",
-          "deleteRule": "restrict"
+          "referencedTableName": "hr.work_schedule"
         }
       },
       "comment": null
@@ -1599,6 +1632,16 @@
         },
         {
           "columnNames": [
+            "organization_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "keyName": "hr_approval_decision_organization_idx",
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": [
             "id"
           ],
           "composite": false,
@@ -1635,8 +1678,19 @@
             "id",
             "organization_id"
           ],
-          "referencedTableName": "hr.employee",
-          "deleteRule": "restrict"
+          "referencedTableName": "hr.employee"
+        },
+        "hr_approval_decision_organization_id_foreign": {
+          "columnNames": [
+            "organization_id"
+          ],
+          "constraintName": "hr_approval_decision_organization_id_foreign",
+          "localTableName": "hr.hr_approval_decision",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "hr.organization",
+          "deleteRule": "cascade"
         },
         "hr_approval_decision_step_id_request_id_request__e985b_foreign": {
           "columnNames": [
@@ -1653,8 +1707,7 @@
             "request_revision",
             "organization_id"
           ],
-          "referencedTableName": "hr.hr_approval_step",
-          "deleteRule": "restrict"
+          "referencedTableName": "hr.hr_approval_step"
         }
       },
       "comment": null
@@ -1968,8 +2021,19 @@
             "id",
             "organization_id"
           ],
-          "referencedTableName": "hr.employee",
-          "deleteRule": "restrict"
+          "referencedTableName": "hr.employee"
+        },
+        "hr_approval_step_organization_id_foreign": {
+          "columnNames": [
+            "organization_id"
+          ],
+          "constraintName": "hr_approval_step_organization_id_foreign",
+          "localTableName": "hr.hr_approval_step",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "hr.organization",
+          "deleteRule": "cascade"
         },
         "hr_approval_step_request_id_organization_id_foreign": {
           "columnNames": [
@@ -1982,8 +2046,7 @@
             "id",
             "organization_id"
           ],
-          "referencedTableName": "hr.hr_request",
-          "deleteRule": "restrict"
+          "referencedTableName": "hr.hr_request"
         }
       },
       "comment": null
@@ -2572,8 +2635,7 @@
             "id",
             "organization_id"
           ],
-          "referencedTableName": "hr.employee",
-          "deleteRule": "restrict"
+          "referencedTableName": "hr.employee"
         },
         "hr_request_initiator_employee_id_organization_id_foreign": {
           "columnNames": [
@@ -2586,8 +2648,19 @@
             "id",
             "organization_id"
           ],
-          "referencedTableName": "hr.employee",
-          "deleteRule": "restrict"
+          "referencedTableName": "hr.employee"
+        },
+        "hr_request_organization_id_foreign": {
+          "columnNames": [
+            "organization_id"
+          ],
+          "constraintName": "hr_request_organization_id_foreign",
+          "localTableName": "hr.hr_request",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "hr.organization",
+          "deleteRule": "cascade"
         },
         "hr_request_related_request_id_employee_id_organi_00bf8_foreign": {
           "columnNames": [
@@ -2602,8 +2675,7 @@
             "employee_id",
             "organization_id"
           ],
-          "referencedTableName": "hr.hr_request",
-          "deleteRule": "restrict"
+          "referencedTableName": "hr.hr_request"
         },
         "hr_request_target_position_id_organization_id_foreign": {
           "columnNames": [
@@ -2616,8 +2688,7 @@
             "id",
             "organization_id"
           ],
-          "referencedTableName": "hr.position",
-          "deleteRule": "restrict"
+          "referencedTableName": "hr.position"
         }
       },
       "comment": null
@@ -2811,12 +2882,12 @@
           "comment": null,
           "collation": null,
           "enumItems": [
+            "ADJUSTMENT",
+            "REVERSAL",
             "ACCRUAL",
             "RESERVE",
             "RELEASE",
-            "CONSUME",
-            "ADJUSTMENT",
-            "REVERSAL"
+            "CONSUME"
           ],
           "mappedType": "enum",
           "nativeEnumName": "ledger_kind"
@@ -2955,8 +3026,8 @@
           "comment": null,
           "collation": null,
           "enumItems": [
-            "DAY",
-            "MINUTE"
+            "MINUTE",
+            "DAY"
           ],
           "mappedType": "unknown"
         }
@@ -3069,8 +3140,7 @@
             "unit",
             "organization_id"
           ],
-          "referencedTableName": "hr.absence",
-          "deleteRule": "restrict"
+          "referencedTableName": "hr.absence"
         },
         "leave_ledger_entry_employee_id_organization_id_foreign": {
           "columnNames": [
@@ -3083,8 +3153,7 @@
             "id",
             "organization_id"
           ],
-          "referencedTableName": "hr.employee",
-          "deleteRule": "restrict"
+          "referencedTableName": "hr.employee"
         },
         "leave_ledger_entry_leave_policy_id_organization_id_foreign": {
           "columnNames": [
@@ -3097,8 +3166,19 @@
             "id",
             "organization_id"
           ],
-          "referencedTableName": "hr.leave_policy",
-          "deleteRule": "restrict"
+          "referencedTableName": "hr.leave_policy"
+        },
+        "leave_ledger_entry_organization_id_foreign": {
+          "columnNames": [
+            "organization_id"
+          ],
+          "constraintName": "leave_ledger_entry_organization_id_foreign",
+          "localTableName": "hr.leave_ledger_entry",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "hr.organization",
+          "deleteRule": "cascade"
         },
         "leave_ledger_entry_reverses_entry_id_employee_id_a889c_foreign": {
           "columnNames": [
@@ -3117,8 +3197,7 @@
             "unit",
             "organization_id"
           ],
-          "referencedTableName": "hr.leave_ledger_entry",
-          "deleteRule": "restrict"
+          "referencedTableName": "hr.leave_ledger_entry"
         },
         "leave_ledger_entry_source_request_id_employee_id_d2bd6_foreign": {
           "columnNames": [
@@ -3133,8 +3212,7 @@
             "employee_id",
             "organization_id"
           ],
-          "referencedTableName": "hr.hr_request",
-          "deleteRule": "restrict"
+          "referencedTableName": "hr.hr_request"
         }
       },
       "comment": null
@@ -3294,8 +3372,8 @@
           "comment": null,
           "collation": null,
           "enumItems": [
-            "ACTIVE",
-            "ARCHIVED"
+            "ARCHIVED",
+            "ACTIVE"
           ],
           "mappedType": "enum",
           "nativeEnumName": "record_status"
@@ -3385,6 +3463,85 @@
           "constraint": true,
           "keyName": "leave_policy_pkey",
           "primary": true,
+          "unique": true
+        }
+      ],
+      "checks": [],
+      "triggers": [],
+      "foreignKeys": {
+        "leave_policy_organization_id_foreign": {
+          "columnNames": [
+            "organization_id"
+          ],
+          "constraintName": "leave_policy_organization_id_foreign",
+          "localTableName": "hr.leave_policy",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "hr.organization",
+          "deleteRule": "cascade"
+        }
+      },
+      "comment": null
+    },
+    {
+      "name": "organization",
+      "schema": "hr",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": true,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "realm_id": {
+          "name": "realm_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": true,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        }
+      },
+      "indexes": [
+        {
+          "columnNames": [
+            "id"
+          ],
+          "composite": false,
+          "constraint": true,
+          "keyName": "organization_pkey",
+          "primary": true,
+          "unique": true
+        },
+        {
+          "columnNames": [
+            "realm_id"
+          ],
+          "composite": false,
+          "constraint": true,
+          "keyName": "organization_realm_unique",
+          "primary": false,
           "unique": true
         }
       ],
@@ -3616,8 +3773,8 @@
           "comment": null,
           "collation": null,
           "enumItems": [
-            "ACTIVE",
-            "ARCHIVED"
+            "ARCHIVED",
+            "ACTIVE"
           ],
           "mappedType": "enum",
           "nativeEnumName": "record_status"
@@ -3767,7 +3924,20 @@
       ],
       "checks": [],
       "triggers": [],
-      "foreignKeys": {},
+      "foreignKeys": {
+        "position_organization_id_foreign": {
+          "columnNames": [
+            "organization_id"
+          ],
+          "constraintName": "position_organization_id_foreign",
+          "localTableName": "hr.position",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "hr.organization",
+          "deleteRule": "cascade"
+        }
+      },
       "comment": null
     },
     {
@@ -4218,8 +4388,7 @@
             "employee_id",
             "organization_id"
           ],
-          "referencedTableName": "hr.hr_request",
-          "deleteRule": "restrict"
+          "referencedTableName": "hr.hr_request"
         },
         "position_assignment_employee_id_organization_id_foreign": {
           "columnNames": [
@@ -4232,8 +4401,19 @@
             "id",
             "organization_id"
           ],
-          "referencedTableName": "hr.employee",
-          "deleteRule": "restrict"
+          "referencedTableName": "hr.employee"
+        },
+        "position_assignment_organization_id_foreign": {
+          "columnNames": [
+            "organization_id"
+          ],
+          "constraintName": "position_assignment_organization_id_foreign",
+          "localTableName": "hr.position_assignment",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "hr.organization",
+          "deleteRule": "cascade"
         },
         "position_assignment_position_id_organization_id_foreign": {
           "columnNames": [
@@ -4246,8 +4426,7 @@
             "id",
             "organization_id"
           ],
-          "referencedTableName": "hr.position",
-          "deleteRule": "restrict"
+          "referencedTableName": "hr.position"
         },
         "position_assignment_source_request_id_employee_i_a72cf_foreign": {
           "columnNames": [
@@ -4262,8 +4441,7 @@
             "employee_id",
             "organization_id"
           ],
-          "referencedTableName": "hr.hr_request",
-          "deleteRule": "restrict"
+          "referencedTableName": "hr.hr_request"
         }
       },
       "comment": null
@@ -4423,8 +4601,8 @@
           "comment": null,
           "collation": null,
           "enumItems": [
-            "ACTIVE",
-            "ARCHIVED"
+            "ARCHIVED",
+            "ACTIVE"
           ],
           "mappedType": "enum",
           "nativeEnumName": "record_status"
@@ -4535,7 +4713,20 @@
       ],
       "checks": [],
       "triggers": [],
-      "foreignKeys": {},
+      "foreignKeys": {
+        "work_calendar_organization_id_foreign": {
+          "columnNames": [
+            "organization_id"
+          ],
+          "constraintName": "work_calendar_organization_id_foreign",
+          "localTableName": "hr.work_calendar",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "hr.organization",
+          "deleteRule": "cascade"
+        }
+      },
       "comment": null
     },
     {
@@ -4777,6 +4968,16 @@
         },
         {
           "columnNames": [
+            "organization_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "keyName": "work_calendar_exception_organization_idx",
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": [
             "id"
           ],
           "composite": false,
@@ -4800,8 +5001,19 @@
             "id",
             "organization_id"
           ],
-          "referencedTableName": "hr.work_calendar",
-          "deleteRule": "restrict"
+          "referencedTableName": "hr.work_calendar"
+        },
+        "work_calendar_exception_organization_id_foreign": {
+          "columnNames": [
+            "organization_id"
+          ],
+          "constraintName": "work_calendar_exception_organization_id_foreign",
+          "localTableName": "hr.work_calendar_exception",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "hr.organization",
+          "deleteRule": "cascade"
         }
       },
       "comment": null
@@ -4986,8 +5198,8 @@
           "comment": null,
           "collation": null,
           "enumItems": [
-            "ACTIVE",
-            "ARCHIVED"
+            "ARCHIVED",
+            "ACTIVE"
           ],
           "mappedType": "enum",
           "nativeEnumName": "record_status"
@@ -5082,7 +5294,20 @@
       ],
       "checks": [],
       "triggers": [],
-      "foreignKeys": {},
+      "foreignKeys": {
+        "work_schedule_organization_id_foreign": {
+          "columnNames": [
+            "organization_id"
+          ],
+          "constraintName": "work_schedule_organization_id_foreign",
+          "localTableName": "hr.work_schedule",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "hr.organization",
+          "deleteRule": "cascade"
+        }
+      },
       "comment": null
     },
     {
@@ -5815,10 +6040,10 @@
       "name": "absence_status",
       "schema": "hr",
       "items": [
-        "SCHEDULED",
         "IN_PROGRESS",
         "COMPLETED",
-        "CANCELLED"
+        "CANCELLED",
+        "SCHEDULED"
       ]
     },
     "hr.approval_status": {
@@ -5871,10 +6096,10 @@
       "name": "employee_status",
       "schema": "hr",
       "items": [
-        "DRAFT",
-        "ACTIVE",
         "TERMINATED",
-        "ARCHIVED"
+        "ARCHIVED",
+        "ACTIVE",
+        "DRAFT"
       ]
     },
     "hr.execution_status": {
@@ -5892,28 +6117,28 @@
       "name": "leave_unit",
       "schema": "hr",
       "items": [
-        "DAY",
-        "MINUTE"
+        "MINUTE",
+        "DAY"
       ]
     },
     "hr.ledger_kind": {
       "name": "ledger_kind",
       "schema": "hr",
       "items": [
+        "ADJUSTMENT",
+        "REVERSAL",
         "ACCRUAL",
         "RESERVE",
         "RELEASE",
-        "CONSUME",
-        "ADJUSTMENT",
-        "REVERSAL"
+        "CONSUME"
       ]
     },
     "hr.record_status": {
       "name": "record_status",
       "schema": "hr",
       "items": [
-        "ACTIVE",
-        "ARCHIVED"
+        "ARCHIVED",
+        "ACTIVE"
       ]
     },
     "hr.request_status": {
