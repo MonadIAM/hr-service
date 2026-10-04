@@ -27,14 +27,14 @@ export class LeavePolicyRepository
         props: Repositories.LeavePolicy.GetLookupList.Props,
     ): Repositories.LeavePolicy.GetLookupList.Result {
         try {
-            const { organization, pagination } = props;
+            const { organization, pagination, realm } = props;
             const term = props.term.trim();
             const entityManager = this.readManager.fork();
             const builder = entityManager.createQueryBuilder(LeavePolicy, "e");
 
             builder
                 .select(["e.id", "e.code", "e.name", "e.revision"])
-                .where({ organization })
+                .where({ organization: { id: organization, realm } })
                 .limit(pagination.elementsPerPage)
                 .offset((pagination.currentPage - 1) * pagination.elementsPerPage);
 

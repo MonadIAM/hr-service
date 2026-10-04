@@ -12,12 +12,16 @@ export class WorkCalendarQueries implements Queries.WorkCalendar.Contract {
 
     public findUnique(props: Queries.WorkCalendar.FindUnique.Props): Queries.WorkCalendar.FindUnique.Result {
         return this.workCalendarRepository.findUniqueOrThrow({
-            where: { id: props.calendar, organization: props.organization },
+            where: {
+                organization: { id: props.organization, realm: props.realm },
+                id: props.calendar,
+            },
         });
     }
 
     public findMany(props: Queries.WorkCalendar.FindMany.Props): Queries.WorkCalendar.FindMany.Result {
-        const prefilter = props.mode === QueryMode.DEFAULT ? { organization: props.organization } : {};
+        const prefilter =
+            props.mode === QueryMode.DEFAULT ? { organization: { id: props.organization, realm: props.realm } } : {};
 
         return this.workCalendarRepository.findMany({
             pagination: props.pagination,
@@ -31,6 +35,7 @@ export class WorkCalendarQueries implements Queries.WorkCalendar.Contract {
         return this.workCalendarRepository.getLookupList({
             organization: props.organization,
             pagination: props.pagination,
+            realm: props.realm,
             term: props.term,
         });
     }

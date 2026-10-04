@@ -27,7 +27,7 @@ export class EmployeeRepository
         props: Repositories.Employee.GetLookupList.Props,
     ): Repositories.Employee.GetLookupList.Result {
         try {
-            const { organization, pagination } = props;
+            const { organization, pagination, realm } = props;
             const term = props.term.trim();
             const fullName = "(e.last_name || ' ' || e.first_name || coalesce(' ' || e.middle_name, ''))";
             const entityManager = this.readManager.fork();
@@ -35,7 +35,7 @@ export class EmployeeRepository
 
             builder
                 .select(["e.id", "e.employeeNumber", "e.lastName", "e.firstName", "e.middleName"])
-                .where({ organization })
+                .where({ organization: { id: organization, realm } })
                 .limit(pagination.elementsPerPage)
                 .offset((pagination.currentPage - 1) * pagination.elementsPerPage);
 

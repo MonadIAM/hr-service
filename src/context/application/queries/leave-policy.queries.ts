@@ -12,12 +12,16 @@ export class LeavePolicyQueries implements Queries.LeavePolicy.Contract {
 
     public findUnique(props: Queries.LeavePolicy.FindUnique.Props): Queries.LeavePolicy.FindUnique.Result {
         return this.leavePolicyRepository.findUniqueOrThrow({
-            where: { id: props.policy, organization: props.organization },
+            where: {
+                organization: { id: props.organization, realm: props.realm },
+                id: props.policy,
+            },
         });
     }
 
     public findMany(props: Queries.LeavePolicy.FindMany.Props): Queries.LeavePolicy.FindMany.Result {
-        const prefilter = props.mode === QueryMode.DEFAULT ? { organization: props.organization } : {};
+        const prefilter =
+            props.mode === QueryMode.DEFAULT ? { organization: { id: props.organization, realm: props.realm } } : {};
 
         return this.leavePolicyRepository.findMany({
             pagination: props.pagination,
@@ -31,6 +35,7 @@ export class LeavePolicyQueries implements Queries.LeavePolicy.Contract {
         return this.leavePolicyRepository.getLookupList({
             organization: props.organization,
             pagination: props.pagination,
+            realm: props.realm,
             term: props.term,
         });
     }

@@ -17,13 +17,17 @@ export class AbsenceQueries implements Queries.Absence.Contract {
 
     public findUnique(props: Queries.Absence.FindUnique.Props): Queries.Absence.FindUnique.Result {
         return this.absenceRepository.findUniqueOrThrow({
-            where: { id: props.absence, organization: props.organization },
+            where: {
+                organization: { id: props.organization, realm: props.realm },
+                id: props.absence,
+            },
             options: { populate: this.populate[props.view] },
         });
     }
 
     public findMany(props: Queries.Absence.FindMany.Props): Queries.Absence.FindMany.Result {
-        const prefilter = props.mode === QueryMode.DEFAULT ? { organization: props.organization } : {};
+        const prefilter =
+            props.mode === QueryMode.DEFAULT ? { organization: { id: props.organization, realm: props.realm } } : {};
 
         return this.absenceRepository.findMany({
             options: { populate: this.populate[props.view] },

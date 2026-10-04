@@ -15,6 +15,7 @@ declare global {
                     view: ResponseViewType;
                     organization: string;
                     assignment: string;
+                    realm: string;
                 };
 
                 type Result = Promise<Entities.PositionAssignment>;
@@ -30,6 +31,7 @@ declare global {
                     view: ResponseViewType;
                     pagination: Pagination;
                     organization: string;
+                    realm: string;
                 };
 
                 type ManageProps = {

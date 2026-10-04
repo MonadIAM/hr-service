@@ -17,13 +17,17 @@ export class LeaveLedgerEntryQueries implements Queries.LeaveLedgerEntry.Contrac
 
     public findUnique(props: Queries.LeaveLedgerEntry.FindUnique.Props): Queries.LeaveLedgerEntry.FindUnique.Result {
         return this.leaveLedgerEntryRepository.findUniqueOrThrow({
-            where: { id: props.entry, organization: props.organization },
+            where: {
+                organization: { id: props.organization, realm: props.realm },
+                id: props.entry,
+            },
             options: { populate: this.populate[props.view] },
         });
     }
 
     public findMany(props: Queries.LeaveLedgerEntry.FindMany.Props): Queries.LeaveLedgerEntry.FindMany.Result {
-        const prefilter = props.mode === QueryMode.DEFAULT ? { organization: props.organization } : {};
+        const prefilter =
+            props.mode === QueryMode.DEFAULT ? { organization: { id: props.organization, realm: props.realm } } : {};
 
         return this.leaveLedgerEntryRepository.findMany({
             options: { populate: this.populate[props.view] },

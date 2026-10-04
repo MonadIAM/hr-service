@@ -9,6 +9,7 @@ declare namespace Repositories.LeavePolicy {
         type Props = {
             organization: string;
             pagination: Pagination;
+            realm: string;
             term: string;
         };
 

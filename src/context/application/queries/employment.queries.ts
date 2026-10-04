@@ -17,13 +17,17 @@ export class EmploymentQueries implements Queries.Employment.Contract {
 
     public findUnique(props: Queries.Employment.FindUnique.Props): Queries.Employment.FindUnique.Result {
         return this.employmentRepository.findUniqueOrThrow({
-            where: { id: props.employment, organization: props.organization },
+            where: {
+                organization: { id: props.organization, realm: props.realm },
+                id: props.employment,
+            },
             options: { populate: this.populate[props.view] },
         });
     }
 
     public findMany(props: Queries.Employment.FindMany.Props): Queries.Employment.FindMany.Result {
-        const prefilter = props.mode === QueryMode.DEFAULT ? { organization: props.organization } : {};
+        const prefilter =
+            props.mode === QueryMode.DEFAULT ? { organization: { id: props.organization, realm: props.realm } } : {};
 
         return this.employmentRepository.findMany({
             options: { populate: this.populate[props.view] },

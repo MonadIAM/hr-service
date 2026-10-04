@@ -17,13 +17,17 @@ export class HRApprovalDecisionQueries implements Queries.HRApprovalDecision.Con
 
     public findUnique(props: Queries.HRApprovalDecision.FindUnique.Props): Queries.HRApprovalDecision.FindUnique.Result {
         return this.hrApprovalDecisionRepository.findUniqueOrThrow({
-            where: { id: props.decision, organization: props.organization },
+            where: {
+                organization: { id: props.organization, realm: props.realm },
+                id: props.decision,
+            },
             options: { populate: this.populate[props.view] },
         });
     }
 
     public findMany(props: Queries.HRApprovalDecision.FindMany.Props): Queries.HRApprovalDecision.FindMany.Result {
-        const prefilter = props.mode === QueryMode.DEFAULT ? { organization: props.organization } : {};
+        const prefilter =
+            props.mode === QueryMode.DEFAULT ? { organization: { id: props.organization, realm: props.realm } } : {};
 
         return this.hrApprovalDecisionRepository.findMany({
             options: { populate: this.populate[props.view] },

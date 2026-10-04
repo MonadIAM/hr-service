@@ -12,12 +12,16 @@ export class PositionQueries implements Queries.Position.Contract {
 
     public findUnique(props: Queries.Position.FindUnique.Props): Queries.Position.FindUnique.Result {
         return this.positionRepository.findUniqueOrThrow({
-            where: { id: props.position, organization: props.organization },
+            where: {
+                organization: { id: props.organization, realm: props.realm },
+                id: props.position,
+            },
         });
     }
 
     public findMany(props: Queries.Position.FindMany.Props): Queries.Position.FindMany.Result {
-        const prefilter = props.mode === QueryMode.DEFAULT ? { organization: props.organization } : {};
+        const prefilter =
+            props.mode === QueryMode.DEFAULT ? { organization: { id: props.organization, realm: props.realm } } : {};
 
         return this.positionRepository.findMany({
             pagination: props.pagination,
@@ -31,6 +35,7 @@ export class PositionQueries implements Queries.Position.Contract {
         return this.positionRepository.getLookupList({
             organization: props.organization,
             pagination: props.pagination,
+            realm: props.realm,
             term: props.term,
         });
     }

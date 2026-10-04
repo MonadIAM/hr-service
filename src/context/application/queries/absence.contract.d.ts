@@ -15,6 +15,7 @@ declare global {
                     view: ResponseViewType;
                     organization: string;
                     absence: string;
+                    realm: string;
                 };
 
                 type Result = Promise<Entities.Absence>;
@@ -30,6 +31,7 @@ declare global {
                     view: ResponseViewType;
                     pagination: Pagination;
                     organization: string;
+                    realm: string;
                 };
 
                 type ManageProps = {

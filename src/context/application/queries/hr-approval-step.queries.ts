@@ -17,13 +17,17 @@ export class HRApprovalStepQueries implements Queries.HRApprovalStep.Contract {
 
     public findUnique(props: Queries.HRApprovalStep.FindUnique.Props): Queries.HRApprovalStep.FindUnique.Result {
         return this.hrApprovalStepRepository.findUniqueOrThrow({
-            where: { id: props.step, organization: props.organization },
+            where: {
+                organization: { id: props.organization, realm: props.realm },
+                id: props.step,
+            },
             options: { populate: this.populate[props.view] },
         });
     }
 
     public findMany(props: Queries.HRApprovalStep.FindMany.Props): Queries.HRApprovalStep.FindMany.Result {
-        const prefilter = props.mode === QueryMode.DEFAULT ? { organization: props.organization } : {};
+        const prefilter =
+            props.mode === QueryMode.DEFAULT ? { organization: { id: props.organization, realm: props.realm } } : {};
 
         return this.hrApprovalStepRepository.findMany({
             options: { populate: this.populate[props.view] },

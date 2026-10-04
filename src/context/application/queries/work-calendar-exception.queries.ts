@@ -19,13 +19,17 @@ export class WorkCalendarExceptionQueries implements Queries.WorkCalendarExcepti
         props: Queries.WorkCalendarException.FindUnique.Props,
     ): Queries.WorkCalendarException.FindUnique.Result {
         return this.workCalendarExceptionRepository.findUniqueOrThrow({
-            where: { id: props.exception, organization: props.organization },
+            where: {
+                organization: { id: props.organization, realm: props.realm },
+                id: props.exception,
+            },
             options: { populate: this.populate[props.view] },
         });
     }
 
     public findMany(props: Queries.WorkCalendarException.FindMany.Props): Queries.WorkCalendarException.FindMany.Result {
-        const prefilter = props.mode === QueryMode.DEFAULT ? { organization: props.organization } : {};
+        const prefilter =
+            props.mode === QueryMode.DEFAULT ? { organization: { id: props.organization, realm: props.realm } } : {};
 
         return this.workCalendarExceptionRepository.findMany({
             options: { populate: this.populate[props.view] },

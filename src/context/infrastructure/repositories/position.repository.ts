@@ -27,14 +27,14 @@ export class PositionRepository
         props: Repositories.Position.GetLookupList.Props,
     ): Repositories.Position.GetLookupList.Result {
         try {
-            const { organization, pagination } = props;
+            const { organization, pagination, realm } = props;
             const term = props.term.trim();
             const entityManager = this.readManager.fork();
             const builder = entityManager.createQueryBuilder(Position, "e");
 
             builder
                 .select(["e.id", "e.code", "e.title"])
-                .where({ organization })
+                .where({ organization: { id: organization, realm } })
                 .limit(pagination.elementsPerPage)
                 .offset((pagination.currentPage - 1) * pagination.elementsPerPage);
 

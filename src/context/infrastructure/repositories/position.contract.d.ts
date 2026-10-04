@@ -9,6 +9,7 @@ declare namespace Repositories.Position {
         type Props = {
             organization: string;
             pagination: Pagination;
+            realm: string;
             term: string;
         };
 

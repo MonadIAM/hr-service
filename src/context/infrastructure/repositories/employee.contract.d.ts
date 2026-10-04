@@ -9,6 +9,7 @@ declare namespace Repositories.Employee {
         type Props = {
             organization: string;
             pagination: Pagination;
+            realm: string;
             term: string;
         };
 

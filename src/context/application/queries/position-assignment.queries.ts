@@ -17,13 +17,17 @@ export class PositionAssignmentQueries implements Queries.PositionAssignment.Con
 
     public findUnique(props: Queries.PositionAssignment.FindUnique.Props): Queries.PositionAssignment.FindUnique.Result {
         return this.positionAssignmentRepository.findUniqueOrThrow({
-            where: { id: props.assignment, organization: props.organization },
+            where: {
+                organization: { id: props.organization, realm: props.realm },
+                id: props.assignment,
+            },
             options: { populate: this.populate[props.view] },
         });
     }
 
     public findMany(props: Queries.PositionAssignment.FindMany.Props): Queries.PositionAssignment.FindMany.Result {
-        const prefilter = props.mode === QueryMode.DEFAULT ? { organization: props.organization } : {};
+        const prefilter =
+            props.mode === QueryMode.DEFAULT ? { organization: { id: props.organization, realm: props.realm } } : {};
 
         return this.positionAssignmentRepository.findMany({
             options: { populate: this.populate[props.view] },

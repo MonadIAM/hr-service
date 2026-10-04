@@ -17,13 +17,17 @@ export class HRRequestQueries implements Queries.HRRequest.Contract {
 
     public findUnique(props: Queries.HRRequest.FindUnique.Props): Queries.HRRequest.FindUnique.Result {
         return this.hrRequestRepository.findUniqueOrThrow({
-            where: { id: props.request, organization: props.organization },
+            where: {
+                organization: { id: props.organization, realm: props.realm },
+                id: props.request,
+            },
             options: { populate: this.populate[props.view] },
         });
     }
 
     public findMany(props: Queries.HRRequest.FindMany.Props): Queries.HRRequest.FindMany.Result {
-        const prefilter = props.mode === QueryMode.DEFAULT ? { organization: props.organization } : {};
+        const prefilter =
+            props.mode === QueryMode.DEFAULT ? { organization: { id: props.organization, realm: props.realm } } : {};
 
         return this.hrRequestRepository.findMany({
             options: { populate: this.populate[props.view] },

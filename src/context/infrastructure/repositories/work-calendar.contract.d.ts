@@ -9,6 +9,7 @@ declare namespace Repositories.WorkCalendar {
         type Props = {
             organization: string;
             pagination: Pagination;
+            realm: string;
             term: string;
         };
 

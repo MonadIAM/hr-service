@@ -16,6 +16,7 @@ declare global {
                     view: ResponseViewType;
                     organization: string;
                     calendar: string;
+                    realm: string;
                 };
 
                 type Result = Promise<Entities.WorkCalendar>;
@@ -31,6 +32,7 @@ declare global {
                     view: ResponseViewType;
                     pagination: Pagination;
                     organization: string;
+                    realm: string;
                 };
 
                 type ManageProps = {
@@ -52,6 +54,7 @@ declare global {
                 type Props = {
                     organization: string;
                     pagination: Pagination;
+                    realm: string;
                     term: string;
                 };
 

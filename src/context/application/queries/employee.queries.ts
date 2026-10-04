@@ -17,13 +17,17 @@ export class EmployeeQueries implements Queries.Employee.Contract {
 
     public findUnique(props: Queries.Employee.FindUnique.Props): Queries.Employee.FindUnique.Result {
         return this.employeeRepository.findUniqueOrThrow({
-            where: { id: props.employee, organization: props.organization },
+            where: {
+                organization: { id: props.organization, realm: props.realm },
+                id: props.employee,
+            },
             options: { populate: this.populate[props.view] },
         });
     }
 
     public findMany(props: Queries.Employee.FindMany.Props): Queries.Employee.FindMany.Result {
-        const prefilter = props.mode === QueryMode.DEFAULT ? { organization: props.organization } : {};
+        const prefilter =
+            props.mode === QueryMode.DEFAULT ? { organization: { id: props.organization, realm: props.realm } } : {};
 
         return this.employeeRepository.findMany({
             options: { populate: this.populate[props.view] },
@@ -38,6 +42,7 @@ export class EmployeeQueries implements Queries.Employee.Contract {
         return this.employeeRepository.getLookupList({
             organization: props.organization,
             pagination: props.pagination,
+            realm: props.realm,
             term: props.term,
         });
     }
