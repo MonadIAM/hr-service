@@ -2,6 +2,11 @@ declare namespace Services.Position {
     interface Contract extends CommandContract {}
 
     interface CommandContract {
+        completePlacement: CompletePlacement.Signature;
+        validateReference: ValidateReference.Signature;
+        purgeDepartment: PurgeDepartment.Signature;
+        purgeTeam: PurgeTeam.Signature;
+
         archive: Archive.Signature;
         restore: Restore.Signature;
         create: Create.Signature;
@@ -66,6 +71,47 @@ declare namespace Services.Position {
         };
 
         type Result = Promise<Entities.Position>;
+
+        type Signature = (props: Props) => Result;
+    }
+
+    namespace CompletePlacement {
+        type Props = Topics.Position.PlacementRequestedMessage["payload"] & {
+            transaction: ORM.EntityManager;
+            rejected: boolean;
+        };
+
+        type Result = Promise<void>;
+
+        type Signature = (props: Props) => Result;
+    }
+
+    namespace ValidateReference {
+        type Props = Topics.Position.ReferenceRequestedMessage["payload"] & {
+            transaction: ORM.EntityManager;
+        };
+
+        type Result = Promise<void>;
+
+        type Signature = (props: Props) => Result;
+    }
+
+    namespace PurgeDepartment {
+        type Props = Topics.Position.DepartmentPurgedMessage["payload"] & {
+            transaction: ORM.EntityManager;
+        };
+
+        type Result = Promise<Entities.Position[]>;
+
+        type Signature = (props: Props) => Result;
+    }
+
+    namespace PurgeTeam {
+        type Props = Topics.Position.TeamPurgedMessage["payload"] & {
+            transaction: ORM.EntityManager;
+        };
+
+        type Result = Promise<Entities.Position[]>;
 
         type Signature = (props: Props) => Result;
     }

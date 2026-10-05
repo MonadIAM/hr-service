@@ -79,6 +79,7 @@ export type I18nTranslations = {
             "ALREADY_ARCHIVED": string;
             "ALREADY_ACTIVE": string;
             "CANNOT_PURGE_ACTIVE": string;
+            "OPERATION_PENDING": string;
         };
         "work-calendar": {
             "CANNOT_UPDATE_ARCHIVED": string;

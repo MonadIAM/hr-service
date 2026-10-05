@@ -48,9 +48,9 @@ export class PositionAssignment implements Entities.PositionAssignment.Contract 
         this.grade = props.grade;
         this.team = props.team;
 
-        this.organization = props.organization;
         this.closedByRequest = props.closedByRequest;
         this.sourceRequest = props.sourceRequest;
+        this.organization = props.organization;
         this.employee = props.employee;
         this.position = props.position;
     }
@@ -83,6 +83,8 @@ export class PositionAssignment implements Entities.PositionAssignment.Contract 
     }
 
     public canCreate(): void {
+        this.position.assertReady();
+
         if (
             this.employee.organization.id !== this.organization.id ||
             this.position.organization.id !== this.organization.id

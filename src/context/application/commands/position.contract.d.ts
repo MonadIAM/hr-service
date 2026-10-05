@@ -2,7 +2,7 @@ import { PayPeriod } from "~context/enums";
 
 declare global {
     namespace Commands.Position {
-        interface Contract extends ControllerContract {}
+        interface Contract extends ControllerContract, ConsumerContract {}
 
         interface ControllerContract {
             archive: Archive.Signature;
@@ -10,6 +10,14 @@ declare global {
             create: Create.Signature;
             update: Update.Signature;
             purge: Purge.Signature;
+        }
+
+        interface ConsumerContract {
+            validateReference: ValidateReference.Signature;
+            completePlacement: CompletePlacement.Signature;
+            rejectReference: RejectReference.Signature;
+            purgeDepartment: PurgeDepartment.Signature;
+            purgeTeam: PurgeTeam.Signature;
         }
 
         namespace Create {
@@ -27,7 +35,7 @@ declare global {
                     plannedFte: string;
                     grade?: string;
                     title: string;
-                    team?: string;
+                    team: string;
                     code: string;
                 };
                 context: Extract.Meta;
@@ -103,6 +111,59 @@ declare global {
             };
 
             type Result = Promise<MessageResult>;
+
+            type Signature = (props: Props) => Result;
+        }
+
+        namespace ValidateReference {
+            type Props = Topics.Position.ReferenceRequestedMessage["payload"] & {
+                incoming: TransactionManager.Service.IncomingMessage;
+            };
+
+            type Result = Promise<void>;
+
+            type Signature = (props: Props) => Result;
+        }
+
+        namespace RejectReference {
+            type Props = {
+                request: Topics.Position.ReferenceRequestedMessage["payload"];
+                incoming: TransactionManager.Service.IncomingMessage;
+                reason: string;
+            };
+
+            type Result = Promise<void>;
+
+            type Signature = (props: Props) => Result;
+        }
+
+        namespace CompletePlacement {
+            type Props = Topics.Position.PlacementRequestedMessage["payload"] & {
+                incoming: TransactionManager.Service.IncomingMessage;
+                rejected: boolean;
+            };
+
+            type Result = Promise<void>;
+
+            type Signature = (props: Props) => Result;
+        }
+
+        namespace PurgeDepartment {
+            type Props = Topics.Position.DepartmentPurgedMessage["payload"] & {
+                incoming: TransactionManager.Service.IncomingMessage;
+            };
+
+            type Result = Promise<void>;
+
+            type Signature = (props: Props) => Result;
+        }
+
+        namespace PurgeTeam {
+            type Props = Topics.Position.TeamPurgedMessage["payload"] & {
+                incoming: TransactionManager.Service.IncomingMessage;
+            };
+
+            type Result = Promise<void>;
 
             type Signature = (props: Props) => Result;
         }

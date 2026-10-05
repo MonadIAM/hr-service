@@ -57,6 +57,7 @@ export class HRRequestService implements Services.HRRequest.Contract {
                     : undefined,
                 input.targetPosition
                     ? this.positionRepository.findUniqueOrThrow({
+                          options: { lockMode: LockMode.PESSIMISTIC_READ, refresh: true },
                           where: { id: input.targetPosition, organization },
                           transaction,
                       })
@@ -72,6 +73,8 @@ export class HRRequestService implements Services.HRRequest.Contract {
                       })
                     : undefined,
             ]);
+
+        targetPositionEntity?.assertReady();
 
         const requestEntity = new HRRequest({
             ...input,
@@ -102,6 +105,7 @@ export class HRRequestService implements Services.HRRequest.Contract {
             }),
             patch.targetPosition
                 ? this.positionRepository.findUniqueOrThrow({
+                      options: { lockMode: LockMode.PESSIMISTIC_READ, refresh: true },
                       where: { id: patch.targetPosition, organization },
                       transaction,
                   })
@@ -113,6 +117,8 @@ export class HRRequestService implements Services.HRRequest.Contract {
                   })
                 : undefined,
         ]);
+
+        targetPositionEntity?.assertReady();
 
         requestEntity.update({
             patch: {

@@ -87,7 +87,7 @@ export const PositionAssignmentSchema = new EntitySchema<PositionAssignment>({
             columnTypes: ["uuid", "uuid"],
             referencedColumnNames: ["id", "organization_id"],
             ownColumns: ["position_id"],
-            deleteRule: "no action",
+            deleteRule: "cascade",
         },
         sourceRequest: {
             kind: "m:1",

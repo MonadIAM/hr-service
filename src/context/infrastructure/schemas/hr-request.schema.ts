@@ -110,7 +110,7 @@ export const HRRequestSchema = new EntitySchema<HRRequest>({
             columnTypes: ["uuid", "uuid"],
             referencedColumnNames: ["id", "organization_id"],
             ownColumns: ["target_position_id"],
-            deleteRule: "no action",
+            deleteRule: 'set null ("target_position_id")',
             nullable: true,
         },
         relatedRequest: {

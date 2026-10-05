@@ -5,7 +5,8 @@
         "EMPTY_UPDATE_PATCH": "Не переданы поля для изменения.",
         "ALREADY_ARCHIVED": "Запись уже архивирована.",
         "ALREADY_ACTIVE": "Запись уже активна.",
-        "CANNOT_PURGE_ACTIVE": "Активную запись нельзя удалить."
+        "CANNOT_PURGE_ACTIVE": "Активную запись нельзя удалить.",
+        "OPERATION_PENDING": "Ожидается проверка позиции"
     },
     "work-calendar": {
         "CANNOT_UPDATE_ARCHIVED": "Архивную запись нельзя изменить.",

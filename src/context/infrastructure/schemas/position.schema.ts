@@ -41,8 +41,9 @@ export const PositionSchema = new EntitySchema<Position>({
     properties: {
         id: { primary: true, type: "uuid" },
 
-        team: { type: "uuid", fieldName: "team_id", nullable: true },
         department: { type: "uuid", fieldName: "department_id" },
+        team: { type: "uuid", fieldName: "team_id" },
+        process: { type: "uuid", nullable: true },
 
         status: {
             enum: true,
@@ -60,6 +61,7 @@ export const PositionSchema = new EntitySchema<Position>({
         },
 
         budgetCurrency: { type: "string", length: 3, nullable: true },
+        previousStatus: { type: "text", nullable: true },
         budgetPeriod: { type: "text", nullable: true },
         requirements: { type: "text", nullable: true },
         description: { type: "text", nullable: true },

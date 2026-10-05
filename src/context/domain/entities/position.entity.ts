@@ -12,6 +12,7 @@ export class Position implements Entities.Position.Contract {
     public createdAt: Date;
     public updatedAt?: Date;
 
+    public previousStatus?: RecordStatus;
     public budgetPeriod?: PayPeriod;
     public budgetCurrency?: string;
     public budgetAmount?: string;
@@ -20,9 +21,10 @@ export class Position implements Entities.Position.Contract {
     public status: RecordStatus;
     public department: string;
     public plannedFte: string;
+    public process?: string;
     public grade?: string;
     public title: string;
-    public team?: string;
+    public team: string;
     public code: string;
 
     public organization: Entities.Organization;
@@ -32,6 +34,7 @@ export class Position implements Entities.Position.Contract {
 
     public constructor(props: Entities.Position.ConstructorProps) {
         this.id = randomUUID();
+        this.process = randomUUID();
         this.createdAt = new Date();
 
         this.status = props.status ?? RecordStatus.ACTIVE;
@@ -52,6 +55,8 @@ export class Position implements Entities.Position.Contract {
     }
 
     public update({ patch }: Entities.Position.ChangeDataProps): void {
+        this.assertReady();
+
         if (this.status === RecordStatus.ARCHIVED) {
             throw Exception.invariantViolation({ messageKey: `${Position.dictionaryPath}.CANNOT_UPDATE_ARCHIVED` });
         } else {
@@ -75,6 +80,8 @@ export class Position implements Entities.Position.Contract {
     }
 
     public archive(): void {
+        this.assertReady();
+
         if (this.status === RecordStatus.ARCHIVED) {
             throw Exception.invariantViolation({ messageKey: `${Position.dictionaryPath}.ALREADY_ARCHIVED` });
         } else {
@@ -84,17 +91,39 @@ export class Position implements Entities.Position.Contract {
     }
 
     public restore(): void {
+        this.assertReady();
+
         if (this.status === RecordStatus.ACTIVE) {
             throw Exception.invariantViolation({ messageKey: `${Position.dictionaryPath}.ALREADY_ACTIVE` });
         } else {
+            this.previousStatus = this.status;
+            this.process = randomUUID();
             this.status = RecordStatus.ACTIVE;
             this.updatedAt = new Date();
         }
     }
 
     public canPurge(): void {
+        this.assertReady();
+
         if (this.status === RecordStatus.ACTIVE) {
             throw Exception.invariantViolation({ messageKey: `${Position.dictionaryPath}.CANNOT_PURGE_ACTIVE` });
         }
+    }
+
+    public assertReady(): void {
+        if (this.process) {
+            throw Exception.invariantViolation({ messageKey: `${Position.dictionaryPath}.OPERATION_PENDING` });
+        }
+    }
+
+    public completePlacement(rejected: boolean): void {
+        if (rejected && this.previousStatus) {
+            this.status = this.previousStatus;
+            this.updatedAt = new Date();
+        }
+
+        this.previousStatus = undefined;
+        this.process = undefined;
     }
 }

@@ -5,7 +5,8 @@
         "EMPTY_UPDATE_PATCH": "No fields were provided for the update.",
         "ALREADY_ARCHIVED": "The record is already archived.",
         "ALREADY_ACTIVE": "The record is already active.",
-        "CANNOT_PURGE_ACTIVE": "An active record cannot be deleted."
+        "CANNOT_PURGE_ACTIVE": "An active record cannot be deleted.",
+        "OPERATION_PENDING": "Position validation is pending"
     },
     "work-calendar": {
         "CANNOT_UPDATE_ARCHIVED": "An archived record cannot be changed.",

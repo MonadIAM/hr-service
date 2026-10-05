@@ -2688,7 +2688,8 @@
             "id",
             "organization_id"
           ],
-          "referencedTableName": "hr.position"
+          "referencedTableName": "hr.position",
+          "deleteRule": "set null (\"target_position_id\")"
         }
       },
       "comment": null
@@ -3741,6 +3742,40 @@
           "enumItems": [],
           "mappedType": "decimal"
         },
+        "previous_status": {
+          "name": "previous_status",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "text"
+        },
+        "process": {
+          "name": "process",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
         "requirements": {
           "name": "requirements",
           "type": "text",
@@ -3785,7 +3820,7 @@
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
-          "nullable": true,
+          "nullable": false,
           "unique": false,
           "length": null,
           "precision": null,
@@ -4426,7 +4461,8 @@
             "id",
             "organization_id"
           ],
-          "referencedTableName": "hr.position"
+          "referencedTableName": "hr.position",
+          "deleteRule": "cascade"
         },
         "position_assignment_source_request_id_employee_i_a72cf_foreign": {
           "columnNames": [

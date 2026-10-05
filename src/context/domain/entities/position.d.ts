@@ -11,6 +11,7 @@ declare global {
                 createdAt: Date;
                 updatedAt?: Date;
 
+                previousStatus?: RecordStatus;
                 budgetPeriod?: PayPeriod;
                 budgetCurrency?: string;
                 budgetAmount?: string;
@@ -19,9 +20,10 @@ declare global {
                 status: RecordStatus;
                 department: string;
                 plannedFte: string;
+                process?: string;
                 grade?: string;
                 title: string;
-                team?: string;
+                team: string;
                 code: string;
 
                 organization: Entities.Organization;
@@ -29,10 +31,12 @@ declare global {
                 positionAssignments: ORM.Collection<Entities.PositionAssignment>;
                 targetedHRRequests: ORM.Collection<Entities.HRRequest>;
 
+                completePlacement(rejected: boolean): void;
                 update(props: ChangeDataProps): void;
+                assertReady(): void;
+                canPurge(): void;
                 archive(): void;
                 restore(): void;
-                canPurge(): void;
             }
 
             type MutableFields = Pick<
@@ -46,8 +50,6 @@ declare global {
                 | "budgetAmount"
                 | "budgetCurrency"
                 | "budgetPeriod"
-                | "department"
-                | "team"
             >;
 
             type ConstructorProps = {
@@ -61,7 +63,7 @@ declare global {
                 plannedFte: string;
                 grade?: string;
                 title: string;
-                team?: string;
+                team: string;
                 code: string;
 
                 organization: Entities.Organization;
