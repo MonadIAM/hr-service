@@ -1,149 +1,153 @@
-declare namespace InfrastructureServices {
-    namespace ReauthenticationCache {
-        interface Contract extends PublicContract {}
+import type { PermissionCode, PrivilegeScope } from "@monadiam/shared";
 
-        interface PublicContract {
-            exists: Exists.Signature;
-            delete: Delete.Signature;
-            set: Set.Signature;
+declare global {
+    namespace InfrastructureServices {
+        namespace ReauthenticationCache {
+            interface Contract extends PublicContract {}
+
+            interface PublicContract {
+                exists: Exists.Signature;
+                delete: Delete.Signature;
+                set: Set.Signature;
+            }
+
+            namespace Exists {
+                type Props = {
+                    session: string;
+                };
+
+                type Result = Promise<boolean>;
+
+                type Signature = (props: Props) => Result;
+            }
+
+            namespace Delete {
+                type Props = {
+                    session: string;
+                };
+
+                type Result = Promise<void>;
+
+                type Signature = (props: Props) => Result;
+            }
+
+            namespace Set {
+                type Props = {
+                    session: string;
+                    ttl: number;
+                };
+
+                type Result = Promise<void>;
+
+                type Signature = (props: Props) => Result;
+            }
         }
 
-        namespace Exists {
-            type Props = {
-                session: string;
-            };
+        namespace BlacklistCache {
+            interface Contract extends PublicContract {}
 
-            type Result = Promise<boolean>;
+            interface PublicContract {
+                exists: Exists.Signature;
+                set: Set.Signature;
+            }
 
-            type Signature = (props: Props) => Result;
+            namespace Exists {
+                type Props = {
+                    session: string;
+                };
+
+                type Result = Promise<boolean>;
+
+                type Signature = (props: Props) => Result;
+            }
+
+            namespace Set {
+                type Props = {
+                    session: string;
+                    ttl: number;
+                };
+
+                type Result = Promise<void>;
+
+                type Signature = (props: Props) => Result;
+            }
         }
 
-        namespace Delete {
-            type Props = {
-                session: string;
-            };
+        namespace AccessCache {
+            interface Contract extends InternalContract, PublicContract {}
 
-            type Result = Promise<void>;
+            interface InternalContract {
+                resolveVersionedKey: ResolveVersionedKey.Signature;
+            }
 
-            type Signature = (props: Props) => Result;
-        }
+            namespace ResolveVersionedKey {
+                type Props = {
+                    account: string;
+                    realm: string;
+                };
 
-        namespace Set {
-            type Props = {
-                session: string;
-                ttl: number;
-            };
+                type Result = Promise<string>;
 
-            type Result = Promise<void>;
+                type Signature = (props: Props) => Result;
+            }
 
-            type Signature = (props: Props) => Result;
-        }
-    }
+            interface PublicContract {
+                checkPermissions: CheckPermissions.Signature;
+                deleteAccount: DeleteAccount.Signature;
+                deleteRealm: DeleteRealm.Signature;
+                deleteAll: DeleteAll.Signature;
+                delete: Delete.Signature;
+            }
 
-    namespace BlacklistCache {
-        interface Contract extends PublicContract {}
+            namespace CheckPermissions {
+                type Props = {
+                    permissions: PermissionCode[];
+                    globalOnly?: boolean;
+                    account: string;
+                    realm: string;
+                };
 
-        interface PublicContract {
-            exists: Exists.Signature;
-            set: Set.Signature;
-        }
+                type Result = Promise<Partial<Record<PermissionCode, PrivilegeScope>>>;
 
-        namespace Exists {
-            type Props = {
-                session: string;
-            };
+                type Signature = (props: Props) => Result;
+            }
 
-            type Result = Promise<boolean>;
+            namespace DeleteAccount {
+                type Props = {
+                    account: string;
+                };
 
-            type Signature = (props: Props) => Result;
-        }
+                type Result = Promise<void>;
 
-        namespace Set {
-            type Props = {
-                session: string;
-                ttl: number;
-            };
+                type Signature = (props: Props) => Result;
+            }
 
-            type Result = Promise<void>;
+            namespace DeleteRealm {
+                type Props = {
+                    realm: string;
+                };
 
-            type Signature = (props: Props) => Result;
-        }
-    }
+                type Result = Promise<void>;
 
-    namespace AccessCache {
-        interface Contract extends InternalContract, PublicContract {}
+                type Signature = (props: Props) => Result;
+            }
 
-        interface InternalContract {
-            resolveVersionedKey: ResolveVersionedKey.Signature;
-        }
+            namespace DeleteAll {
+                type Result = Promise<void>;
 
-        namespace ResolveVersionedKey {
-            type Props = {
-                account: string;
-                realm: string;
-            };
+                type Signature = () => Result;
+            }
 
-            type Result = Promise<string>;
+            namespace Delete {
+                type Props = {
+                    account: string;
+                    realm: string;
+                };
 
-            type Signature = (props: Props) => Result;
-        }
+                type Result = Promise<void>;
 
-        interface PublicContract {
-            checkPermissions: CheckPermissions.Signature;
-            deleteAccount: DeleteAccount.Signature;
-            deleteRealm: DeleteRealm.Signature;
-            deleteAll: DeleteAll.Signature;
-            delete: Delete.Signature;
-        }
-
-        namespace CheckPermissions {
-            type Props = {
-                permissions: string[];
-                globalOnly?: boolean;
-                account: string;
-                realm: string;
-            };
-
-            type Result = Promise<string[]>;
-
-            type Signature = (props: Props) => Result;
-        }
-
-        namespace DeleteAccount {
-            type Props = {
-                account: string;
-            };
-
-            type Result = Promise<void>;
-
-            type Signature = (props: Props) => Result;
-        }
-
-        namespace DeleteRealm {
-            type Props = {
-                realm: string;
-            };
-
-            type Result = Promise<void>;
-
-            type Signature = (props: Props) => Result;
-        }
-
-        namespace DeleteAll {
-            type Result = Promise<void>;
-
-            type Signature = () => Result;
-        }
-
-        namespace Delete {
-            type Props = {
-                account: string;
-                realm: string;
-            };
-
-            type Result = Promise<void>;
-
-            type Signature = (props: Props) => Result;
+                type Signature = (props: Props) => Result;
+            }
         }
     }
 }

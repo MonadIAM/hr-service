@@ -90,7 +90,7 @@ export class GuardUnitHelpers extends DomainServiceCoreUnitHelpers implements Un
 
     public permission(props: Unit.Guard.PermissionFactory.Props = {}): Unit.Guard.PermissionFactory.Result {
         const checkPermissions = jest.fn<InfrastructureServices.AccessCache.CheckPermissions.Signature>(() =>
-            Promise.resolve(props.matched ?? []),
+            Promise.resolve(props.matched ?? {}),
         );
         const cache = this.contract<InfrastructureServices.AccessCache.PublicContract>({
             deleteAccount: jest.fn(() => Promise.resolve()),

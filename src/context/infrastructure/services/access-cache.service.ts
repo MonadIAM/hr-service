@@ -1,3 +1,4 @@
+import { PermissionCode, PrivilegeScope } from "@monadiam/shared";
 import { Inject, Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import ms, { StringValue } from "ms";
@@ -31,11 +32,7 @@ export class AccessCacheService implements InfrastructureServices.AccessCache.Co
         pipeline.exists(loadedKey);
 
         for (const permission of permissions) {
-            if (globalOnly) {
-                pipeline.hget(key, permission);
-            } else {
-                pipeline.hexists(key, permission);
-            }
+            pipeline.hget(key, permission);
         }
 
         pipeline.expire(key, this.ttl);
@@ -47,7 +44,16 @@ export class AccessCacheService implements InfrastructureServices.AccessCache.Co
         if (isLoaded) {
             const checks = results?.slice(1, 1 + permissions.length) ?? [];
 
-            return permissions.filter((_, i) => (globalOnly ? checks[i]?.[1] === "GLOBAL" : checks[i]?.[1] === 1));
+            const matched: Partial<Record<PermissionCode, PrivilegeScope>> = {};
+
+            for (const [index, permission] of permissions.entries()) {
+                const scope = checks[index]?.[1];
+                if (scope === PrivilegeScope.GLOBAL || (!globalOnly && scope === PrivilegeScope.REALM)) {
+                    matched[permission] = scope;
+                }
+            }
+
+            return matched;
         }
 
         const effectivePermissions = await this.accessControlClient.listEffectivePrivileges({ account, realm });
@@ -62,9 +68,16 @@ export class AccessCacheService implements InfrastructureServices.AccessCache.Co
 
         await cachePipeline.exec();
 
-        return permissions.filter((permission) =>
-            globalOnly ? effectivePermissions[permission] === "GLOBAL" : Boolean(effectivePermissions[permission]),
-        );
+        const matched: Partial<Record<PermissionCode, PrivilegeScope>> = {};
+
+        for (const permission of permissions) {
+            const scope = effectivePermissions[permission];
+            if (globalOnly ? scope === PrivilegeScope.GLOBAL : Boolean(scope)) {
+                matched[permission] = scope;
+            }
+        }
+
+        return matched;
     }
 
     public async delete(
