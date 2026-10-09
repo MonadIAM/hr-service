@@ -69,6 +69,9 @@ export class EnvironmentVariablesDTO {
     declare public NOTIFICATION_SERVICE_URL: string;
 
     @Validator.IsString()
+    declare public ORGANIZATION_SERVICE_URL: string;
+
+    @Validator.IsString()
     declare public HR_SERVICE_URL: string;
 
     @Validator.IsUUID("4")
