@@ -72,7 +72,7 @@ export class AccessCacheService implements InfrastructureServices.AccessCache.Co
 
         for (const permission of permissions) {
             const scope = effectivePermissions[permission];
-            if (globalOnly ? scope === PrivilegeScope.GLOBAL : Boolean(scope)) {
+            if (scope === PrivilegeScope.GLOBAL || (!globalOnly && scope === PrivilegeScope.REALM)) {
                 matched[permission] = scope;
             }
         }

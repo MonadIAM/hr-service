@@ -20,6 +20,7 @@ const ACCESS_CONTROL_PROTO_PATH = require.resolve("@monadiam/shared/grpc/access_
                         url: config.getOrThrow<string>("ACCESS_CONTROL_GRPC_URL"),
                         package: "monadiam.grpc.access_control.v1",
                         protoPath: ACCESS_CONTROL_PROTO_PATH,
+                        loader: { enums: String },
                     },
                 }),
             },
