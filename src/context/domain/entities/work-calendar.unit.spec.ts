@@ -19,18 +19,24 @@ function createWorkCalendar(overrides?: Partial<Entities.WorkCalendar.Constructo
     });
 }
 
-describe("WorkCalendar Entity", () => {
-    describe("constructor", () => {
-        it("should generate identity and creation metadata", () => {
-            const entity = createWorkCalendar();
+describe("[Entity] - WorkCalendar", () => {
+    describe("[Method] - constructor", () => {
+        it("[case] - generates identity and creation metadata", () => {
+            // Arrange
 
-            expect(isUUID(entity.id, "4")).toBe(true);
+            // Act
+            const entity = createWorkCalendar();
+            const result = isUUID(entity.id, "4");
+
+            // Assert
+            expect(result).toBe(true);
             expect(entity.createdAt).toBeInstanceOf(Date);
             expect(entity.version).toBe(1);
             expect(entity.updatedAt).toBeUndefined();
         });
 
-        it("should assign supplied fields and relations", () => {
+        it("[case] - assigns supplied fields and relations", () => {
+            // Arrange
             const props: Partial<Entities.WorkCalendar.ConstructorProps> = {
                 code: "ALT",
                 name: "Regional calendar",
@@ -50,105 +56,170 @@ describe("WorkCalendar Entity", () => {
                 ],
                 organization,
             };
+
+            // Act
             const entity = createWorkCalendar(props);
 
+            // Assert
             expect(entity).toMatchObject(props);
             expect(entity.organization).toBe(props.organization);
         });
 
-        it("should initialize independent empty relation collections", () => {
+        it("[case] - initializes independent empty relation collections", () => {
+            // Arrange
+
+            // Act
             const entity = createWorkCalendar();
             const other = createWorkCalendar();
+            const result = entity.exceptions.getItems();
+            const result1 = entity.exceptions;
+            const result2 = entity.employmentHistory.getItems();
+            const result3 = entity.employmentHistory;
+            const result4 = entity.employees.getItems();
 
-            expect(entity.exceptions.getItems()).toEqual([]);
-            expect(entity.exceptions).not.toBe(other.exceptions);
-            expect(entity.employmentHistory.getItems()).toEqual([]);
-            expect(entity.employmentHistory).not.toBe(other.employmentHistory);
-            expect(entity.employees.getItems()).toEqual([]);
+            // Assert
+            expect(result).toEqual([]);
+            expect(result1).not.toBe(other.exceptions);
+            expect(result2).toEqual([]);
+            expect(result3).not.toBe(other.employmentHistory);
+            expect(result4).toEqual([]);
             expect(entity.employees).not.toBe(other.employees);
         });
     });
 
-    describe("archive", () => {
-        it("should archive an active record", () => {
+    describe("[Method] - archive", () => {
+        it("[case] - archives an active record", () => {
+            // Arrange
             const entity = createWorkCalendar();
+
+            // Act
             entity.archive();
 
+            // Assert
             expect(entity.status).toBe(RecordStatus.ARCHIVED);
             expect(entity.updatedAt).toBeInstanceOf(Date);
         });
 
-        it("should reject repeated archival", () => {
+        it("[case] - rejects repeated archival", () => {
+            // Arrange
             const entity = createWorkCalendar({ status: RecordStatus.ARCHIVED });
 
-            expect(() => entity.archive()).toThrow("ALREADY_ARCHIVED");
+            // Act
+            const act = (): unknown => entity.archive();
+
+            // Assert
+            expect(act).toThrow("ALREADY_ARCHIVED");
             expect(entity.updatedAt).toBeUndefined();
         });
     });
 
-    describe("restore", () => {
-        it("should restore an archived record", () => {
+    describe("[Method] - restore", () => {
+        it("[case] - restores an archived record", () => {
+            // Arrange
             const entity = createWorkCalendar({ status: RecordStatus.ARCHIVED });
+
+            // Act
             entity.restore();
 
+            // Assert
             expect(entity.status).toBe(RecordStatus.ACTIVE);
             expect(entity.updatedAt).toBeInstanceOf(Date);
         });
 
-        it("should reject restoring an active record", () => {
-            expect(() => createWorkCalendar().restore()).toThrow("ALREADY_ACTIVE");
+        it("[case] - rejects restoring an active record", () => {
+            // Arrange
+
+            // Act
+            const act = (): unknown => createWorkCalendar().restore();
+
+            // Assert
+            expect(act).toThrow("ALREADY_ACTIVE");
         });
     });
 
-    describe("canPurge", () => {
-        it("should reject an active record", () => {
-            expect(() => createWorkCalendar().canPurge()).toThrow("CANNOT_PURGE_ACTIVE");
+    describe("[Method] - canPurge", () => {
+        it("[case] - rejects an active record", () => {
+            // Arrange
+
+            // Act
+            const act = (): unknown => createWorkCalendar().canPurge();
+
+            // Assert
+            expect(act).toThrow("CANNOT_PURGE_ACTIVE");
         });
 
-        it("should allow an archived record", () => {
-            expect(() => createWorkCalendar({ status: RecordStatus.ARCHIVED }).canPurge()).not.toThrow();
+        it("[case] - allows an archived record", () => {
+            // Arrange
+
+            // Act
+            const act = (): unknown => createWorkCalendar({ status: RecordStatus.ARCHIVED }).canPurge();
+
+            // Assert
+            expect(act).not.toThrow();
         });
     });
 
-    describe("update", () => {
-        it("should update changed fields and preserve omitted or undefined values", () => {
+    describe("[Method] - update", () => {
+        it("[case] - updates changed fields and preserve omitted or undefined values", () => {
+            // Arrange
             const entity = createWorkCalendar({ name: "Original", regionCode: "MA-06" });
 
+            // Act
             entity.update({ patch: { name: "Updated", regionCode: undefined } });
 
+            // Assert
             expect(entity.name).toBe("Updated");
             expect(entity.regionCode).toEqual("MA-06");
             expect(entity.updatedAt).toBeInstanceOf(Date);
         });
 
-        it("should reject an empty patch without changing metadata", () => {
+        it("[case] - rejects an empty patch without changing metadata", () => {
+            // Arrange
             const entity = createWorkCalendar();
 
-            expect(() => entity.update({ patch: {} })).toThrow("EMPTY_UPDATE_PATCH");
+            // Act
+            const act = (): unknown => entity.update({ patch: {} });
+
+            // Assert
+            expect(act).toThrow("EMPTY_UPDATE_PATCH");
             expect(entity.updatedAt).toBeUndefined();
         });
 
-        it("should reject unchanged and undefined-only patches", () => {
+        it("[case] - rejects unchanged and undefined-only patches", () => {
+            // Arrange
             const entity = createWorkCalendar({ name: "Original" });
 
-            expect(() => entity.update({ patch: { name: "Original" } })).toThrow("NO_CHANGES_DETECTED");
-            expect(() => entity.update({ patch: { name: undefined } })).toThrow("NO_CHANGES_DETECTED");
+            // Act
+            const act = (): unknown => entity.update({ patch: { name: "Original" } });
+            const act1 = (): unknown => entity.update({ patch: { name: undefined } });
+
+            // Assert
+            expect(act).toThrow("NO_CHANGES_DETECTED");
+            expect(act1).toThrow("NO_CHANGES_DETECTED");
             expect(entity.updatedAt).toBeUndefined();
         });
 
-        it("should apply changed values alongside unchanged fields", () => {
+        it("[case] - applies changed values alongside unchanged fields", () => {
+            // Arrange
             const entity = createWorkCalendar({ name: "Original" });
 
+            // Act
             entity.update({ patch: { name: "Original", regionCode: "MA-06" } });
 
+            // Assert
             expect(entity.name).toBe("Original");
             expect(entity.regionCode).toEqual("MA-06");
         });
 
-        it("should reject updates to archived records", () => {
+        it("[case] - rejects updates to archived records", () => {
+            // Arrange
             const entity = createWorkCalendar({ status: RecordStatus.ARCHIVED });
 
-            expect(() => entity.update({ patch: { name: "Updated" } })).toThrow("CANNOT_UPDATE_ARCHIVED");
+            // Act
+            const act = (): unknown => entity.update({ patch: { name: "Updated" } });
+
+            // Assert
+            expect(act).toThrow("CANNOT_UPDATE_ARCHIVED");
         });
     });
 });

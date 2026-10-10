@@ -18,18 +18,24 @@ function createWorkCalendarException(
     });
 }
 
-describe("WorkCalendarException Entity", () => {
-    describe("constructor", () => {
-        it("should generate identity and creation metadata", () => {
-            const entity = createWorkCalendarException();
+describe("[Entity] - WorkCalendarException", () => {
+    describe("[Method] - constructor", () => {
+        it("[case] - generates identity and creation metadata", () => {
+            // Arrange
 
-            expect(isUUID(entity.id, "4")).toBe(true);
+            // Act
+            const entity = createWorkCalendarException();
+            const result = isUUID(entity.id, "4");
+
+            // Assert
+            expect(result).toBe(true);
             expect(entity.createdAt).toBeInstanceOf(Date);
             expect(entity.version).toBe(1);
             expect(entity.updatedAt).toBeUndefined();
         });
 
-        it("should assign supplied fields and relations", () => {
+        it("[case] - assigns supplied fields and relations", () => {
+            // Arrange
             const props: Partial<Entities.WorkCalendarException.ConstructorProps> = {
                 date: "2026-12-31",
                 name: "Short day",
@@ -40,71 +46,106 @@ describe("WorkCalendarException Entity", () => {
                 organization,
                 calendar: { organization } as Entities.WorkCalendar,
             };
+
+            // Act
             const entity = createWorkCalendarException(props);
 
+            // Assert
             expect(entity).toMatchObject(props);
             expect(entity.organization).toBe(props.organization);
         });
     });
 
-    describe("update", () => {
-        it("should update changed fields and preserve omitted or undefined values", () => {
+    describe("[Method] - update", () => {
+        it("[case] - updates changed fields and preserve omitted or undefined values", () => {
+            // Arrange
             const entity = createWorkCalendarException({ name: "Holiday", source: "manual" });
 
+            // Act
             entity.update({ patch: { name: "Working day", source: undefined } });
 
+            // Assert
             expect(entity.name).toBe("Working day");
             expect(entity.source).toEqual("manual");
             expect(entity.updatedAt).toBeInstanceOf(Date);
         });
 
-        it("should reject an empty patch without changing metadata", () => {
+        it("[case] - rejects an empty patch without changing metadata", () => {
+            // Arrange
             const entity = createWorkCalendarException();
 
-            expect(() => entity.update({ patch: {} })).toThrow("EMPTY_UPDATE_PATCH");
+            // Act
+            const act = (): unknown => entity.update({ patch: {} });
+
+            // Assert
+            expect(act).toThrow("EMPTY_UPDATE_PATCH");
             expect(entity.updatedAt).toBeUndefined();
         });
 
-        it("should reject unchanged and undefined-only patches", () => {
+        it("[case] - rejects unchanged and undefined-only patches", () => {
+            // Arrange
             const entity = createWorkCalendarException({ name: "Holiday" });
 
-            expect(() => entity.update({ patch: { name: "Holiday" } })).toThrow("NO_CHANGES_DETECTED");
-            expect(() => entity.update({ patch: { name: undefined } })).toThrow("NO_CHANGES_DETECTED");
+            // Act
+            const act = (): unknown => entity.update({ patch: { name: "Holiday" } });
+            const act1 = (): unknown => entity.update({ patch: { name: undefined } });
+
+            // Assert
+            expect(act).toThrow("NO_CHANGES_DETECTED");
+            expect(act1).toThrow("NO_CHANGES_DETECTED");
             expect(entity.updatedAt).toBeUndefined();
         });
 
-        it("should apply changed values alongside unchanged fields", () => {
+        it("[case] - applies changed values alongside unchanged fields", () => {
+            // Arrange
             const entity = createWorkCalendarException({ name: "Holiday" });
 
+            // Act
             entity.update({ patch: { name: "Holiday", source: "manual" } });
 
+            // Assert
             expect(entity.name).toBe("Holiday");
             expect(entity.source).toEqual("manual");
         });
 
-        it("should preserve explicit false and zero overrides", () => {
+        it("[case] - preserves explicit false and zero overrides", () => {
+            // Arrange
             const entity = createWorkCalendarException({ holidayOverride: true, shortenedByMinutes: 60 });
+
+            // Act
             entity.update({
                 patch: { holidayOverride: false, shortenedByMinutes: 0, workdayOverride: DayOverride.WORKDAY },
             });
 
+            // Assert
             expect(entity.holidayOverride).toBe(false);
             expect(entity.shortenedByMinutes).toBe(0);
             expect(entity.workdayOverride).toBe(DayOverride.WORKDAY);
         });
     });
 
-    describe("canCreate", () => {
-        it("should accept a calendar from the same organization", () => {
-            expect(() => createWorkCalendarException().canCreate()).not.toThrow();
+    describe("[Method] - canCreate", () => {
+        it("[case] - accepts a calendar from the same organization", () => {
+            // Arrange
+
+            // Act
+            const act = (): unknown => createWorkCalendarException().canCreate();
+
+            // Assert
+            expect(act).not.toThrow();
         });
 
-        it("should reject a calendar from another organization", () => {
+        it("[case] - rejects a calendar from another organization", () => {
+            // Arrange
             const entity = createWorkCalendarException({
                 calendar: { organization: { id: "other" } } as Entities.WorkCalendar,
             });
 
-            expect(() => entity.canCreate()).toThrow("ORGANIZATION_MISMATCH");
+            // Act
+            const act = (): unknown => entity.canCreate();
+
+            // Assert
+            expect(act).toThrow("ORGANIZATION_MISMATCH");
         });
     });
 });

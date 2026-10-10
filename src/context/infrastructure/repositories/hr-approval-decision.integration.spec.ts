@@ -8,18 +8,21 @@ import { HRDecisionKind } from "~context/enums";
 
 import { HRApprovalDecisionRepository } from "./hr-approval-decision.repository";
 
-describe("HRApprovalDecisionRepository", () => {
+describe("[Repository] - HRApprovalDecision", () => {
     const suite = postgresSuite({
         repository: ({ readManager }) => new HRApprovalDecisionRepository(readManager),
         fixture: (entityManager) => new HRFixture(entityManager),
     });
 
-    describe("findUniqueOrThrow", () => {
-        it("loads persisted fields and relations through the schema", async () => {
+    describe("[Method] - findUniqueOrThrow", () => {
+        it("[case] - loads persisted fields and relations through the schema", async () => {
+            // Arrange
             const entity = await suite.fixtures().createHRApprovalDecision();
 
+            // Act
             const loaded = await suite.repository().findUniqueOrThrow({ where: { id: entity.id } });
 
+            // Assert
             expect(loaded).toMatchObject({
                 id: entity.id,
                 createdAt: entity.createdAt,
@@ -36,13 +39,15 @@ describe("HRApprovalDecisionRepository", () => {
         });
     });
 
-    describe("findMany", () => {
-        it("filters by organization and decision", async () => {
+    describe("[Method] - findMany", () => {
+        it("[case] - filters by organization and decision", async () => {
+            // Arrange
             const organization = await suite.fixtures().createOrganization();
             const matched = await suite.fixtures().createHRApprovalDecision({ organization });
             await suite.fixtures().createHRApprovalDecision({ organization, decision: HRDecisionKind.REJECT });
             await suite.fixtures().createHRApprovalDecision({});
 
+            // Act
             const [entries, total] = await suite.repository().findMany({
                 pagination: { currentPage: 1, elementsPerPage: 10 },
                 sort: { createdAt: QueryOrder.ASC },
@@ -51,12 +56,16 @@ describe("HRApprovalDecisionRepository", () => {
                     decision: { operator: PublicStringOperator.EQUAL, value: HRDecisionKind.APPROVE },
                 },
             });
+            const result = total;
+            const result1 = entries.map(({ id }) => id);
 
-            expect(total).toBe(1);
-            expect(entries.map(({ id }) => id)).toEqual([matched.id]);
+            // Assert
+            expect(result).toBe(1);
+            expect(result1).toEqual([matched.id]);
         });
 
-        it("filters by organization and requestRevision", async () => {
+        it("[case] - filters by organization and requestRevision", async () => {
+            // Arrange
             const organization = await suite.fixtures().createOrganization();
             const matched = await suite.fixtures().createHRApprovalDecision({ organization });
             await suite.fixtures().createHRApprovalDecision({
@@ -65,6 +74,7 @@ describe("HRApprovalDecisionRepository", () => {
             });
             await suite.fixtures().createHRApprovalDecision({});
 
+            // Act
             const [entries, total] = await suite.repository().findMany({
                 pagination: { currentPage: 1, elementsPerPage: 10 },
                 sort: { createdAt: QueryOrder.ASC },
@@ -73,42 +83,56 @@ describe("HRApprovalDecisionRepository", () => {
                     requestRevision: { operator: PublicOrdinalOperator.EQUAL, value: 1 },
                 },
             });
+            const result = total;
+            const result1 = entries.map(({ id }) => id);
 
-            expect(total).toBe(1);
-            expect(entries.map(({ id }) => id)).toEqual([matched.id]);
+            // Assert
+            expect(result).toBe(1);
+            expect(result1).toEqual([matched.id]);
         });
 
-        it("filters by the step relation", async () => {
+        it("[case] - filters by the step relation", async () => {
+            // Arrange
             const organization = await suite.fixtures().createOrganization();
             const matched = await suite.fixtures().createHRApprovalDecision({ organization });
             await suite.fixtures().createHRApprovalDecision({ organization });
 
+            // Act
             const [entries, total] = await suite.repository().findMany({
                 pagination: { currentPage: 1, elementsPerPage: 10 },
                 sort: {},
                 filters: { step: { operator: PublicLinkOperator.EQUAL, value: matched.step.id } },
             });
+            const result = total;
+            const result1 = entries.map(({ id }) => id);
 
-            expect(total).toBe(1);
-            expect(entries.map(({ id }) => id)).toEqual([matched.id]);
+            // Assert
+            expect(result).toBe(1);
+            expect(result1).toEqual([matched.id]);
         });
 
-        it("filters by the actorEmployee relation", async () => {
+        it("[case] - filters by the actorEmployee relation", async () => {
+            // Arrange
             const organization = await suite.fixtures().createOrganization();
             const matched = await suite.fixtures().createHRApprovalDecision({ organization });
             await suite.fixtures().createHRApprovalDecision({ organization });
 
+            // Act
             const [entries, total] = await suite.repository().findMany({
                 pagination: { currentPage: 1, elementsPerPage: 10 },
                 sort: {},
                 filters: { actorEmployee: { operator: PublicLinkOperator.EQUAL, value: matched.actorEmployee.id } },
             });
+            const result = total;
+            const result1 = entries.map(({ id }) => id);
 
-            expect(total).toBe(1);
-            expect(entries.map(({ id }) => id)).toEqual([matched.id]);
+            // Assert
+            expect(result).toBe(1);
+            expect(result1).toEqual([matched.id]);
         });
 
-        it("sorts and paginates while preserving the total count", async () => {
+        it("[case] - sorts and paginates while preserving the total count", async () => {
+            // Arrange
             const organization = await suite.fixtures().createOrganization();
             const first = await suite
                 .fixtures()
@@ -116,14 +140,18 @@ describe("HRApprovalDecisionRepository", () => {
             await suite.fixtures().createHRApprovalDecision({ organization, createdAt: new Date("2026-01-02T00:00:00Z") });
             await suite.fixtures().createHRApprovalDecision({ organization, createdAt: new Date("2026-01-03T00:00:00Z") });
 
+            // Act
             const [entries, total] = await suite.repository().findMany({
                 pagination: { currentPage: 2, elementsPerPage: 2 },
                 sort: { createdAt: QueryOrder.DESC },
                 filters: { organization: { operator: PublicLinkOperator.EQUAL, value: organization.id } },
             });
+            const result = total;
+            const result1 = entries.map(({ id }) => id);
 
-            expect(total).toBe(3);
-            expect(entries.map(({ id }) => id)).toEqual([first.id]);
+            // Assert
+            expect(result).toBe(3);
+            expect(result1).toEqual([first.id]);
         });
     });
 });

@@ -6,6 +6,35 @@ declare namespace Services.HRApprovalStep {
         decide: Decide.Signature;
     }
 
+    namespace Reassign {
+        type Props = {
+            transaction: ORM.EntityManager;
+            organization: string;
+            employee: string;
+            id: string;
+        };
+
+        type Result = Promise<Entities.HRApprovalStep>;
+
+        type Signature = (props: Props) => Result;
+    }
+
+    namespace Decide {
+        type Props = {
+            decision: Entities.HRApprovalDecision["decision"];
+            transaction: ORM.EntityManager;
+            actorEmployee: string;
+            organization: string;
+            actorAccount: string;
+            comment?: string;
+            id: string;
+        };
+
+        type Result = Promise<Entities.HRApprovalStep>;
+
+        type Signature = (props: Props) => Result;
+    }
+
     interface ServiceContract {
         activate: Activate.Signature;
         create: Create.Signature;
@@ -30,19 +59,6 @@ declare namespace Services.HRApprovalStep {
         type Signature = (props: Props) => Result;
     }
 
-    namespace Reassign {
-        type Props = {
-            transaction: ORM.EntityManager;
-            organization: string;
-            employee: string;
-            id: string;
-        };
-
-        type Result = Promise<Entities.HRApprovalStep>;
-
-        type Signature = (props: Props) => Result;
-    }
-
     namespace Activate {
         type Props = {
             transaction: ORM.EntityManager;
@@ -59,22 +75,6 @@ declare namespace Services.HRApprovalStep {
         type Props = {
             transaction: ORM.EntityManager;
             organization: string;
-            id: string;
-        };
-
-        type Result = Promise<Entities.HRApprovalStep>;
-
-        type Signature = (props: Props) => Result;
-    }
-
-    namespace Decide {
-        type Props = {
-            decision: Entities.HRApprovalDecision["decision"];
-            transaction: ORM.EntityManager;
-            actorEmployee: string;
-            organization: string;
-            actorAccount: string;
-            comment?: string;
             id: string;
         };
 

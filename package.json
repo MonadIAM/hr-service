@@ -1,6 +1,6 @@
 {
   "name": "@monadiam/hr-service",
-  "description": "HR service for MonadIAM: employee records, staffing, work calendars, leave management, and HR requests.",
+  "description": "HRM | Workforce Management: employee records, employment, staffing, work calendars and schedules, leave management and approval workflows.",
   "author": "Daniil Egorov (https://github.com/Lambdius)",
   "license": "SEE LICENSE IN LICENSE",
   "version": "0.0.1",

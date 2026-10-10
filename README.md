@@ -1,12 +1,6 @@
 # @monadiam/hr-service
 
-HR Service is responsible for employee records, staffing, work calendars and
-schedules, leave management, and employee requests with approval workflows.
-
-The repository currently provides authentication through `identity-service`,
-permission checks through `access-control-service`, audit/change logs, Kafka
-integration, and retention cleanup. The HR data model includes 13 domain entities
-and PostgreSQL ORM schemas; application workflows and HTTP endpoints are pending.
+HRM | Workforce Management: employee records, employment, staffing, work calendars and schedules, leave management and approval workflows.
 
 ----
 

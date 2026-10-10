@@ -8,18 +8,21 @@ import { AbsenceStatus, LeaveUnit } from "~context/enums";
 
 import { AbsenceRepository } from "./absence.repository";
 
-describe("AbsenceRepository", () => {
+describe("[Repository] - Absence", () => {
     const suite = postgresSuite({
         repository: ({ readManager }) => new AbsenceRepository(readManager),
         fixture: (entityManager) => new HRFixture(entityManager),
     });
 
-    describe("findUniqueOrThrow", () => {
-        it("loads persisted fields and relations through the schema", async () => {
+    describe("[Method] - findUniqueOrThrow", () => {
+        it("[case] - loads persisted fields and relations through the schema", async () => {
+            // Arrange
             const entity = await suite.fixtures().createAbsence();
 
+            // Act
             const loaded = await suite.repository().findUniqueOrThrow({ where: { id: entity.id } });
 
+            // Assert
             expect(loaded).toMatchObject({
                 id: entity.id,
                 createdAt: entity.createdAt,
@@ -39,13 +42,15 @@ describe("AbsenceRepository", () => {
         });
     });
 
-    describe("findMany", () => {
-        it("filters by organization and status", async () => {
+    describe("[Method] - findMany", () => {
+        it("[case] - filters by organization and status", async () => {
+            // Arrange
             const organization = await suite.fixtures().createOrganization();
             const matched = await suite.fixtures().createAbsence({ organization });
             await suite.fixtures().createAbsence({ organization, status: AbsenceStatus.COMPLETED });
             await suite.fixtures().createAbsence({});
 
+            // Act
             const [entries, total] = await suite.repository().findMany({
                 pagination: { currentPage: 1, elementsPerPage: 10 },
                 sort: { createdAt: QueryOrder.ASC },
@@ -54,17 +59,22 @@ describe("AbsenceRepository", () => {
                     status: { operator: PublicStringOperator.EQUAL, value: AbsenceStatus.SCHEDULED },
                 },
             });
+            const result = total;
+            const result1 = entries.map(({ id }) => id);
 
-            expect(total).toBe(1);
-            expect(entries.map(({ id }) => id)).toEqual([matched.id]);
+            // Assert
+            expect(result).toBe(1);
+            expect(result1).toEqual([matched.id]);
         });
 
-        it("filters by organization and quantity", async () => {
+        it("[case] - filters by organization and quantity", async () => {
+            // Arrange
             const organization = await suite.fixtures().createOrganization();
             const matched = await suite.fixtures().createAbsence({ organization });
             await suite.fixtures().createAbsence({ organization, quantity: "3.000000" });
             await suite.fixtures().createAbsence({});
 
+            // Act
             const [entries, total] = await suite.repository().findMany({
                 pagination: { currentPage: 1, elementsPerPage: 10 },
                 sort: { createdAt: QueryOrder.ASC },
@@ -73,57 +83,76 @@ describe("AbsenceRepository", () => {
                     quantity: { operator: PublicOrdinalOperator.EQUAL, value: "5" },
                 },
             });
+            const result = total;
+            const result1 = entries.map(({ id }) => id);
 
-            expect(total).toBe(1);
-            expect(entries.map(({ id }) => id)).toEqual([matched.id]);
+            // Assert
+            expect(result).toBe(1);
+            expect(result1).toEqual([matched.id]);
         });
 
-        it("filters by the employee relation", async () => {
+        it("[case] - filters by the employee relation", async () => {
+            // Arrange
             const organization = await suite.fixtures().createOrganization();
             const matched = await suite.fixtures().createAbsence({ organization });
             await suite.fixtures().createAbsence({ organization });
 
+            // Act
             const [entries, total] = await suite.repository().findMany({
                 pagination: { currentPage: 1, elementsPerPage: 10 },
                 sort: {},
                 filters: { employee: { operator: PublicLinkOperator.EQUAL, value: matched.employee.id } },
             });
+            const result = total;
+            const result1 = entries.map(({ id }) => id);
 
-            expect(total).toBe(1);
-            expect(entries.map(({ id }) => id)).toEqual([matched.id]);
+            // Assert
+            expect(result).toBe(1);
+            expect(result1).toEqual([matched.id]);
         });
 
-        it("filters by the sourceRequest relation", async () => {
+        it("[case] - filters by the sourceRequest relation", async () => {
+            // Arrange
             const organization = await suite.fixtures().createOrganization();
             const matched = await suite.fixtures().createAbsence({ organization });
             await suite.fixtures().createAbsence({ organization });
 
+            // Act
             const [entries, total] = await suite.repository().findMany({
                 pagination: { currentPage: 1, elementsPerPage: 10 },
                 sort: {},
                 filters: { sourceRequest: { operator: PublicLinkOperator.EQUAL, value: matched.sourceRequest.id } },
             });
+            const result = total;
+            const result1 = entries.map(({ id }) => id);
 
-            expect(total).toBe(1);
-            expect(entries.map(({ id }) => id)).toEqual([matched.id]);
+            // Assert
+            expect(result).toBe(1);
+            expect(result1).toEqual([matched.id]);
         });
 
-        it("filters by the leavePolicy relation", async () => {
+        it("[case] - filters by the leavePolicy relation", async () => {
+            // Arrange
             const organization = await suite.fixtures().createOrganization();
             const matched = await suite.fixtures().createAbsence({ organization });
             await suite.fixtures().createAbsence({ organization });
 
+            // Act
             const [entries, total] = await suite.repository().findMany({
                 pagination: { currentPage: 1, elementsPerPage: 10 },
                 sort: {},
                 filters: { leavePolicy: { operator: PublicLinkOperator.EQUAL, value: matched.leavePolicy.id } },
             });
+            const result = total;
+            const result1 = entries.map(({ id }) => id);
 
-            expect(total).toBe(1);
-            expect(entries.map(({ id }) => id)).toEqual([matched.id]);
+            // Assert
+            expect(result).toBe(1);
+            expect(result1).toEqual([matched.id]);
         });
 
-        it("sorts and paginates while preserving the total count", async () => {
+        it("[case] - sorts and paginates while preserving the total count", async () => {
+            // Arrange
             const organization = await suite.fixtures().createOrganization();
             const first = await suite
                 .fixtures()
@@ -131,14 +160,18 @@ describe("AbsenceRepository", () => {
             await suite.fixtures().createAbsence({ organization, createdAt: new Date("2026-01-02T00:00:00Z") });
             await suite.fixtures().createAbsence({ organization, createdAt: new Date("2026-01-03T00:00:00Z") });
 
+            // Act
             const [entries, total] = await suite.repository().findMany({
                 pagination: { currentPage: 2, elementsPerPage: 2 },
                 sort: { createdAt: QueryOrder.DESC },
                 filters: { organization: { operator: PublicLinkOperator.EQUAL, value: organization.id } },
             });
+            const result = total;
+            const result1 = entries.map(({ id }) => id);
 
-            expect(total).toBe(3);
-            expect(entries.map(({ id }) => id)).toEqual([first.id]);
+            // Assert
+            expect(result).toBe(3);
+            expect(result1).toEqual([first.id]);
         });
     });
 });

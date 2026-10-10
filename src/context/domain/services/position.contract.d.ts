@@ -6,7 +6,6 @@ declare namespace Services.Position {
         validateReference: ValidateReference.Signature;
         purgeDepartment: PurgeDepartment.Signature;
         purgeTeam: PurgeTeam.Signature;
-
         archive: Archive.Signature;
         restore: Restore.Signature;
         create: Create.Signature;

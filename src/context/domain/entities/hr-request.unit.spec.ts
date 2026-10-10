@@ -31,18 +31,24 @@ function createHRRequest(overrides?: Partial<Entities.HRRequest.ConstructorProps
     });
 }
 
-describe("HRRequest Entity", () => {
-    describe("constructor", () => {
-        it("should generate identity and creation metadata", () => {
-            const entity = createHRRequest();
+describe("[Entity] - HRRequest", () => {
+    describe("[Method] - constructor", () => {
+        it("[case] - generates identity and creation metadata", () => {
+            // Arrange
 
-            expect(isUUID(entity.id, "4")).toBe(true);
+            // Act
+            const entity = createHRRequest();
+            const result = isUUID(entity.id, "4");
+
+            // Assert
+            expect(result).toBe(true);
             expect(entity.createdAt).toBeInstanceOf(Date);
             expect(entity.version).toBe(1);
             expect(entity.updatedAt).toBeUndefined();
         });
 
-        it("should assign supplied fields and relations", () => {
+        it("[case] - assigns supplied fields and relations", () => {
+            // Arrange
             const props: Partial<Entities.HRRequest.ConstructorProps> = {
                 type: HRRequestType.TRANSFER,
                 status: HRRequestStatus.APPROVED,
@@ -68,97 +74,147 @@ describe("HRRequest Entity", () => {
                 relatedRequest: stubRequest(),
                 targetPosition: { organization } as Entities.Position,
             };
+
+            // Act
             const entity = createHRRequest(props);
 
+            // Assert
             expect(entity).toMatchObject(props);
             expect(entity.organization).toBe(props.organization);
         });
 
-        it("should initialize independent empty relation collections", () => {
+        it("[case] - initializes independent empty relation collections", () => {
+            // Arrange
+
+            // Act
             const entity = createHRRequest();
             const other = createHRRequest();
+            const result = entity.createdPositionAssignments.getItems();
+            const result1 = entity.createdPositionAssignments;
+            const result2 = entity.closedPositionAssignments.getItems();
+            const result3 = entity.closedPositionAssignments;
+            const result4 = entity.replacedEmploymentHistory.getItems();
+            const result5 = entity.replacedEmploymentHistory;
+            const result6 = entity.leaveLedgerEntries.getItems();
+            const result7 = entity.leaveLedgerEntries;
+            const result8 = entity.approvalSteps.getItems();
+            const result9 = entity.approvalSteps;
+            const result10 = entity.relatedRequests.getItems();
+            const result11 = entity.relatedRequests;
+            const result12 = entity.cancelledAbsences.getItems();
+            const result13 = entity.cancelledAbsences;
+            const result14 = entity.createdAbsences.getItems();
 
-            expect(entity.createdPositionAssignments.getItems()).toEqual([]);
-            expect(entity.createdPositionAssignments).not.toBe(other.createdPositionAssignments);
-            expect(entity.closedPositionAssignments.getItems()).toEqual([]);
-            expect(entity.closedPositionAssignments).not.toBe(other.closedPositionAssignments);
-            expect(entity.replacedEmploymentHistory.getItems()).toEqual([]);
-            expect(entity.replacedEmploymentHistory).not.toBe(other.replacedEmploymentHistory);
-            expect(entity.leaveLedgerEntries.getItems()).toEqual([]);
-            expect(entity.leaveLedgerEntries).not.toBe(other.leaveLedgerEntries);
-            expect(entity.approvalSteps.getItems()).toEqual([]);
-            expect(entity.approvalSteps).not.toBe(other.approvalSteps);
-            expect(entity.relatedRequests.getItems()).toEqual([]);
-            expect(entity.relatedRequests).not.toBe(other.relatedRequests);
-            expect(entity.cancelledAbsences.getItems()).toEqual([]);
-            expect(entity.cancelledAbsences).not.toBe(other.cancelledAbsences);
-            expect(entity.createdAbsences.getItems()).toEqual([]);
+            // Assert
+            expect(result).toEqual([]);
+            expect(result1).not.toBe(other.createdPositionAssignments);
+            expect(result2).toEqual([]);
+            expect(result3).not.toBe(other.closedPositionAssignments);
+            expect(result4).toEqual([]);
+            expect(result5).not.toBe(other.replacedEmploymentHistory);
+            expect(result6).toEqual([]);
+            expect(result7).not.toBe(other.leaveLedgerEntries);
+            expect(result8).toEqual([]);
+            expect(result9).not.toBe(other.approvalSteps);
+            expect(result10).toEqual([]);
+            expect(result11).not.toBe(other.relatedRequests);
+            expect(result12).toEqual([]);
+            expect(result13).not.toBe(other.cancelledAbsences);
+            expect(result14).toEqual([]);
             expect(entity.createdAbsences).not.toBe(other.createdAbsences);
         });
     });
 
-    describe("update", () => {
-        it("should update multiple fields and increment revision once", () => {
+    describe("[Method] - update", () => {
+        it("[case] - updates multiple fields and increment revision once", () => {
+            // Arrange
             const entity = createHRRequest();
             const payload = { contractType: "permanent" };
+
+            // Act
             entity.update({ patch: { payload, payloadSchemaVersion: 2, effectiveAt: undefined } });
 
+            // Assert
             expect(entity.payload).toBe(payload);
             expect(entity.payloadSchemaVersion).toBe(2);
             expect(entity.revision).toBe(2);
             expect(entity.updatedAt).toBeInstanceOf(Date);
         });
 
-        it("should reject empty or unchanged patches without incrementing revision", () => {
+        it("[case] - rejects empty or unchanged patches without incrementing revision", () => {
+            // Arrange
             const entity = createHRRequest();
 
-            expect(() => entity.update({ patch: {} })).toThrow("EMPTY_UPDATE_PATCH");
-            expect(() => entity.update({ patch: { payload: entity.payload } })).toThrow("NO_CHANGES_DETECTED");
-            expect(() => entity.update({ patch: { effectiveAt: undefined } })).toThrow("NO_CHANGES_DETECTED");
+            // Act
+            const act = (): unknown => entity.update({ patch: {} });
+            const act1 = (): unknown => entity.update({ patch: { payload: entity.payload } });
+            const act2 = (): unknown => entity.update({ patch: { effectiveAt: undefined } });
+
+            // Assert
+            expect(act).toThrow("EMPTY_UPDATE_PATCH");
+            expect(act1).toThrow("NO_CHANGES_DETECTED");
+            expect(act2).toThrow("NO_CHANGES_DETECTED");
             expect(entity.revision).toBe(1);
             expect(entity.updatedAt).toBeUndefined();
         });
 
-        it("should reject a foreign target position", () => {
+        it("[case] - rejects a foreign target position", () => {
+            // Arrange
             const entity = createHRRequest();
 
-            expect(() =>
-                entity.update({ patch: { targetPosition: { organization: { id: "other" } } as Entities.Position } }),
-            ).toThrow("ORGANIZATION_MISMATCH");
+            // Act
+            const act = (): unknown =>
+                entity.update({ patch: { targetPosition: { organization: { id: "other" } } as Entities.Position } });
+
+            // Assert
+            expect(act).toThrow("ORGANIZATION_MISMATCH");
         });
     });
 
-    describe.each(["update", "submit"] as const)("%s draft guards", (method) => {
-        it.each(["status", "execution"])("should reject invalid %s", (field) => {
+    describe.each(["update", "submit"] as const)("[Behavior] - %s draft guards", (method) => {
+        it.each(["status", "execution"])("[case] - rejects invalid %s", (field) => {
+            // Arrange
             const entity = createHRRequest();
             if (field === "status") {
                 entity.status = HRRequestStatus.SUBMITTED;
             } else {
                 entity.executionStatus = HRExecutionStatus.RUNNING;
             }
+
+            // Act
             const invoke = (): void =>
                 method === "update"
                     ? entity.update({ patch: { payloadSchemaVersion: 2 } })
                     : entity.submit({ workflowCode: "hire", workflowVersion: 1 });
 
+            // Assert
             expect(invoke).toThrow("INVALID_STATUS");
         });
     });
 
-    describe("submit", () => {
-        it("should save workflow and submission timestamps", () => {
+    describe("[Method] - submit", () => {
+        it("[case] - saves workflow and submission timestamps", () => {
+            // Arrange
             const entity = createHRRequest();
+
+            // Act
             entity.submit({ workflowCode: "hire", workflowVersion: 3 });
 
+            // Assert
             expect(entity).toMatchObject({ status: HRRequestStatus.SUBMITTED, workflowCode: "hire", workflowVersion: 3 });
             expect(entity.submittedAt).toBeInstanceOf(Date);
             expect(entity.updatedAt).toBe(entity.submittedAt);
         });
 
-        it("should validate relations before submission", () => {
+        it("[case] - validates relations before submission", () => {
+            // Arrange
             const entity = createHRRequest({ employee: stubEmployee({ organization: { id: "other", realm: "realm" } }) });
 
-            expect(() => entity.submit({ workflowCode: "hire", workflowVersion: 1 })).toThrow("ORGANIZATION_MISMATCH");
+            // Act
+            const act = (): unknown => entity.submit({ workflowCode: "hire", workflowVersion: 1 });
+
+            // Assert
+            expect(act).toThrow("ORGANIZATION_MISMATCH");
             expect(entity.status).toBe(HRRequestStatus.DRAFT);
         });
     });
@@ -168,11 +224,15 @@ describe("HRRequest Entity", () => {
         ["approve", HRRequestStatus.APPROVED],
         ["reject", HRRequestStatus.REJECTED],
         ["returnForRevision", HRRequestStatus.DRAFT],
-    ] as const)("%s", (method, expected) => {
-        it("should transition a submitted request", () => {
+    ] as const)("[Method] - %s", (method, expected) => {
+        it("[case] - transitions a submitted request", () => {
+            // Arrange
             const entity = createHRRequest({ status: HRRequestStatus.SUBMITTED, revision: 3 });
+
+            // Act
             entity[method]();
 
+            // Assert
             expect(entity.status).toBe(expected);
             expect(entity.updatedAt).toBeInstanceOf(Date);
             if (method === "approve") {
@@ -181,22 +241,33 @@ describe("HRRequest Entity", () => {
             }
         });
 
-        it("should reject a resolved request", () => {
-            expect(() => createHRRequest({ status: HRRequestStatus.REJECTED })[method]()).toThrow("INVALID_STATUS");
+        it("[case] - rejects a resolved request", () => {
+            // Arrange
+
+            // Act
+            const act = (): unknown => createHRRequest({ status: HRRequestStatus.REJECTED })[method]();
+
+            // Assert
+            expect(act).toThrow("INVALID_STATUS");
         });
     });
 
-    describe("withdraw", () => {
-        it("should also withdraw a draft", () => {
+    describe("[Method] - withdraw", () => {
+        it("[case] - also withdraws a draft", () => {
+            // Arrange
             const entity = createHRRequest();
+
+            // Act
             entity.withdraw();
 
+            // Assert
             expect(entity.status).toBe(HRRequestStatus.WITHDRAWN);
         });
     });
 
-    describe("returnForRevision", () => {
-        it("should clear approval and workflow data and increment the revision", () => {
+    describe("[Method] - returnForRevision", () => {
+        it("[case] - clears approval and workflow data and increment the revision", () => {
+            // Arrange
             const entity = createHRRequest({
                 status: HRRequestStatus.SUBMITTED,
                 workflowCode: "hire",
@@ -205,8 +276,11 @@ describe("HRRequest Entity", () => {
                 approvedAt: new Date(),
                 approvedRevision: 1,
             });
+
+            // Act
             entity.returnForRevision();
 
+            // Assert
             expect(entity.revision).toBe(2);
             expect(entity.workflowCode).toBeUndefined();
             expect(entity.workflowVersion).toBeUndefined();
@@ -217,7 +291,7 @@ describe("HRRequest Entity", () => {
     });
 
     describe.each(["cancel", "scheduleApplication", "markApplied", "markFailed", "canApply", "beginApplication"] as const)(
-        "%s approval guards",
+        "[Behavior] - %s approval guards",
         (method) => {
             function invoke(entity: HRRequest): void {
                 if (method === "scheduleApplication") {
@@ -230,44 +304,65 @@ describe("HRRequest Entity", () => {
                     entity[method]();
                 }
             }
-            it("should reject an unapproved request", () => {
-                expect(() => invoke(createHRRequest())).toThrow("INVALID_STATUS");
+            it("[case] - rejects an unapproved request", () => {
+                // Arrange
+
+                // Act
+                const act = (): unknown => invoke(createHRRequest());
+
+                // Assert
+                expect(act).toThrow("INVALID_STATUS");
             });
-            it("should reject an outdated approval", () => {
-                expect(() => invoke(createHRRequest({ status: HRRequestStatus.APPROVED, approvedRevision: 2 }))).toThrow(
-                    "STALE_REVISION",
-                );
+            it("[case] - rejects an outdated approval", () => {
+                // Arrange
+
+                // Act
+                const act = (): unknown =>
+                    invoke(createHRRequest({ status: HRRequestStatus.APPROVED, approvedRevision: 2 }));
+
+                // Assert
+                expect(act).toThrow("STALE_REVISION");
             });
-            it("should reject an incompatible execution state", () => {
+            it("[case] - rejects an incompatible execution state", () => {
+                // Arrange
                 const executionStatus = method === "cancel" ? HRExecutionStatus.RUNNING : HRExecutionStatus.APPLIED;
 
-                expect(() =>
-                    invoke(createHRRequest({ status: HRRequestStatus.APPROVED, approvedRevision: 1, executionStatus })),
-                ).toThrow("INVALID_EXECUTION_STATUS");
+                // Act
+                const act = (): unknown =>
+                    invoke(createHRRequest({ status: HRRequestStatus.APPROVED, approvedRevision: 1, executionStatus }));
+
+                // Assert
+                expect(act).toThrow("INVALID_EXECUTION_STATUS");
             });
         },
     );
-    describe("application", () => {
-        it("should schedule, run, fail, retry and apply an approved revision", () => {
+    describe("[Behavior] - application", () => {
+        it("[case] - schedules, runs, fail, retry and apply an approved revision", () => {
+            // Arrange
             const entity = createHRRequest({ status: HRRequestStatus.APPROVED, approvedRevision: 1 });
             const effectiveAt = new Date(0);
+
+            // Act
             entity.scheduleApplication({ effectiveAt });
-
-            expect(entity.executionStatus).toBe(HRExecutionStatus.SCHEDULED);
-            expect(entity.effectiveAt).toBe(effectiveAt);
+            const result1 = entity.executionStatus;
+            const result2 = entity.effectiveAt;
             entity.beginApplication();
-
-            expect(entity.executionStatus).toBe(HRExecutionStatus.RUNNING);
+            const result3 = entity.executionStatus;
             entity.markFailed({ reason: "retryable" });
-
-            expect(entity.executionStatus).toBe(HRExecutionStatus.FAILED);
-            expect(entity.failure).toBe("retryable");
+            const result4 = entity.executionStatus;
+            const result5 = entity.failure;
             entity.beginApplication();
-
-            expect(entity.failure).toBeUndefined();
+            const result6 = entity.failure;
             const result = { employee: "employee" };
             entity.markApplied({ result });
 
+            // Assert
+            expect(result1).toBe(HRExecutionStatus.SCHEDULED);
+            expect(result2).toBe(effectiveAt);
+            expect(result3).toBe(HRExecutionStatus.RUNNING);
+            expect(result4).toBe(HRExecutionStatus.FAILED);
+            expect(result5).toBe("retryable");
+            expect(result6).toBeUndefined();
             expect(entity.executionStatus).toBe(HRExecutionStatus.APPLIED);
             expect(entity.appliedRevision).toBe(1);
             expect(entity.appliedAt).toBeInstanceOf(Date);
@@ -276,35 +371,49 @@ describe("HRRequest Entity", () => {
             expect(entity.failure).toBeUndefined();
         });
 
-        it("should allow application without a schedule or result", () => {
+        it("[case] - allows application without a schedule or result", () => {
+            // Arrange
             const entity = createHRRequest({ status: HRRequestStatus.APPROVED, approvedRevision: 1 });
+
+            // Act
             entity.beginApplication();
             entity.markApplied({});
 
+            // Assert
             expect(entity.result).toBeUndefined();
             expect(entity.executionStatus).toBe(HRExecutionStatus.APPLIED);
         });
 
-        it("should reject application before the effective time", () => {
+        it("[case] - rejects application before the effective time", () => {
+            // Arrange
             const entity = createHRRequest({
                 status: HRRequestStatus.APPROVED,
                 approvedRevision: 1,
                 effectiveAt: new Date("2999-01-01T00:00:00Z"),
             });
 
-            expect(() => entity.canApply()).toThrow("APPLICATION_NOT_DUE");
-            expect(() => entity.beginApplication()).toThrow("APPLICATION_NOT_DUE");
+            // Act
+            const act = (): unknown => entity.canApply();
+            const act1 = (): unknown => entity.beginApplication();
+
+            // Assert
+            expect(act).toThrow("APPLICATION_NOT_DUE");
+            expect(act1).toThrow("APPLICATION_NOT_DUE");
             expect(entity.executionStatus).toBe(HRExecutionStatus.NOT_STARTED);
         });
     });
 
-    describe("cancel", () => {
+    describe("[Method] - cancel", () => {
         it.each([HRExecutionStatus.NOT_STARTED, HRExecutionStatus.SCHEDULED, HRExecutionStatus.APPLIED])(
-            "should cancel execution state %s",
+            "[case] - cancels execution state %s",
             (executionStatus) => {
+                // Arrange
                 const entity = createHRRequest({ status: HRRequestStatus.APPROVED, approvedRevision: 1, executionStatus });
+
+                // Act
                 entity.cancel();
 
+                // Assert
                 expect(entity.status).toBe(HRRequestStatus.CANCELLED);
                 expect(entity.executionStatus).toBe(executionStatus);
                 expect(entity.updatedAt).toBeInstanceOf(Date);
@@ -312,8 +421,9 @@ describe("HRRequest Entity", () => {
         );
     });
 
-    describe.each(["update", "canCreate"] as const)("%s related request guards", (method) => {
-        it.each(["self", "organization", "employee"])("should reject a related request with mismatched %s", (reason) => {
+    describe.each(["update", "canCreate"] as const)("[Behavior] - %s related request guards", (method) => {
+        it.each(["self", "organization", "employee"])("[case] - rejects a related request with mismatched %s", (reason) => {
+            // Arrange
             const entity = createHRRequest();
             const request = reason === "self" ? entity : stubRequest();
             if (reason === "organization") {
@@ -322,6 +432,8 @@ describe("HRRequest Entity", () => {
             if (reason === "employee") {
                 request.employee = stubEmployee({ id: "other" });
             }
+
+            // Act
             const invoke = (): void => {
                 if (method === "update") {
                     entity.update({ patch: { relatedRequest: request } });
@@ -331,25 +443,37 @@ describe("HRRequest Entity", () => {
                 }
             };
 
+            // Assert
             expect(invoke).toThrow("REQUEST_MISMATCH");
         });
 
-        it("should accept a matching related request", () => {
+        it("[case] - accepts a matching related request", () => {
+            // Arrange
             const entity = createHRRequest();
             const request = stubRequest();
+
+            // Act
             if (method === "update") {
                 entity.update({ patch: { relatedRequest: request } });
             } else {
                 entity.relatedRequest = request;
                 entity.canCreate();
             }
+
+            // Assert
             expect(entity.relatedRequest).toBe(request);
         });
     });
 
-    describe("canCreate", () => {
-        it("should accept a draft and a consistently applied or cancelled request", () => {
-            expect(() => createHRRequest().canCreate()).not.toThrow();
+    describe("[Method] - canCreate", () => {
+        it("[case] - accepts a draft and a consistently applied or cancelled request", () => {
+            // Arrange
+
+            // Act
+            const act = (): unknown => createHRRequest().canCreate();
+
+            // Assert
+            expect(act).not.toThrow();
             for (const status of [HRRequestStatus.APPROVED, HRRequestStatus.CANCELLED]) {
                 expect(() =>
                     createHRRequest({
@@ -362,37 +486,51 @@ describe("HRRequest Entity", () => {
             }
         });
 
-        it("should reject stale approval", () => {
-            expect(() => createHRRequest({ status: HRRequestStatus.APPROVED }).canCreate()).toThrow("STALE_REVISION");
+        it("[case] - rejects stale approval", () => {
+            // Arrange
+
+            // Act
+            const act = (): unknown => createHRRequest({ status: HRRequestStatus.APPROVED }).canCreate();
+
+            // Assert
+            expect(act).toThrow("STALE_REVISION");
         });
 
-        it("should reject inconsistent execution states and revisions", () => {
-            expect(() => createHRRequest({ executionStatus: HRExecutionStatus.RUNNING }).canCreate()).toThrow(
-                "INVALID_EXECUTION_STATUS",
-            );
-            expect(() =>
+        it("[case] - rejects inconsistent execution states and revisions", () => {
+            // Arrange
+
+            // Act
+            const act = (): unknown => createHRRequest({ executionStatus: HRExecutionStatus.RUNNING }).canCreate();
+            const act1 = (): unknown =>
                 createHRRequest({
                     status: HRRequestStatus.CANCELLED,
                     executionStatus: HRExecutionStatus.SCHEDULED,
                     approvedRevision: 2,
-                }).canCreate(),
-            ).toThrow("INVALID_EXECUTION_STATUS");
-
-            expect(() =>
+                }).canCreate();
+            const act2 = (): unknown =>
                 createHRRequest({
                     status: HRRequestStatus.APPROVED,
                     approvedRevision: 1,
                     appliedRevision: 2,
                     executionStatus: HRExecutionStatus.APPLIED,
-                }).canCreate(),
-            ).toThrow("INVALID_EXECUTION_STATUS");
+                }).canCreate();
+
+            // Assert
+            expect(act).toThrow("INVALID_EXECUTION_STATUS");
+            expect(act1).toThrow("INVALID_EXECUTION_STATUS");
+            expect(act2).toThrow("INVALID_EXECUTION_STATUS");
         });
 
-        it.each(["employee", "initiatorEmployee", "targetPosition"] as const)("should reject a foreign %s", (field) => {
+        it.each(["employee", "initiatorEmployee", "targetPosition"] as const)("[case] - rejects a foreign %s", (field) => {
+            // Arrange
             const entity = createHRRequest();
             Object.assign(entity, { [field]: { organization: { id: "other" } } });
 
-            expect(() => entity.canCreate()).toThrow("ORGANIZATION_MISMATCH");
+            // Act
+            const act = (): unknown => entity.canCreate();
+
+            // Assert
+            expect(act).toThrow("ORGANIZATION_MISMATCH");
         });
     });
 });

@@ -38,18 +38,24 @@ function createAbsence(overrides?: Partial<Entities.Absence.ConstructorProps>): 
     });
 }
 
-describe("Absence Entity", () => {
-    describe("constructor", () => {
-        it("should generate identity and creation metadata", () => {
-            const entity = createAbsence();
+describe("[Entity] - Absence", () => {
+    describe("[Method] - constructor", () => {
+        it("[case] - generates identity and creation metadata", () => {
+            // Arrange
 
-            expect(isUUID(entity.id, "4")).toBe(true);
+            // Act
+            const entity = createAbsence();
+            const result = isUUID(entity.id, "4");
+
+            // Assert
+            expect(result).toBe(true);
             expect(entity.createdAt).toBeInstanceOf(Date);
             expect(entity.version).toBe(1);
             expect(entity.updatedAt).toBeUndefined();
         });
 
-        it("should assign supplied fields and relations", () => {
+        it("[case] - assigns supplied fields and relations", () => {
+            // Arrange
             const props: Partial<Entities.Absence.ConstructorProps> = {
                 status: AbsenceStatus.CANCELLED,
                 sourceItemKey: "item-2",
@@ -68,74 +74,148 @@ describe("Absence Entity", () => {
                 sourceRequest: stubRequest(),
                 cancelledByRequest: stubRequest({ id: "cancellation" }),
             };
+
+            // Act
             const entity = createAbsence(props);
 
+            // Assert
             expect(entity).toMatchObject(props);
             expect(entity.organization).toBe(props.organization);
         });
 
-        it("should initialize independent empty relation collections", () => {
+        it("[case] - initializes independent empty relation collections", () => {
+            // Arrange
+
+            // Act
             const entity = createAbsence();
             const other = createAbsence();
+            const result = entity.leaveLedgerEntries.getItems();
 
-            expect(entity.leaveLedgerEntries.getItems()).toEqual([]);
+            // Assert
+            expect(result).toEqual([]);
             expect(entity.leaveLedgerEntries).not.toBe(other.leaveLedgerEntries);
         });
     });
 
-    describe("advanceStatus", () => {
-        it("should use local calendar dates and complete at the exclusive end date", () => {
+    describe("[Method] - advanceStatus", () => {
+        it("[case] - rejects starting before the local start date", () => {
+            // Arrange
             const entity = createAbsence();
 
-            expect(() => entity.advanceStatus({ at: new Date("2026-01-10T04:59:59Z") })).toThrow("NO_CHANGES_DETECTED");
-            entity.advanceStatus({ at: new Date("2026-01-10T05:00:00Z") });
+            // Act
+            const act = (): unknown => entity.advanceStatus({ at: new Date("2026-01-10T04:59:59Z") });
 
+            // Assert
+            expect(act).toThrow("NO_CHANGES_DETECTED");
+        });
+
+        it("[case] - starts on the local date and rejects early completion", () => {
+            // Arrange
+            const entity = createAbsence();
+
+            // Act
+            entity.advanceStatus({ at: new Date("2026-01-10T05:00:00Z") });
+            const act = (): unknown => entity.advanceStatus({ at: new Date("2026-01-12T04:59:59Z") });
+
+            // Assert
             expect(entity.status).toBe(AbsenceStatus.IN_PROGRESS);
             expect(entity.updatedAt).toBeInstanceOf(Date);
-            expect(() => entity.advanceStatus({ at: new Date("2026-01-12T04:59:59Z") })).toThrow("NO_CHANGES_DETECTED");
+            expect(act).toThrow("NO_CHANGES_DETECTED");
+        });
+
+        it("[case] - completes at the exclusive local end date", () => {
+            // Arrange
+            const entity = createAbsence();
+            entity.advanceStatus({ at: new Date("2026-01-10T05:00:00Z") });
+
+            // Act
             entity.advanceStatus({ at: new Date("2026-01-12T05:00:00Z") });
 
+            // Assert
             expect(entity.status).toBe(AbsenceStatus.COMPLETED);
         });
 
-        it("should use exact instants for minute-based absences", () => {
+        it("[case] - rejects starting before the exact start instant", () => {
+            // Arrange
             const entity = createAbsence({
                 unit: LeaveUnit.MINUTE,
                 startsAt: new Date("2026-01-10T10:00:00Z"),
                 endsAt: new Date("2026-01-10T11:00:00Z"),
             });
 
-            expect(() => entity.advanceStatus({ at: new Date("2026-01-10T09:59:59Z") })).toThrow("NO_CHANGES_DETECTED");
+            // Act
+            const act = (): unknown => entity.advanceStatus({ at: new Date("2026-01-10T09:59:59Z") });
+
+            // Assert
+            expect(act).toThrow("NO_CHANGES_DETECTED");
+        });
+
+        it("[case] - starts at the exact start instant", () => {
+            // Arrange
+            const entity = createAbsence({
+                unit: LeaveUnit.MINUTE,
+                startsAt: new Date("2026-01-10T10:00:00Z"),
+                endsAt: new Date("2026-01-10T11:00:00Z"),
+            });
+
+            // Act
             entity.advanceStatus({ at: new Date("2026-01-10T10:00:00Z") });
 
+            // Assert
             expect(entity.status).toBe(AbsenceStatus.IN_PROGRESS);
+        });
+
+        it("[case] - completes at the exact end instant", () => {
+            // Arrange
+            const entity = createAbsence({
+                unit: LeaveUnit.MINUTE,
+                startsAt: new Date("2026-01-10T10:00:00Z"),
+                endsAt: new Date("2026-01-10T11:00:00Z"),
+            });
+            entity.advanceStatus({ at: new Date("2026-01-10T10:00:00Z") });
+
+            // Act
             entity.advanceStatus({ at: new Date("2026-01-10T11:00:00Z") });
 
+            // Assert
             expect(entity.status).toBe(AbsenceStatus.COMPLETED);
         });
 
-        it("should complete a scheduled absence when the entire period has elapsed", () => {
+        it("[case] - completes a scheduled absence when the entire period has elapsed", () => {
+            // Arrange
             const entity = createAbsence();
+
+            // Act
             entity.advanceStatus({ at: new Date("2026-01-13T00:00:00Z") });
 
+            // Assert
             expect(entity.status).toBe(AbsenceStatus.COMPLETED);
         });
 
-        it("should never move an in-progress absence back to scheduled", () => {
+        it("[case] - never moves an in-progress absence back to scheduled", () => {
+            // Arrange
             const entity = createAbsence({ status: AbsenceStatus.IN_PROGRESS });
 
-            expect(() => entity.advanceStatus({ at: new Date("2026-01-01T00:00:00Z") })).toThrow("NO_CHANGES_DETECTED");
+            // Act
+            const act = (): unknown => entity.advanceStatus({ at: new Date("2026-01-01T00:00:00Z") });
+
+            // Assert
+            expect(act).toThrow("NO_CHANGES_DETECTED");
             expect(entity.status).toBe(AbsenceStatus.IN_PROGRESS);
         });
 
-        it.each([AbsenceStatus.COMPLETED, AbsenceStatus.CANCELLED])("should reject terminal status %s", (status) => {
-            expect(() => createAbsence({ status }).advanceStatus({ at: new Date("2026-01-13T00:00:00Z") })).toThrow(
-                "INVALID_STATUS",
-            );
+        it.each([AbsenceStatus.COMPLETED, AbsenceStatus.CANCELLED])("[case] - rejects terminal status %s", (status) => {
+            // Arrange
+
+            // Act
+            const act = (): unknown => createAbsence({ status }).advanceStatus({ at: new Date("2026-01-13T00:00:00Z") });
+
+            // Assert
+            expect(act).toThrow("INVALID_STATUS");
         });
     });
 
-    describe("cancel", () => {
+    describe("[Method] - cancel", () => {
         function cancellation(): Entities.HRRequest {
             return stubRequest({
                 type: HRRequestType.CANCEL_REQUEST,
@@ -146,21 +226,27 @@ describe("Absence Entity", () => {
             });
         }
         it.each([AbsenceStatus.SCHEDULED, AbsenceStatus.IN_PROGRESS, AbsenceStatus.COMPLETED])(
-            "should cancel status %s with a current approved request",
+            "[case] - cancels status %s with a current approved request",
             (status) => {
+                // Arrange
                 const entity = createAbsence({ status });
                 const request = cancellation();
-                entity.cancel({ request });
 
+                // Act
+                entity.cancel({ request });
+                const act = (): unknown => entity.cancel({ request });
+
+                // Assert
                 expect(entity.status).toBe(AbsenceStatus.CANCELLED);
                 expect(entity.cancelledByRequest).toBe(request);
                 expect(entity.updatedAt).toBeInstanceOf(Date);
-                expect(() => entity.cancel({ request })).toThrow("INVALID_STATUS");
+                expect(act).toThrow("INVALID_STATUS");
             },
         );
         it.each(["organization", "employee", "type", "related", "missingRelated"])(
-            "should reject mismatched %s",
+            "[case] - rejects mismatched %s",
             (reason) => {
+                // Arrange
                 const request = cancellation();
                 if (reason === "organization") {
                     request.organization = { id: "other", realm: "realm" };
@@ -177,44 +263,79 @@ describe("Absence Entity", () => {
                 if (reason === "missingRelated") {
                     request.relatedRequest = undefined;
                 }
-                expect(() => createAbsence().cancel({ request })).toThrow("REQUEST_MISMATCH");
+
+                // Act
+                const act = (): unknown => createAbsence().cancel({ request });
+
+                // Assert
+                expect(act).toThrow("REQUEST_MISMATCH");
             },
         );
-        it.each(["status", "revision"])("should reject an unapproved or stale %s", (reason) => {
+        it.each(["status", "revision"])("[case] - rejects an unapproved or stale %s", (reason) => {
+            // Arrange
             const request = cancellation();
             if (reason === "status") {
                 request.status = HRRequestStatus.SUBMITTED;
             } else {
                 request.revision++;
             }
-            expect(() => createAbsence().cancel({ request })).toThrow("INVALID_REQUEST_STATUS");
+
+            // Act
+            const act = (): unknown => createAbsence().cancel({ request });
+
+            // Assert
+            expect(act).toThrow("INVALID_REQUEST_STATUS");
         });
     });
 
-    describe("canCreate", () => {
-        it("should accept matching relations and pool", () => {
-            expect(() => createAbsence({ cancelledByRequest: stubRequest() }).canCreate()).not.toThrow();
-            expect(() => createAbsence().canCreate()).not.toThrow();
+    describe("[Method] - canCreate", () => {
+        it("[case] - accepts matching relations and pool", () => {
+            // Arrange
+
+            // Act
+            const act = (): unknown => createAbsence({ cancelledByRequest: stubRequest() }).canCreate();
+            const act1 = (): unknown => createAbsence().canCreate();
+
+            // Assert
+            expect(act).not.toThrow();
+            expect(act1).not.toThrow();
         });
 
         it.each(["employee", "leavePolicy", "sourceRequest", "cancelledByRequest"] as const)(
-            "should reject a foreign %s",
+            "[case] - rejects a foreign %s",
             (field) => {
+                // Arrange
                 const entity = createAbsence();
                 Object.assign(entity, { [field]: { organization: { id: "other" } } });
 
-                expect(() => entity.canCreate()).toThrow("ORGANIZATION_MISMATCH");
+                // Act
+                const act = (): unknown => entity.canCreate();
+
+                // Assert
+                expect(act).toThrow("ORGANIZATION_MISMATCH");
             },
         );
-        it.each(["sourceRequest", "cancelledByRequest"] as const)("should reject another employee in %s", (field) => {
-            expect(() =>
-                createAbsence({ [field]: stubRequest({ employee: stubEmployee({ id: "other" }) }) }).canCreate(),
-            ).toThrow("REQUEST_MISMATCH");
+        it.each(["sourceRequest", "cancelledByRequest"] as const)("[case] - rejects another employee in %s", (field) => {
+            // Arrange
+
+            // Act
+            const act = (): unknown =>
+                createAbsence({ [field]: stubRequest({ employee: stubEmployee({ id: "other" }) }) }).canCreate();
+
+            // Assert
+            expect(act).toThrow("REQUEST_MISMATCH");
         });
 
-        it("should reject an unknown pool or wrong unit", () => {
-            expect(() => createAbsence({ poolCode: "other" }).canCreate()).toThrow("INVALID_POOL");
-            expect(() => createAbsence({ unit: LeaveUnit.MINUTE }).canCreate()).toThrow("INVALID_POOL");
+        it("[case] - rejects an unknown pool or wrong unit", () => {
+            // Arrange
+
+            // Act
+            const act = (): unknown => createAbsence({ poolCode: "other" }).canCreate();
+            const act1 = (): unknown => createAbsence({ unit: LeaveUnit.MINUTE }).canCreate();
+
+            // Assert
+            expect(act).toThrow("INVALID_POOL");
+            expect(act1).toThrow("INVALID_POOL");
         });
     });
 });

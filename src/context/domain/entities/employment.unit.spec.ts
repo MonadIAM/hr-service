@@ -25,16 +25,22 @@ function createEmployment(overrides?: Partial<Entities.Employment.ConstructorPro
     });
 }
 
-describe("Employment Entity", () => {
-    describe("constructor", () => {
-        it("should generate identity and creation metadata", () => {
-            const entity = createEmployment();
+describe("[Entity] - Employment", () => {
+    describe("[Method] - constructor", () => {
+        it("[case] - generates identity and creation metadata", () => {
+            // Arrange
 
-            expect(isUUID(entity.id, "4")).toBe(true);
+            // Act
+            const entity = createEmployment();
+            const result = isUUID(entity.id, "4");
+
+            // Assert
+            expect(result).toBe(true);
             expect(entity.createdAt).toBeInstanceOf(Date);
         });
 
-        it("should assign supplied fields and relations", () => {
+        it("[case] - assigns supplied fields and relations", () => {
+            // Arrange
             const props: Partial<Entities.Employment.ConstructorProps> = {
                 validFrom: "2026-01-01",
                 validTo: "2026-06-01",
@@ -47,28 +53,43 @@ describe("Employment Entity", () => {
                 workSchedule: { organization } as Entities.WorkSchedule,
                 leavePolicy: { organization } as Entities.LeavePolicy,
             };
+
+            // Act
             const entity = createEmployment(props);
 
+            // Assert
             expect(entity).toMatchObject(props);
             expect(entity.organization).toBe(props.organization);
         });
     });
 
-    describe("canCreate", () => {
-        it("should accept omitted optional relations", () => {
-            expect(() => createEmployment().canCreate()).not.toThrow();
+    describe("[Method] - canCreate", () => {
+        it("[case] - accepts omitted optional relations", () => {
+            // Arrange
+
+            // Act
+            const act = (): unknown => createEmployment().canCreate();
+
+            // Assert
+            expect(act).not.toThrow();
         });
 
         it.each(["employee", "workCalendar", "workSchedule", "leavePolicy", "replacedByRequest"] as const)(
-            "should reject a foreign %s",
+            "[case] - rejects a foreign %s",
             (field) => {
+                // Arrange
                 const entity = createEmployment();
                 Object.assign(entity, { [field]: { organization: { id: "other" } } });
 
-                expect(() => entity.canCreate()).toThrow("ORGANIZATION_MISMATCH");
+                // Act
+                const act = (): unknown => entity.canCreate();
+
+                // Assert
+                expect(act).toThrow("ORGANIZATION_MISMATCH");
             },
         );
-        it("should accept matching relations and reject a request for another employee", () => {
+        it("[case] - accepts matching relations", () => {
+            // Arrange
             const request = stubRequest();
             const entity = createEmployment({
                 replacedByRequest: request,
@@ -77,10 +98,29 @@ describe("Employment Entity", () => {
                 leavePolicy: { organization } as Entities.LeavePolicy,
             });
 
-            expect(() => entity.canCreate()).not.toThrow();
+            // Act
+            const act = (): unknown => entity.canCreate();
+
+            // Assert
+            expect(act).not.toThrow();
+        });
+
+        it("[case] - rejects a request for another employee", () => {
+            // Arrange
+            const request = stubRequest();
+            const entity = createEmployment({
+                replacedByRequest: request,
+                workCalendar: { organization } as Entities.WorkCalendar,
+                workSchedule: { organization } as Entities.WorkSchedule,
+                leavePolicy: { organization } as Entities.LeavePolicy,
+            });
             request.employee = stubEmployee({ id: "other" });
 
-            expect(() => entity.canCreate()).toThrow("REQUEST_MISMATCH");
+            // Act
+            const act = (): unknown => entity.canCreate();
+
+            // Assert
+            expect(act).toThrow("REQUEST_MISMATCH");
         });
     });
 });

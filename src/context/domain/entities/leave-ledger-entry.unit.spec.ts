@@ -37,16 +37,22 @@ function createLeaveLedgerEntry(overrides?: Partial<Entities.LeaveLedgerEntry.Co
     });
 }
 
-describe("LeaveLedgerEntry Entity", () => {
-    describe("constructor", () => {
-        it("should generate identity and creation metadata", () => {
-            const entity = createLeaveLedgerEntry();
+describe("[Entity] - LeaveLedgerEntry", () => {
+    describe("[Method] - constructor", () => {
+        it("[case] - generates identity and creation metadata", () => {
+            // Arrange
 
-            expect(isUUID(entity.id, "4")).toBe(true);
+            // Act
+            const entity = createLeaveLedgerEntry();
+            const result = isUUID(entity.id, "4");
+
+            // Assert
+            expect(result).toBe(true);
             expect(entity.createdAt).toBeInstanceOf(Date);
         });
 
-        it("should assign supplied fields and relations", () => {
+        it("[case] - assigns supplied fields and relations", () => {
+            // Arrange
             const props: Partial<Entities.LeaveLedgerEntry.ConstructorProps> = {
                 kind: LeaveLedgerKind.REVERSAL,
                 balanceDelta: "-1.25",
@@ -66,52 +72,90 @@ describe("LeaveLedgerEntry Entity", () => {
                 absence: { organization } as Entities.Absence,
                 reversesEntry: createLeaveLedgerEntry(),
             };
+
+            // Act
             const entity = createLeaveLedgerEntry(props);
 
+            // Assert
             expect(entity).toMatchObject(props);
             expect(entity.organization).toBe(props.organization);
         });
     });
 
-    describe("canCreate", () => {
-        it("should accept an entry without optional relations", () => {
-            expect(() => createLeaveLedgerEntry().canCreate()).not.toThrow();
+    describe("[Method] - canCreate", () => {
+        it("[case] - accepts an entry without optional relations", () => {
+            // Arrange
+
+            // Act
+            const act = (): unknown => createLeaveLedgerEntry().canCreate();
+
+            // Assert
+            expect(act).not.toThrow();
         });
 
         it.each(["employee", "leavePolicy", "sourceRequest", "absence", "reversesEntry"] as const)(
-            "should reject a foreign %s",
+            "[case] - rejects a foreign %s",
             (field) => {
+                // Arrange
                 const entity = createLeaveLedgerEntry();
                 Object.assign(entity, { [field]: { organization: { id: "other" } } });
 
-                expect(() => entity.canCreate()).toThrow("ORGANIZATION_MISMATCH");
+                // Act
+                const act = (): unknown => entity.canCreate();
+
+                // Assert
+                expect(act).toThrow("ORGANIZATION_MISMATCH");
             },
         );
-        it("should validate the source request employee", () => {
-            expect(() => createLeaveLedgerEntry({ sourceRequest: stubRequest() }).canCreate()).not.toThrow();
-            expect(() =>
+        it("[case] - validates the source request employee", () => {
+            // Arrange
+
+            // Act
+            const act = (): unknown => createLeaveLedgerEntry({ sourceRequest: stubRequest() }).canCreate();
+            const act1 = (): unknown =>
                 createLeaveLedgerEntry({
                     sourceRequest: stubRequest({ employee: stubEmployee({ id: "other" }) }),
-                }).canCreate(),
-            ).toThrow("REQUEST_MISMATCH");
+                }).canCreate();
+
+            // Assert
+            expect(act).not.toThrow();
+            expect(act1).toThrow("REQUEST_MISMATCH");
         });
 
-        it.each(["absence", "reversesEntry"] as const)("should validate the employee, pool and unit of %s", (field) => {
-            for (const patch of [
-                { employee: stubEmployee({ id: "other" }) },
-                { poolCode: "other" },
-                { unit: LeaveUnit.MINUTE },
-            ]) {
-                const entity = createLeaveLedgerEntry();
-                Object.assign(entity, {
-                    [field]: { organization, employee: stubEmployee(), poolCode: "annual", unit: LeaveUnit.DAY, ...patch },
-                });
+        it.each([
+            { field: "absence", reason: "employee" },
+            { field: "absence", reason: "pool" },
+            { field: "absence", reason: "unit" },
+            { field: "reversesEntry", reason: "employee" },
+            { field: "reversesEntry", reason: "pool" },
+            { field: "reversesEntry", reason: "unit" },
+        ] as const)("[case] - rejects a mismatched $reason in $field", ({ field, reason }) => {
+            // Arrange
+            const patches = {
+                employee: { employee: stubEmployee({ id: "other" }) },
+                pool: { poolCode: "other" },
+                unit: { unit: LeaveUnit.MINUTE },
+            };
+            const entity = createLeaveLedgerEntry();
+            Object.assign(entity, {
+                [field]: {
+                    organization,
+                    employee: stubEmployee(),
+                    poolCode: "annual",
+                    unit: LeaveUnit.DAY,
+                    ...patches[reason],
+                },
+            });
 
-                expect(() => entity.canCreate()).toThrow("POOL_MISMATCH");
-            }
+            // Act
+            const act = (): unknown => entity.canCreate();
+
+            // Assert
+            expect(act).toThrow("POOL_MISMATCH");
         });
 
-        it("should accept a matching absence", () => {
+        it("[case] - accepts a matching absence", () => {
+            // Arrange
             const absence = {
                 organization,
                 employee: stubEmployee(),
@@ -119,33 +163,50 @@ describe("LeaveLedgerEntry Entity", () => {
                 unit: LeaveUnit.DAY,
             } as Entities.Absence;
 
-            expect(() => createLeaveLedgerEntry({ absence }).canCreate()).not.toThrow();
+            // Act
+            const act = (): unknown => createLeaveLedgerEntry({ absence }).canCreate();
+
+            // Assert
+            expect(act).not.toThrow();
         });
 
-        it("should reject an unknown pool and a mismatched unit", () => {
-            expect(() => createLeaveLedgerEntry({ poolCode: "other" }).canCreate()).toThrow("INVALID_POOL");
-            expect(() => createLeaveLedgerEntry({ unit: LeaveUnit.MINUTE }).canCreate()).toThrow("INVALID_POOL");
+        it("[case] - rejects an unknown pool and a mismatched unit", () => {
+            // Arrange
+
+            // Act
+            const act = (): unknown => createLeaveLedgerEntry({ poolCode: "other" }).canCreate();
+            const act1 = (): unknown => createLeaveLedgerEntry({ unit: LeaveUnit.MINUTE }).canCreate();
+
+            // Assert
+            expect(act).toThrow("INVALID_POOL");
+            expect(act1).toThrow("INVALID_POOL");
         });
     });
 
-    describe("reversal", () => {
+    describe("[Behavior] - reversal", () => {
         it.each([
             ["1.25", "-1.250000", "-0.5", "0.500000"],
             ["0.000001", "-0.000001", "0", "0.000000"],
             ["9007199254740993.123456", "-9007199254740993.123456", "0.000001", "-0.000001"],
-        ])("should reverse exact decimal deltas %s and %s", (balance, reversedBalance, reserved, reversedReserved) => {
+        ])("[case] - reverses exact decimal deltas %s and %s", (balance, reversedBalance, reserved, reversedReserved) => {
+            // Arrange
             const original = createLeaveLedgerEntry({ balanceDelta: balance, reservedDelta: reserved });
+
+            // Act
             const reversal = createLeaveLedgerEntry({
                 kind: LeaveLedgerKind.REVERSAL,
                 balanceDelta: reversedBalance,
                 reservedDelta: reversedReserved,
                 reversesEntry: original,
             });
+            const act = (): unknown => reversal.canCreate();
 
-            expect(() => reversal.canCreate()).not.toThrow();
+            // Assert
+            expect(act).not.toThrow();
         });
 
-        it.each(["balanceDelta", "reservedDelta"] as const)("should reject a non-opposite %s", (field) => {
+        it.each(["balanceDelta", "reservedDelta"] as const)("[case] - rejects a non-opposite %s", (field) => {
+            // Arrange
             const original = createLeaveLedgerEntry({ balanceDelta: "1.25", reservedDelta: "0.5" });
             const entity = createLeaveLedgerEntry({
                 balanceDelta: "-1.25",
@@ -154,14 +215,23 @@ describe("LeaveLedgerEntry Entity", () => {
                 [field]: "0",
             });
 
-            expect(() => entity.canCreate()).toThrow("INVALID_REVERSAL");
+            // Act
+            const act = (): unknown => entity.canCreate();
+
+            // Assert
+            expect(act).toThrow("INVALID_REVERSAL");
         });
 
-        it("should reject a self-reversal even with zero deltas", () => {
+        it("[case] - rejects a self-reversal even with zero deltas", () => {
+            // Arrange
             const entity = createLeaveLedgerEntry();
             entity.reversesEntry = entity;
 
-            expect(() => entity.canCreate()).toThrow("INVALID_REVERSAL");
+            // Act
+            const act = (): unknown => entity.canCreate();
+
+            // Assert
+            expect(act).toThrow("INVALID_REVERSAL");
         });
     });
 });

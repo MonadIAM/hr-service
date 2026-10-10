@@ -7,18 +7,21 @@ import { HRFixture } from "~testing/integration/repositories/hr.fixture";
 
 import { EmploymentRepository } from "./employment.repository";
 
-describe("EmploymentRepository", () => {
+describe("[Repository] - Employment", () => {
     const suite = postgresSuite({
         repository: ({ readManager }) => new EmploymentRepository(readManager),
         fixture: (entityManager) => new HRFixture(entityManager),
     });
 
-    describe("findUniqueOrThrow", () => {
-        it("loads persisted fields and relations through the schema", async () => {
+    describe("[Method] - findUniqueOrThrow", () => {
+        it("[case] - loads persisted fields and relations through the schema", async () => {
+            // Arrange
             const entity = await suite.fixtures().createEmployment();
 
+            // Act
             const loaded = await suite.repository().findUniqueOrThrow({ where: { id: entity.id } });
 
+            // Assert
             expect(loaded).toMatchObject({
                 id: entity.id,
                 createdAt: entity.createdAt,
@@ -32,13 +35,15 @@ describe("EmploymentRepository", () => {
         });
     });
 
-    describe("findMany", () => {
-        it("filters by organization and termsRevision", async () => {
+    describe("[Method] - findMany", () => {
+        it("[case] - filters by organization and termsRevision", async () => {
+            // Arrange
             const organization = await suite.fixtures().createOrganization();
             const matched = await suite.fixtures().createEmployment({ organization });
             await suite.fixtures().createEmployment({ organization, termsRevision: 2 });
             await suite.fixtures().createEmployment({});
 
+            // Act
             const [entries, total] = await suite.repository().findMany({
                 pagination: { currentPage: 1, elementsPerPage: 10 },
                 sort: { createdAt: QueryOrder.ASC },
@@ -47,17 +52,22 @@ describe("EmploymentRepository", () => {
                     termsRevision: { operator: PublicOrdinalOperator.EQUAL, value: 1 },
                 },
             });
+            const result = total;
+            const result1 = entries.map(({ id }) => id);
 
-            expect(total).toBe(1);
-            expect(entries.map(({ id }) => id)).toEqual([matched.id]);
+            // Assert
+            expect(result).toBe(1);
+            expect(result1).toEqual([matched.id]);
         });
 
-        it("filters by organization and validFrom", async () => {
+        it("[case] - filters by organization and validFrom", async () => {
+            // Arrange
             const organization = await suite.fixtures().createOrganization();
             const matched = await suite.fixtures().createEmployment({ organization });
             await suite.fixtures().createEmployment({ organization, validFrom: "2026-02-01" });
             await suite.fixtures().createEmployment({});
 
+            // Act
             const [entries, total] = await suite.repository().findMany({
                 pagination: { currentPage: 1, elementsPerPage: 10 },
                 sort: { createdAt: QueryOrder.ASC },
@@ -66,27 +76,36 @@ describe("EmploymentRepository", () => {
                     validFrom: { operator: PublicOrdinalOperator.EQUAL, value: "2026-01-01" },
                 },
             });
+            const result = total;
+            const result1 = entries.map(({ id }) => id);
 
-            expect(total).toBe(1);
-            expect(entries.map(({ id }) => id)).toEqual([matched.id]);
+            // Assert
+            expect(result).toBe(1);
+            expect(result1).toEqual([matched.id]);
         });
 
-        it("filters by the employee relation", async () => {
+        it("[case] - filters by the employee relation", async () => {
+            // Arrange
             const organization = await suite.fixtures().createOrganization();
             const matched = await suite.fixtures().createEmployment({ organization });
             await suite.fixtures().createEmployment({ organization });
 
+            // Act
             const [entries, total] = await suite.repository().findMany({
                 pagination: { currentPage: 1, elementsPerPage: 10 },
                 sort: {},
                 filters: { employee: { operator: PublicLinkOperator.EQUAL, value: matched.employee.id } },
             });
+            const result = total;
+            const result1 = entries.map(({ id }) => id);
 
-            expect(total).toBe(1);
-            expect(entries.map(({ id }) => id)).toEqual([matched.id]);
+            // Assert
+            expect(result).toBe(1);
+            expect(result1).toEqual([matched.id]);
         });
 
-        it("sorts and paginates while preserving the total count", async () => {
+        it("[case] - sorts and paginates while preserving the total count", async () => {
+            // Arrange
             const organization = await suite.fixtures().createOrganization();
             const first = await suite
                 .fixtures()
@@ -94,14 +113,18 @@ describe("EmploymentRepository", () => {
             await suite.fixtures().createEmployment({ organization, createdAt: new Date("2026-01-02T00:00:00Z") });
             await suite.fixtures().createEmployment({ organization, createdAt: new Date("2026-01-03T00:00:00Z") });
 
+            // Act
             const [entries, total] = await suite.repository().findMany({
                 pagination: { currentPage: 2, elementsPerPage: 2 },
                 sort: { createdAt: QueryOrder.DESC },
                 filters: { organization: { operator: PublicLinkOperator.EQUAL, value: organization.id } },
             });
+            const result = total;
+            const result1 = entries.map(({ id }) => id);
 
-            expect(total).toBe(3);
-            expect(entries.map(({ id }) => id)).toEqual([first.id]);
+            // Assert
+            expect(result).toBe(3);
+            expect(result1).toEqual([first.id]);
         });
     });
 });

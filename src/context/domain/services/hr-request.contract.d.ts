@@ -8,18 +8,16 @@ declare namespace Services.HRRequest {
         submit: Submit.Signature;
     }
 
-    interface ProcessorContract {
-        scheduleApplication: ScheduleApplication.Signature;
-        beginApplication: BeginApplication.Signature;
-        markApplied: MarkApplied.Signature;
-        markFailed: MarkFailed.Signature;
-        cancel: Cancel.Signature;
-    }
+    namespace Withdraw {
+        type Props = {
+            transaction: ORM.EntityManager;
+            organization: string;
+            id: string;
+        };
 
-    interface ServiceContract {
-        returnForRevision: ReturnForRevision.Signature;
-        approve: Approve.Signature;
-        reject: Reject.Signature;
+        type Result = Promise<Entities.HRRequest>;
+
+        type Signature = (props: Props) => Result;
     }
 
     namespace Create {
@@ -77,16 +75,10 @@ declare namespace Services.HRRequest {
         type Signature = (props: Props) => Result;
     }
 
-    namespace Withdraw {
-        type Props = {
-            transaction: ORM.EntityManager;
-            organization: string;
-            id: string;
-        };
-
-        type Result = Promise<Entities.HRRequest>;
-
-        type Signature = (props: Props) => Result;
+    interface ServiceContract {
+        returnForRevision: ReturnForRevision.Signature;
+        approve: Approve.Signature;
+        reject: Reject.Signature;
     }
 
     namespace Approve {
@@ -123,6 +115,14 @@ declare namespace Services.HRRequest {
         type Result = Promise<Entities.HRRequest>;
 
         type Signature = (props: Props) => Result;
+    }
+
+    interface ProcessorContract {
+        scheduleApplication: ScheduleApplication.Signature;
+        beginApplication: BeginApplication.Signature;
+        markApplied: MarkApplied.Signature;
+        markFailed: MarkFailed.Signature;
+        cancel: Cancel.Signature;
     }
 
     namespace Cancel {

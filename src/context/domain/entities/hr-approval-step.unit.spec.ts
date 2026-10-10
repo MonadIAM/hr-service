@@ -28,18 +28,24 @@ function createHRApprovalStep(overrides?: Partial<Entities.HRApprovalStep.Constr
     });
 }
 
-describe("HRApprovalStep Entity", () => {
-    describe("constructor", () => {
-        it("should generate identity and creation metadata", () => {
-            const entity = createHRApprovalStep();
+describe("[Entity] - HRApprovalStep", () => {
+    describe("[Method] - constructor", () => {
+        it("[case] - generates identity and creation metadata", () => {
+            // Arrange
 
-            expect(isUUID(entity.id, "4")).toBe(true);
+            // Act
+            const entity = createHRApprovalStep();
+            const result = isUUID(entity.id, "4");
+
+            // Assert
+            expect(result).toBe(true);
             expect(entity.createdAt).toBeInstanceOf(Date);
             expect(entity.version).toBe(1);
             expect(entity.updatedAt).toBeUndefined();
         });
 
-        it("should assign supplied fields and relations", () => {
+        it("[case] - assigns supplied fields and relations", () => {
+            // Arrange
             const props: Partial<Entities.HRApprovalStep.ConstructorProps> = {
                 name: "HR approval",
                 ordinal: 2,
@@ -51,8 +57,11 @@ describe("HRApprovalStep Entity", () => {
                 request: stubRequest(),
                 assigneeEmployee: stubEmployee(),
             };
+
+            // Act
             const entity = createHRApprovalStep(props);
 
+            // Assert
             expect(entity).toMatchObject(props);
             expect(entity.organization).toBe(props.organization);
         });
@@ -63,11 +72,15 @@ describe("HRApprovalStep Entity", () => {
         ["approve", HRApprovalStatus.ACTIVE, HRApprovalStatus.APPROVED],
         ["reject", HRApprovalStatus.ACTIVE, HRApprovalStatus.REJECTED],
         ["returnForRevision", HRApprovalStatus.ACTIVE, HRApprovalStatus.RETURNED],
-    ] as const)("%s", (method, initial, expected) => {
-        it("should transition a current step", () => {
+    ] as const)("[Method] - %s", (method, initial, expected) => {
+        it("[case] - transitions a current step", () => {
+            // Arrange
             const entity = createHRApprovalStep({ status: initial });
+
+            // Act
             entity[method]();
 
+            // Assert
             expect(entity.status).toBe(expected);
             expect(entity.updatedAt).toBeInstanceOf(Date);
             if (method === "activate") {
@@ -78,8 +91,9 @@ describe("HRApprovalStep Entity", () => {
         });
 
         it.each(["organization", "revision", "request", "status", "assignee"])(
-            "should reject invalid %s without changing the step",
+            "[case] - rejects invalid %s without changing the step",
             (reason) => {
+                // Arrange
                 const entity = createHRApprovalStep({ status: initial });
                 const errors = {
                     organization: "ORGANIZATION_MISMATCH",
@@ -105,7 +119,11 @@ describe("HRApprovalStep Entity", () => {
                 }
                 const status = entity.status;
 
-                expect(() => entity[method]()).toThrow(errors[reason as keyof typeof errors]);
+                // Act
+                const act = (): unknown => entity[method]();
+
+                // Assert
+                expect(act).toThrow(errors[reason as keyof typeof errors]);
                 expect(entity.status).toBe(status);
                 expect(entity.updatedAt).toBeUndefined();
                 expect(entity.resolvedAt).toBeUndefined();
@@ -113,20 +131,25 @@ describe("HRApprovalStep Entity", () => {
         );
     });
 
-    describe("reassign", () => {
-        it.each([HRApprovalStatus.WAITING, HRApprovalStatus.ACTIVE])("should reassign status %s", (status) => {
+    describe("[Method] - reassign", () => {
+        it.each([HRApprovalStatus.WAITING, HRApprovalStatus.ACTIVE])("[case] - reassigns status %s", (status) => {
+            // Arrange
             const entity = createHRApprovalStep({ status });
             const employee = stubEmployee({ id: "replacement", status: EmployeeStatus.ACTIVE });
+
+            // Act
             entity.reassign({ employee });
 
+            // Assert
             expect(entity.assigneeEmployee).toBe(employee);
             expect(entity.status).toBe(status);
             expect(entity.updatedAt).toBeInstanceOf(Date);
         });
 
         it.each(["organization", "revision", "request", "status", "same", "foreign", "inactive"])(
-            "should reject %s",
+            "[case] - rejects %s",
             (reason) => {
+                // Arrange
                 const entity = createHRApprovalStep();
                 const employee = stubEmployee({ id: "replacement", status: EmployeeStatus.ACTIVE });
                 const errors = {
@@ -159,17 +182,26 @@ describe("HRApprovalStep Entity", () => {
                 if (reason === "inactive") {
                     employee.status = EmployeeStatus.ARCHIVED;
                 }
-                expect(() => entity.reassign({ employee })).toThrow(errors[reason as keyof typeof errors]);
+
+                // Act
+                const act = (): unknown => entity.reassign({ employee });
+
+                // Assert
+                expect(act).toThrow(errors[reason as keyof typeof errors]);
                 expect(entity.assigneeEmployee.id).toBe("employee");
             },
         );
     });
 
-    describe("skip", () => {
-        it.each([HRApprovalStatus.WAITING, HRApprovalStatus.ACTIVE])("should skip status %s", (status) => {
+    describe("[Method] - skip", () => {
+        it.each([HRApprovalStatus.WAITING, HRApprovalStatus.ACTIVE])("[case] - skips status %s", (status) => {
+            // Arrange
             const entity = createHRApprovalStep({ status });
+
+            // Act
             entity.skip();
 
+            // Assert
             expect(entity.status).toBe(HRApprovalStatus.SKIPPED);
             expect(entity.resolvedAt).toBeInstanceOf(Date);
             expect(entity.resolvedAt).toBe(entity.updatedAt);
@@ -180,28 +212,51 @@ describe("HRApprovalStep Entity", () => {
             HRApprovalStatus.REJECTED,
             HRApprovalStatus.RETURNED,
             HRApprovalStatus.SKIPPED,
-        ])("should reject resolved status %s", (status) => {
-            expect(() => createHRApprovalStep({ status }).skip()).toThrow("INVALID_STATUS");
+        ])("[case] - rejects resolved status %s", (status) => {
+            // Arrange
+
+            // Act
+            const act = (): unknown => createHRApprovalStep({ status }).skip();
+
+            // Assert
+            expect(act).toThrow("INVALID_STATUS");
         });
     });
 
-    describe("canCreate", () => {
-        it("should allow a current step", () => {
-            expect(() => createHRApprovalStep().canCreate()).not.toThrow();
+    describe("[Method] - canCreate", () => {
+        it("[case] - allows a current step", () => {
+            // Arrange
+
+            // Act
+            const act = (): unknown => createHRApprovalStep().canCreate();
+
+            // Assert
+            expect(act).not.toThrow();
         });
 
-        it.each(["request", "assigneeEmployee"] as const)("should reject a foreign %s", (field) => {
+        it.each(["request", "assigneeEmployee"] as const)("[case] - rejects a foreign %s", (field) => {
+            // Arrange
             const entity = createHRApprovalStep();
             entity[field].organization = { id: "other", realm: "realm" };
 
-            expect(() => entity.canCreate()).toThrow("ORGANIZATION_MISMATCH");
+            // Act
+            const act = (): unknown => entity.canCreate();
+
+            // Assert
+            expect(act).toThrow("ORGANIZATION_MISMATCH");
         });
 
-        it("should reject stale revisions and inactive assignees", () => {
-            expect(() => createHRApprovalStep({ requestRevision: 1 }).canCreate()).toThrow("STALE_REVISION");
-            expect(() =>
-                createHRApprovalStep({ assigneeEmployee: stubEmployee({ status: EmployeeStatus.DRAFT }) }).canCreate(),
-            ).toThrow("INACTIVE_ASSIGNEE");
+        it("[case] - rejects stale revisions and inactive assignees", () => {
+            // Arrange
+
+            // Act
+            const act = (): unknown => createHRApprovalStep({ requestRevision: 1 }).canCreate();
+            const act1 = (): unknown =>
+                createHRApprovalStep({ assigneeEmployee: stubEmployee({ status: EmployeeStatus.DRAFT }) }).canCreate();
+
+            // Assert
+            expect(act).toThrow("STALE_REVISION");
+            expect(act1).toThrow("INACTIVE_ASSIGNEE");
         });
     });
 });

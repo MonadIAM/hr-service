@@ -27,18 +27,24 @@ function createLeavePolicy(overrides?: Partial<Entities.LeavePolicy.ConstructorP
     });
 }
 
-describe("LeavePolicy Entity", () => {
-    describe("constructor", () => {
-        it("should generate identity and creation metadata", () => {
-            const entity = createLeavePolicy();
+describe("[Entity] - LeavePolicy", () => {
+    describe("[Method] - constructor", () => {
+        it("[case] - generates identity and creation metadata", () => {
+            // Arrange
 
-            expect(isUUID(entity.id, "4")).toBe(true);
+            // Act
+            const entity = createLeavePolicy();
+            const result = isUUID(entity.id, "4");
+
+            // Assert
+            expect(result).toBe(true);
             expect(entity.createdAt).toBeInstanceOf(Date);
             expect(entity.version).toBe(1);
             expect(entity.updatedAt).toBeUndefined();
         });
 
-        it("should assign supplied fields and relations", () => {
+        it("[case] - assigns supplied fields and relations", () => {
+            // Arrange
             const props: Partial<Entities.LeavePolicy.ConstructorProps> = {
                 code: "ALT",
                 name: "Alternative",
@@ -57,80 +63,133 @@ describe("LeavePolicy Entity", () => {
                 ],
                 organization,
             };
+
+            // Act
             const entity = createLeavePolicy(props);
 
+            // Assert
             expect(entity).toMatchObject(props);
             expect(entity.organization).toBe(props.organization);
         });
 
-        it("should default status and revision", () => {
+        it("[case] - defaults status and revision", () => {
+            // Arrange
+
+            // Act
             const entity = createLeavePolicy();
 
+            // Assert
             expect(entity.status).toBe(RecordStatus.ACTIVE);
             expect(entity.revision).toBe(1);
         });
 
-        it("should initialize independent empty relation collections", () => {
+        it("[case] - initializes independent empty relation collections", () => {
+            // Arrange
+
+            // Act
             const entity = createLeavePolicy();
             const other = createLeavePolicy();
+            const result = entity.leaveLedgerEntries.getItems();
+            const result1 = entity.leaveLedgerEntries;
+            const result2 = entity.employmentHistory.getItems();
+            const result3 = entity.employmentHistory;
+            const result4 = entity.employees.getItems();
+            const result5 = entity.employees;
+            const result6 = entity.absences.getItems();
 
-            expect(entity.leaveLedgerEntries.getItems()).toEqual([]);
-            expect(entity.leaveLedgerEntries).not.toBe(other.leaveLedgerEntries);
-            expect(entity.employmentHistory.getItems()).toEqual([]);
-            expect(entity.employmentHistory).not.toBe(other.employmentHistory);
-            expect(entity.employees.getItems()).toEqual([]);
-            expect(entity.employees).not.toBe(other.employees);
-            expect(entity.absences.getItems()).toEqual([]);
+            // Assert
+            expect(result).toEqual([]);
+            expect(result1).not.toBe(other.leaveLedgerEntries);
+            expect(result2).toEqual([]);
+            expect(result3).not.toBe(other.employmentHistory);
+            expect(result4).toEqual([]);
+            expect(result5).not.toBe(other.employees);
+            expect(result6).toEqual([]);
             expect(entity.absences).not.toBe(other.absences);
         });
     });
 
-    describe("archive", () => {
-        it("should archive an active record", () => {
+    describe("[Method] - archive", () => {
+        it("[case] - archives an active record", () => {
+            // Arrange
             const entity = createLeavePolicy();
+
+            // Act
             entity.archive();
 
+            // Assert
             expect(entity.status).toBe(RecordStatus.ARCHIVED);
             expect(entity.updatedAt).toBeInstanceOf(Date);
         });
 
-        it("should reject repeated archival", () => {
+        it("[case] - rejects repeated archival", () => {
+            // Arrange
             const entity = createLeavePolicy({ status: RecordStatus.ARCHIVED });
 
-            expect(() => entity.archive()).toThrow("ALREADY_ARCHIVED");
+            // Act
+            const act = (): unknown => entity.archive();
+
+            // Assert
+            expect(act).toThrow("ALREADY_ARCHIVED");
             expect(entity.updatedAt).toBeUndefined();
         });
     });
 
-    describe("restore", () => {
-        it("should restore an archived record", () => {
+    describe("[Method] - restore", () => {
+        it("[case] - restores an archived record", () => {
+            // Arrange
             const entity = createLeavePolicy({ status: RecordStatus.ARCHIVED });
+
+            // Act
             entity.restore();
 
+            // Assert
             expect(entity.status).toBe(RecordStatus.ACTIVE);
             expect(entity.updatedAt).toBeInstanceOf(Date);
         });
 
-        it("should reject restoring an active record", () => {
-            expect(() => createLeavePolicy().restore()).toThrow("ALREADY_ACTIVE");
+        it("[case] - rejects restoring an active record", () => {
+            // Arrange
+
+            // Act
+            const act = (): unknown => createLeavePolicy().restore();
+
+            // Assert
+            expect(act).toThrow("ALREADY_ACTIVE");
         });
     });
 
-    describe("canPurge", () => {
-        it("should reject an active record", () => {
-            expect(() => createLeavePolicy().canPurge()).toThrow("CANNOT_PURGE_ACTIVE");
+    describe("[Method] - canPurge", () => {
+        it("[case] - rejects an active record", () => {
+            // Arrange
+
+            // Act
+            const act = (): unknown => createLeavePolicy().canPurge();
+
+            // Assert
+            expect(act).toThrow("CANNOT_PURGE_ACTIVE");
         });
 
-        it("should allow an archived record", () => {
-            expect(() => createLeavePolicy({ status: RecordStatus.ARCHIVED }).canPurge()).not.toThrow();
+        it("[case] - allows an archived record", () => {
+            // Arrange
+
+            // Act
+            const act = (): unknown => createLeavePolicy({ status: RecordStatus.ARCHIVED }).canPurge();
+
+            // Assert
+            expect(act).not.toThrow();
         });
     });
 
-    describe("createRevision", () => {
-        it("should create an independent revision without changing the original", () => {
+    describe("[Method] - createRevision", () => {
+        it("[case] - creates an independent revision without changing the original", () => {
+            // Arrange
             const entity = createLeavePolicy({ revision: 3 });
+
+            // Act
             const revision = entity.createRevision({ name: "Updated" });
 
+            // Assert
             expect(revision.id).not.toBe(entity.id);
             expect(revision.revision).toBe(4);
             expect(revision.name).toBe("Updated");
@@ -144,30 +203,56 @@ describe("LeavePolicy Entity", () => {
             expect(entity.updatedAt).toBeUndefined();
         });
 
-        it("should reject empty, undefined and deeply equal changes", () => {
+        it("[case] - rejects empty, undefined and deeply equal changes", () => {
+            // Arrange
             const entity = createLeavePolicy();
 
-            expect(() => entity.createRevision({})).toThrow("NO_CHANGES_DETECTED");
-            expect(() => entity.createRevision({ name: undefined })).toThrow("NO_CHANGES_DETECTED");
-            expect(() => entity.createRevision({ rules: createLeavePolicy().rules })).toThrow("NO_CHANGES_DETECTED");
+            // Act
+            const act = (): unknown => entity.createRevision({});
+            const act1 = (): unknown => entity.createRevision({ name: undefined });
+            const act2 = (): unknown => entity.createRevision({ rules: createLeavePolicy().rules });
+
+            // Assert
+            expect(act).toThrow("NO_CHANGES_DETECTED");
+            expect(act1).toThrow("NO_CHANGES_DETECTED");
+            expect(act2).toThrow("NO_CHANGES_DETECTED");
         });
 
-        it("should reject archived records", () => {
+        it("[case] - rejects archived records", () => {
+            // Arrange
             const entity = createLeavePolicy({ status: RecordStatus.ARCHIVED });
 
-            expect(() => entity.createRevision({ name: "Updated" })).toThrow("CANNOT_UPDATE_ARCHIVED");
+            // Act
+            const act = (): unknown => entity.createRevision({ name: "Updated" });
+
+            // Assert
+            expect(act).toThrow("CANNOT_UPDATE_ARCHIVED");
         });
 
-        it("should apply jurisdiction and rules with independent nested objects", () => {
+        it("[case] - applies jurisdiction and rules while preserving the name", () => {
+            // Arrange
             const entity = createLeavePolicy();
             const rules = [{ ...entity.rules[0], annualEntitlement: "25" }];
+
+            // Act
             const revision = entity.createRevision({ jurisdiction: "FR", rules });
 
+            // Assert
             expect(revision.jurisdiction).toBe("FR");
             expect(revision.name).toBe(entity.name);
             expect(revision.rules).toEqual(rules);
+        });
+
+        it("[case] - clones nested leave rules", () => {
+            // Arrange
+            const entity = createLeavePolicy();
+            const rules = [{ ...entity.rules[0], annualEntitlement: "25" }];
+
+            // Act
+            const revision = entity.createRevision({ jurisdiction: "FR", rules });
             rules[0].annualEntitlement = "30";
 
+            // Assert
             expect(revision.rules[0].annualEntitlement).toBe("25");
         });
     });

@@ -20,18 +20,24 @@ function createPosition(overrides?: Partial<Entities.Position.ConstructorProps>)
     });
 }
 
-describe("Position Entity", () => {
-    describe("constructor", () => {
-        it("should generate identity and creation metadata", () => {
-            const entity = createPosition();
+describe("[Entity] - Position", () => {
+    describe("[Method] - constructor", () => {
+        it("[case] - generates identity and creation metadata", () => {
+            // Arrange
 
-            expect(isUUID(entity.id, "4")).toBe(true);
+            // Act
+            const entity = createPosition();
+            const result = isUUID(entity.id, "4");
+
+            // Assert
+            expect(result).toBe(true);
             expect(entity.createdAt).toBeInstanceOf(Date);
             expect(entity.version).toBe(1);
             expect(entity.updatedAt).toBeUndefined();
         });
 
-        it("should assign supplied fields and relations", () => {
+        it("[case] - assigns supplied fields and relations", () => {
+            // Arrange
             const props: Partial<Entities.Position.ConstructorProps> = {
                 code: "LEAD",
                 title: "Team lead",
@@ -46,105 +52,168 @@ describe("Position Entity", () => {
                 status: RecordStatus.ARCHIVED,
                 organization,
             };
+
+            // Act
             const entity = createPosition(props);
 
+            // Assert
             expect(entity).toMatchObject(props);
             expect(entity.organization).toBe(props.organization);
         });
 
-        it("should initialize independent empty relation collections", () => {
+        it("[case] - initializes independent empty relation collections", () => {
+            // Arrange
+
+            // Act
             const entity = createPosition();
             const other = createPosition();
+            const result = entity.positionAssignments.getItems();
+            const result1 = entity.positionAssignments;
+            const result2 = entity.targetedHRRequests.getItems();
 
-            expect(entity.positionAssignments.getItems()).toEqual([]);
-            expect(entity.positionAssignments).not.toBe(other.positionAssignments);
-            expect(entity.targetedHRRequests.getItems()).toEqual([]);
+            // Assert
+            expect(result).toEqual([]);
+            expect(result1).not.toBe(other.positionAssignments);
+            expect(result2).toEqual([]);
             expect(entity.targetedHRRequests).not.toBe(other.targetedHRRequests);
         });
     });
 
-    describe("update", () => {
-        it("should update changed fields and preserve omitted or undefined values", () => {
+    describe("[Method] - update", () => {
+        it("[case] - updates changed fields and preserve omitted or undefined values", () => {
+            // Arrange
             const entity = createPosition({ title: "Developer", description: "Platform role" });
+
+            // Act
             entity.completePlacement(false);
             entity.update({ patch: { title: "Senior developer", description: undefined } });
 
+            // Assert
             expect(entity.title).toBe("Senior developer");
             expect(entity.description).toEqual("Platform role");
             expect(entity.updatedAt).toBeInstanceOf(Date);
         });
 
-        it("should reject an empty patch without changing metadata", () => {
+        it("[case] - rejects an empty patch without changing metadata", () => {
+            // Arrange
             const entity = createPosition();
             entity.completePlacement(false);
 
-            expect(() => entity.update({ patch: {} })).toThrow("EMPTY_UPDATE_PATCH");
+            // Act
+            const act = (): unknown => entity.update({ patch: {} });
+
+            // Assert
+            expect(act).toThrow("EMPTY_UPDATE_PATCH");
             expect(entity.updatedAt).toBeUndefined();
         });
 
-        it("should reject unchanged and undefined-only patches", () => {
+        it("[case] - rejects unchanged and undefined-only patches", () => {
+            // Arrange
             const entity = createPosition({ title: "Developer" });
             entity.completePlacement(false);
 
-            expect(() => entity.update({ patch: { title: "Developer" } })).toThrow("NO_CHANGES_DETECTED");
-            expect(() => entity.update({ patch: { title: undefined } })).toThrow("NO_CHANGES_DETECTED");
+            // Act
+            const act = (): unknown => entity.update({ patch: { title: "Developer" } });
+            const act1 = (): unknown => entity.update({ patch: { title: undefined } });
+
+            // Assert
+            expect(act).toThrow("NO_CHANGES_DETECTED");
+            expect(act1).toThrow("NO_CHANGES_DETECTED");
             expect(entity.updatedAt).toBeUndefined();
         });
 
-        it("should apply changed values alongside unchanged fields", () => {
+        it("[case] - applies changed values alongside unchanged fields", () => {
+            // Arrange
             const entity = createPosition({ title: "Developer" });
+
+            // Act
             entity.completePlacement(false);
             entity.update({ patch: { title: "Developer", description: "Platform role" } });
 
+            // Assert
             expect(entity.title).toBe("Developer");
             expect(entity.description).toEqual("Platform role");
         });
 
-        it("should reject updates to archived records", () => {
+        it("[case] - rejects updates to archived records", () => {
+            // Arrange
             const entity = createPosition({ status: RecordStatus.ARCHIVED });
             entity.completePlacement(false);
 
-            expect(() => entity.update({ patch: { title: "Senior developer" } })).toThrow("CANNOT_UPDATE_ARCHIVED");
+            // Act
+            const act = (): unknown => entity.update({ patch: { title: "Senior developer" } });
+
+            // Assert
+            expect(act).toThrow("CANNOT_UPDATE_ARCHIVED");
         });
     });
 
-    describe("placement", () => {
-        it("should start with a pending operation", () => {
-            const entity = createPosition();
+    describe("[Behavior] - placement", () => {
+        it("[case] - starts with a pending operation", () => {
+            // Arrange
 
-            expect(isUUID(entity.process!, "4")).toBe(true);
+            // Act
+            const entity = createPosition();
+            const result = isUUID(entity.process!, "4");
+            const act = (): unknown => entity.assertReady();
+
+            // Assert
+            expect(result).toBe(true);
             expect(entity.process).not.toBe(entity.id);
-            expect(() => entity.assertReady()).toThrow("OPERATION_PENDING");
+            expect(act).toThrow("OPERATION_PENDING");
         });
 
-        it.each(["archive", "restore", "canPurge"] as const)("should block %s while placement is pending", (method) => {
-            expect(() => createPosition()[method]()).toThrow("OPERATION_PENDING");
+        it.each(["archive", "restore", "canPurge"] as const)("[case] - blocks %s while placement is pending", (method) => {
+            // Arrange
+
+            // Act
+            const act = (): unknown => createPosition()[method]();
+
+            // Assert
+            expect(act).toThrow("OPERATION_PENDING");
         });
 
-        it("should block updates while placement is pending", () => {
-            expect(() => createPosition().update({ patch: { title: "Updated" } })).toThrow("OPERATION_PENDING");
+        it("[case] - blocks updates while placement is pending", () => {
+            // Arrange
+
+            // Act
+            const act = (): unknown => createPosition().update({ patch: { title: "Updated" } });
+
+            // Assert
+            expect(act).toThrow("OPERATION_PENDING");
         });
 
-        it.each([false, true])("should complete initial placement with rejected=%s", (rejected) => {
+        it.each([false, true])("[case] - completes initial placement with rejected=%s", (rejected) => {
+            // Arrange
             const entity = createPosition();
-            entity.completePlacement(rejected);
 
+            // Act
+            entity.completePlacement(rejected);
+            const act = (): unknown => entity.assertReady();
+
+            // Assert
             expect(entity.status).toBe(RecordStatus.ACTIVE);
             expect(entity.process).toBeUndefined();
             expect(entity.previousStatus).toBeUndefined();
-            expect(() => entity.assertReady()).not.toThrow();
+            expect(act).not.toThrow();
         });
 
-        it.each([false, true])("should complete restoration with rejected=%s", (rejected) => {
+        it.each([false, true])("[case] - completes restoration with rejected=%s", (rejected) => {
+            // Arrange
             const entity = createPosition({ status: RecordStatus.ARCHIVED });
+
+            // Act
             entity.completePlacement(false);
             entity.restore();
-
-            expect(entity.status).toBe(RecordStatus.ACTIVE);
-            expect(entity.previousStatus).toBe(RecordStatus.ARCHIVED);
-            expect(isUUID(entity.process!, "4")).toBe(true);
+            const result = entity.status;
+            const result1 = entity.previousStatus;
+            const result2 = isUUID(entity.process!, "4");
             entity.completePlacement(rejected);
 
+            // Assert
+            expect(result).toBe(RecordStatus.ACTIVE);
+            expect(result1).toBe(RecordStatus.ARCHIVED);
+            expect(result2).toBe(true);
             expect(entity.status).toBe(rejected ? RecordStatus.ARCHIVED : RecordStatus.ACTIVE);
             expect(entity.previousStatus).toBeUndefined();
             expect(entity.process).toBeUndefined();
@@ -152,19 +221,36 @@ describe("Position Entity", () => {
         });
     });
 
-    describe("archive and purge", () => {
-        it("should allow purging only after archival", () => {
+    describe("[Behavior] - archive and purge", () => {
+        it("[case] - rejects purging or restoring an active position", () => {
+            // Arrange
             const entity = createPosition();
             entity.completePlacement(false);
 
-            expect(() => entity.canPurge()).toThrow("CANNOT_PURGE_ACTIVE");
-            expect(() => entity.restore()).toThrow("ALREADY_ACTIVE");
+            // Act
+            const act = (): unknown => entity.canPurge();
+            const act1 = (): unknown => entity.restore();
+
+            // Assert
+            expect(act).toThrow("CANNOT_PURGE_ACTIVE");
+            expect(act1).toThrow("ALREADY_ACTIVE");
+        });
+
+        it("[case] - allows purging an archived position and rejects repeated archival", () => {
+            // Arrange
+            const entity = createPosition();
+            entity.completePlacement(false);
             entity.archive();
 
+            // Act
+            const act = (): unknown => entity.archive();
+            const act1 = (): unknown => entity.canPurge();
+
+            // Assert
             expect(entity.status).toBe(RecordStatus.ARCHIVED);
             expect(entity.updatedAt).toBeInstanceOf(Date);
-            expect(() => entity.archive()).toThrow("ALREADY_ARCHIVED");
-            expect(() => entity.canPurge()).not.toThrow();
+            expect(act).toThrow("ALREADY_ARCHIVED");
+            expect(act1).not.toThrow();
         });
     });
 });

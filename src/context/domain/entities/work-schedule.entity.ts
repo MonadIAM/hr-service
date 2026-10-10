@@ -1,5 +1,5 @@
-import { Collection } from "@mikro-orm/core";
 import { isDeepStrictEqual } from "node:util";
+import { Collection } from "@mikro-orm/core";
 import { randomUUID } from "node:crypto";
 
 import { CalendarApplication, SchedulePattern, RecordStatus } from "~context/enums";

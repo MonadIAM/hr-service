@@ -35,16 +35,22 @@ function createHRApprovalDecision(overrides?: Partial<Entities.HRApprovalDecisio
     });
 }
 
-describe("HRApprovalDecision Entity", () => {
-    describe("constructor", () => {
-        it("should generate identity and creation metadata", () => {
-            const entity = createHRApprovalDecision();
+describe("[Entity] - HRApprovalDecision", () => {
+    describe("[Method] - constructor", () => {
+        it("[case] - generates identity and creation metadata", () => {
+            // Arrange
 
-            expect(isUUID(entity.id, "4")).toBe(true);
+            // Act
+            const entity = createHRApprovalDecision();
+            const result = isUUID(entity.id, "4");
+
+            // Assert
+            expect(result).toBe(true);
             expect(entity.createdAt).toBeInstanceOf(Date);
         });
 
-        it("should assign supplied fields and relations", () => {
+        it("[case] - assigns supplied fields and relations", () => {
+            // Arrange
             const props: Partial<Entities.HRApprovalDecision.ConstructorProps> = {
                 decision: HRDecisionKind.RETURN,
                 requestRevision: 3,
@@ -56,38 +62,79 @@ describe("HRApprovalDecision Entity", () => {
                 actorEmployee: stubEmployee(),
                 step: { organization } as Entities.HRApprovalStep,
             };
+
+            // Act
             const entity = createHRApprovalDecision(props);
 
+            // Assert
             expect(entity).toMatchObject(props);
             expect(entity.organization).toBe(props.organization);
         });
     });
 
-    describe("canCreate", () => {
+    describe("[Method] - canCreate", () => {
         it.each([
             [HRDecisionKind.APPROVE, HRApprovalStatus.APPROVED],
             [HRDecisionKind.REJECT, HRApprovalStatus.REJECTED],
             [HRDecisionKind.RETURN, HRApprovalStatus.RETURNED],
-        ])("should accept %s for an active or matching resolved step", (decision, status) => {
+        ])("[case] - accepts %s for an active step", (decision) => {
+            // Arrange
             const entity = createHRApprovalDecision({ decision });
 
-            expect(() => entity.canCreate()).not.toThrow();
-            entity.step.status = status;
+            // Act
+            const act = (): unknown => entity.canCreate();
 
-            expect(() => entity.canCreate()).not.toThrow();
-            entity.step.status = HRApprovalStatus.SKIPPED;
-
-            expect(() => entity.canCreate()).toThrow("INVALID_STATUS");
+            // Assert
+            expect(act).not.toThrow();
         });
 
-        it.each(["step", "actorEmployee"] as const)("should reject a foreign %s", (field) => {
+        it.each([
+            [HRDecisionKind.APPROVE, HRApprovalStatus.APPROVED],
+            [HRDecisionKind.REJECT, HRApprovalStatus.REJECTED],
+            [HRDecisionKind.RETURN, HRApprovalStatus.RETURNED],
+        ])("[case] - accepts %s for a matching resolved step", (decision, status) => {
+            // Arrange
+            const entity = createHRApprovalDecision({ decision });
+            entity.step.status = status;
+
+            // Act
+            const act = (): unknown => entity.canCreate();
+
+            // Assert
+            expect(act).not.toThrow();
+        });
+
+        it.each([
+            [HRDecisionKind.APPROVE, HRApprovalStatus.APPROVED],
+            [HRDecisionKind.REJECT, HRApprovalStatus.REJECTED],
+            [HRDecisionKind.RETURN, HRApprovalStatus.RETURNED],
+        ])("[case] - rejects %s for a skipped step", (decision, status) => {
+            // Arrange
+            const entity = createHRApprovalDecision({ decision });
+            entity.step.status = status;
+            entity.step.status = HRApprovalStatus.SKIPPED;
+
+            // Act
+            const act = (): unknown => entity.canCreate();
+
+            // Assert
+            expect(act).toThrow("INVALID_STATUS");
+        });
+
+        it.each(["step", "actorEmployee"] as const)("[case] - rejects a foreign %s", (field) => {
+            // Arrange
             const entity = createHRApprovalDecision();
             entity[field].organization = { id: "other", realm: "realm" };
 
-            expect(() => entity.canCreate()).toThrow("ORGANIZATION_MISMATCH");
+            // Act
+            const act = (): unknown => entity.canCreate();
+
+            // Assert
+            expect(act).toThrow("ORGANIZATION_MISMATCH");
         });
 
-        it.each(["request", "stepRevision", "requestRevision"])("should reject stale %s", (field) => {
+        it.each(["request", "stepRevision", "requestRevision"])("[case] - rejects stale %s", (field) => {
+            // Arrange
             const entity = createHRApprovalDecision();
             if (field === "request") {
                 entity.request = "other";
@@ -98,10 +145,16 @@ describe("HRApprovalDecision Entity", () => {
             if (field === "requestRevision") {
                 entity.step.request.revision++;
             }
-            expect(() => entity.canCreate()).toThrow("STALE_REVISION");
+
+            // Act
+            const act = (): unknown => entity.canCreate();
+
+            // Assert
+            expect(act).toThrow("STALE_REVISION");
         });
 
-        it.each(["employee", "account", "status"])("should reject invalid actor %s", (field) => {
+        it.each(["employee", "account", "status"])("[case] - rejects invalid actor %s", (field) => {
+            // Arrange
             const entity = createHRApprovalDecision();
             if (field === "employee") {
                 entity.actorEmployee.id = "other";
@@ -112,14 +165,24 @@ describe("HRApprovalDecision Entity", () => {
             if (field === "status") {
                 entity.actorEmployee.status = EmployeeStatus.TERMINATED;
             }
-            expect(() => entity.canCreate()).toThrow("INVALID_ACTOR");
+
+            // Act
+            const act = (): unknown => entity.canCreate();
+
+            // Assert
+            expect(act).toThrow("INVALID_ACTOR");
         });
 
-        it("should reject a request that is no longer submitted", () => {
+        it("[case] - rejects a request that is no longer submitted", () => {
+            // Arrange
             const entity = createHRApprovalDecision();
             entity.step.request.status = HRRequestStatus.APPROVED;
 
-            expect(() => entity.canCreate()).toThrow("INVALID_REQUEST_STATUS");
+            // Act
+            const act = (): unknown => entity.canCreate();
+
+            // Assert
+            expect(act).toThrow("INVALID_REQUEST_STATUS");
         });
     });
 });
