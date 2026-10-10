@@ -322,6 +322,7 @@ declare global {
             type OutboxPayloadMap = {
                 [KafkaTopic.ACCESS_CACHE]: Topics.AccessCache.Message["payload"];
                 [KafkaTopic.POSITION]: Topics.Position.Message["payload"];
+                [KafkaTopic.REALM]: Topics.Realm.Message["payload"];
             };
 
             type OutboxConfig<T extends Service.ResultValue> = {

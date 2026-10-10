@@ -7,6 +7,7 @@ import { LeaveLedgerEntryService } from "./leave-ledger-entry.service";
 import { HRApprovalStepService } from "./hr-approval-step.service";
 import { WorkCalendarService } from "./work-calendar.service";
 import { WorkScheduleService } from "./work-schedule.service";
+import { OrganizationService } from "./organization.service";
 import { LeavePolicyService } from "./leave-policy.service";
 import { EmploymentService } from "./employment.service";
 import { ChangeLogService } from "./change-log.service";
@@ -23,6 +24,7 @@ import {
     HR_APPROVAL_STEP_SERVICE,
     WORK_CALENDAR_SERVICE,
     WORK_SCHEDULE_SERVICE,
+    ORGANIZATION_SERVICE,
     LEAVE_POLICY_SERVICE,
     CHANGE_LOG_SERVICE,
     EMPLOYMENT_SERVICE,
@@ -61,6 +63,10 @@ export const DOMAIN_SERVICES: ClassProvider[] = [
     {
         provide: WORK_SCHEDULE_SERVICE,
         useClass: WorkScheduleService,
+    },
+    {
+        provide: ORGANIZATION_SERVICE,
+        useClass: OrganizationService,
     },
     {
         provide: LEAVE_POLICY_SERVICE,
@@ -109,6 +115,7 @@ export {
     EMPLOYMENT_SERVICE,
     HR_REQUEST_SERVICE,
     AUDIT_LOG_SERVICE,
+    ORGANIZATION_SERVICE,
     POSITION_SERVICE,
     EMPLOYEE_SERVICE,
     ABSENCE_SERVICE,

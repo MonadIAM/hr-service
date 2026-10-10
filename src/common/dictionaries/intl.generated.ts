@@ -196,6 +196,9 @@ export type I18nTranslations = {
         };
     };
     "services": {
+        "organization": {
+            "REALM_MISMATCH": string;
+        };
         "kafka-incoming": {
             "EVENT_MISSING": string;
         };

@@ -4,6 +4,7 @@ import { WorkCalendarExceptionCommands } from "./work-calendar-exception.command
 import { HRApprovalStepCommands } from "./hr-approval-step.commands";
 import { WorkCalendarCommands } from "./work-calendar.commands";
 import { WorkScheduleCommands } from "./work-schedule.commands";
+import { OrganizationCommands } from "./organization.commands";
 import { LeavePolicyCommands } from "./leave-policy.commands";
 import { HRRequestCommands } from "./hr-request.commands";
 import { PositionCommands } from "./position.commands";
@@ -14,6 +15,7 @@ import {
     WORK_CALENDAR_COMMANDS,
     WORK_SCHEDULE_COMMANDS,
     LEAVE_POLICY_COMMANDS,
+    ORGANIZATION_COMMANDS,
     HR_REQUEST_COMMANDS,
     POSITION_COMMANDS,
     EMPLOYEE_COMMANDS,
@@ -35,6 +37,10 @@ export const COMMANDS: ClassProvider[] = [
     {
         provide: WORK_SCHEDULE_COMMANDS,
         useClass: WorkScheduleCommands,
+    },
+    {
+        provide: ORGANIZATION_COMMANDS,
+        useClass: OrganizationCommands,
     },
     {
         provide: LEAVE_POLICY_COMMANDS,
@@ -60,6 +66,7 @@ export {
     WORK_CALENDAR_COMMANDS,
     WORK_SCHEDULE_COMMANDS,
     LEAVE_POLICY_COMMANDS,
+    ORGANIZATION_COMMANDS,
     HR_REQUEST_COMMANDS,
     POSITION_COMMANDS,
     EMPLOYEE_COMMANDS,

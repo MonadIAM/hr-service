@@ -1,4 +1,7 @@
 {
+  "organization": {
+    "REALM_MISMATCH": "Organization belongs to another realm."
+  },
   "kafka-incoming": {
     "EVENT_MISSING": "The Kafka message key required for idempotent processing is missing."
   },

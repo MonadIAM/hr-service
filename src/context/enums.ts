@@ -25,6 +25,7 @@ export enum EntityType {
     WORK_CALENDAR           = "WORK_CALENDAR",
     WORK_SCHEDULE           = "WORK_SCHEDULE",
     LEAVE_POLICY            = "LEAVE_POLICY",
+    ORGANIZATION            = "ORGANIZATION",
     EMPLOYMENT              = "EMPLOYMENT",
     HR_REQUEST              = "HR_REQUEST",
     EMPLOYEE                = "EMPLOYEE",

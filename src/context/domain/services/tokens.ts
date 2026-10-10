@@ -5,6 +5,7 @@ export const LEAVE_LEDGER_ENTRY_SERVICE = Symbol("Services.LeaveLedgerEntry.Cont
 export const HR_APPROVAL_STEP_SERVICE = Symbol("Services.HRApprovalStep.Contract");
 export const WORK_CALENDAR_SERVICE = Symbol("Services.WorkCalendar.Contract");
 export const WORK_SCHEDULE_SERVICE = Symbol("Services.WorkSchedule.Contract");
+export const ORGANIZATION_SERVICE = Symbol("Services.Organization.Contract");
 export const LEAVE_POLICY_SERVICE = Symbol("Services.LeavePolicy.Contract");
 export const EMPLOYMENT_SERVICE = Symbol("Services.Employment.Contract");
 export const CHANGE_LOG_SERVICE = Symbol("Services.ChangeLog.Contract");
