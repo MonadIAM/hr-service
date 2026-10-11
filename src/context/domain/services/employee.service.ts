@@ -236,7 +236,6 @@ export class EmployeeService implements Services.Employee.Contract {
             leavePolicy: employeeEntity.leavePolicy,
             validTo: input.termsValidFrom,
             employee: employeeEntity,
-            organization,
             termsSnapshot: {
                 employmentStartedOn: employeeEntity.employmentStartedOn,
                 scheduleAnchorDate: employeeEntity.scheduleAnchorDate,
@@ -311,7 +310,6 @@ export class EmployeeService implements Services.Employee.Contract {
             leavePolicy: employeeEntity.leavePolicy,
             validTo: props.input.employmentEndedOn,
             employee: employeeEntity,
-            organization,
             termsSnapshot: {
                 employmentStartedOn: employeeEntity.employmentStartedOn,
                 scheduleAnchorDate: employeeEntity.scheduleAnchorDate,

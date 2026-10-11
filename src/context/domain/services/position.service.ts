@@ -64,7 +64,7 @@ export class PositionService implements Services.Position.Contract {
         positionEntity.archive();
 
         const assignmentEntities = await this.positionAssignmentRepository.find({
-            where: { position: id, organization, status: PositionAssignmentStatus.ACTIVE },
+            where: { position: { id }, organization, status: PositionAssignmentStatus.ACTIVE },
             options: { lockMode: LockMode.PESSIMISTIC_WRITE, refresh: true },
             transaction,
         });

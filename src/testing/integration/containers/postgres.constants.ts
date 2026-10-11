@@ -11,6 +11,6 @@ export const CONNECTION_ENV_KEYS = {
     port: "MONADIAM_TEST_POSTGRES_PORT",
 } as const;
 
-export const TRUNCATED_SCHEMAS = ["system"];
+export const TRUNCATED_SCHEMAS = ["system", "hr"];
 export const EXCLUDED_TABLES = ["mikro_orm_migrations"];
 export const IDENTIFIER_PATTERN = /^[a-z_][a-z0-9_]*$/;
