@@ -6,7 +6,7 @@ color: true
 loglevel: info
 savePrefix: ""
 allowBuilds:
-  "@monadiam/shared@https://codeload.github.com/MonadIAM/shared/tar.gz/43cbacc8643c96b50e23c9f045dc0cf26cd374d0": true
+  "@monadiam/shared@https://codeload.github.com/MonadIAM/shared/tar.gz/a7bbf40aa06a07617dbdad4356a5fb2b4db482ad": true
   "@launchql/protobufjs": true
   "msgpackr-extract": true
   "unrs-resolver": true
