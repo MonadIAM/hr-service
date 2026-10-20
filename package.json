@@ -3,7 +3,7 @@
   "description": "HRM | Workforce Management: employee records, employment, staffing, work calendars and schedules, leave management and approval workflows.",
   "author": "Daniil Egorov (https://github.com/Lambdius)",
   "license": "SEE LICENSE IN LICENSE",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "main": "dist/index.js",
   "engines": {
     "node": "24.18.0"
