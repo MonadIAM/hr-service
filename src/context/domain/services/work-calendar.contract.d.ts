@@ -14,6 +14,7 @@ declare namespace Services.WorkCalendar {
             input: Omit<Entities.WorkCalendar.ConstructorProps, "organization" | "status">;
             transaction: ORM.EntityManager;
             organization: string;
+            realm: string;
         };
 
         type Result = Promise<Entities.WorkCalendar>;
@@ -26,6 +27,7 @@ declare namespace Services.WorkCalendar {
             patch: Partial<Entities.WorkCalendar.MutableFields>;
             transaction: ORM.EntityManager;
             organization: string;
+            realm: string;
             id: string;
         };
 
@@ -38,6 +40,7 @@ declare namespace Services.WorkCalendar {
         type Props = {
             transaction: ORM.EntityManager;
             organization: string;
+            realm: string;
             id: string;
         };
 
@@ -50,6 +53,7 @@ declare namespace Services.WorkCalendar {
         type Props = {
             transaction: ORM.EntityManager;
             organization: string;
+            realm: string;
             id: string;
         };
 
@@ -62,6 +66,7 @@ declare namespace Services.WorkCalendar {
         type Props = {
             transaction: ORM.EntityManager;
             organization: string;
+            realm: string;
             id: string;
         };
 

@@ -1,7 +1,14 @@
 import { describe, expect, it } from "@jest/globals";
 import { randomUUID } from "node:crypto";
 
-import { EmployeeStatus, HRRequestStatus, HRApprovalStatus, HRExecutionStatus } from "~context/enums";
+import {
+    EmployeeStatus,
+    HRRequestType,
+    HRRequestStatus,
+    HRApprovalStatus,
+    HRExecutionStatus,
+    PermissionCode,
+} from "~context/enums";
 import { HRRequestIntegrationHelpers } from "~testing/integration/domain-service/hr-request.helpers";
 import { postgresSuite } from "~testing/integration/containers/postgres.suite";
 import { HRFixture } from "~testing/integration/repositories/hr.fixture";
@@ -9,10 +16,97 @@ import { HRRequest, HRApprovalStep } from "~context/domain/entities";
 
 const helpers = new HRRequestIntegrationHelpers();
 
+const permissions = [
+    PermissionCode.HR_REQUEST_WITHDRAW,
+    PermissionCode.HR_REQUEST_CREATE,
+    PermissionCode.HR_REQUEST_UPDATE,
+    PermissionCode.HR_REQUEST_SUBMIT,
+];
+
 describe("[DomainService] - HRRequest", () => {
     const suite = postgresSuite({
         repository: (context) => helpers.service(context),
         fixture: (entityManager) => new HRFixture(entityManager),
+    });
+
+    describe("[Behavior] - personal requests", () => {
+        it.each([HRRequestType.ABSENCE, HRRequestType.OVERTIME, HRRequestType.CANCEL_REQUEST])(
+            "[case] - updates an owned %s request",
+            async (type) => {
+                // Arrange
+                const actor = randomUUID();
+                const employee = await suite.fixtures().createEmployee({ account: actor });
+                const relatedRequest =
+                    type === HRRequestType.CANCEL_REQUEST
+                        ? await suite.fixtures().createHRRequest({ employee, organization: employee.organization })
+                        : undefined;
+                const request = await suite.fixtures().createHRRequest({
+                    organization: employee.organization,
+                    initiatorAccount: actor,
+                    relatedRequest,
+                    employee,
+                    type,
+                });
+
+                // Act
+                await suite.transaction((transaction) =>
+                    suite.repository().service.update({
+                        permissions: [PermissionCode.HR_REQUEST_UPDATE_PERSONAL],
+                        patch: { payload: { reason: "Updated" } },
+                        organization: request.organization.id,
+                        realm: request.organization.realm,
+                        id: request.id,
+                        transaction,
+                        actor,
+                    }),
+                );
+                const persisted = await suite.transaction((transaction) =>
+                    transaction.findOneOrFail(HRRequest, { id: request.id }),
+                );
+
+                // Assert
+                expect(persisted.payload).toEqual({ reason: "Updated" });
+                expect(persisted.revision).toBe(2);
+            },
+        );
+
+        it.each(["employee", "initiator", "type", "realm", "permission"])(
+            "[case] - rejects a personal update with a mismatched %s",
+            async (kind) => {
+                // Arrange
+                const actor = randomUUID();
+                const employee = await suite.fixtures().createEmployee({
+                    account: kind === "employee" ? randomUUID() : actor,
+                });
+                const request = await suite.fixtures().createHRRequest({
+                    initiatorAccount: kind === "initiator" ? randomUUID() : actor,
+                    type: kind === "type" ? HRRequestType.HIRE : HRRequestType.ABSENCE,
+                    organization: employee.organization,
+                    employee,
+                });
+
+                // Act
+                const result = suite.transaction((transaction) =>
+                    suite.repository().service.update({
+                        permissions: kind === "permission" ? [] : [PermissionCode.HR_REQUEST_UPDATE_PERSONAL],
+                        realm: kind === "realm" ? randomUUID() : request.organization.realm,
+                        patch: { payload: { reason: "Updated" } },
+                        organization: request.organization.id,
+                        id: request.id,
+                        transaction,
+                        actor,
+                    }),
+                );
+
+                // Assert
+                await expect(result).rejects.toThrow();
+                const persisted = await suite.transaction((transaction) =>
+                    transaction.findOneOrFail(HRRequest, { id: request.id }),
+                );
+                expect(persisted.payload).toEqual(request.payload);
+                expect(persisted.revision).toBe(1);
+            },
+        );
     });
 
     describe("[Method] - submit", () => {
@@ -26,9 +120,6 @@ describe("[DomainService] - HRRequest", () => {
             // Act
             await suite.transaction((transaction) =>
                 suite.repository().service.submit({
-                    organization: request.organization.id,
-                    id: request.id,
-                    transaction,
                     input: {
                         workflowCode: "leave",
                         workflowVersion: 1,
@@ -37,13 +128,26 @@ describe("[DomainService] - HRRequest", () => {
                             { name: "HR", assigneeEmployee: assignee.id },
                         ],
                     },
+                    organization: request.organization.id,
+                    realm: request.organization.realm,
+                    actor: request.initiatorAccount,
+                    id: request.id,
+                    permissions,
+                    transaction,
                 }),
             );
             const steps = await suite.transaction((transaction) =>
                 transaction.find(HRApprovalStep, { request: { id: request.id } }, { orderBy: { ordinal: "ASC" } }),
             );
             await suite.transaction((transaction) =>
-                suite.repository().service.withdraw({ organization: request.organization.id, id: request.id, transaction }),
+                suite.repository().service.withdraw({
+                    organization: request.organization.id,
+                    realm: request.organization.realm,
+                    actor: request.initiatorAccount,
+                    id: request.id,
+                    permissions,
+                    transaction,
+                }),
             );
             const withdrawn = await suite.transaction((transaction) =>
                 transaction.findOneOrFail(HRRequest, { id: request.id }),
@@ -80,9 +184,6 @@ describe("[DomainService] - HRRequest", () => {
                 // Act
                 const result = suite.transaction((transaction) =>
                     suite.repository().service.submit({
-                        organization: request.organization.id,
-                        id: request.id,
-                        transaction,
                         input: {
                             workflowCode: "leave",
                             workflowVersion: 1,
@@ -91,6 +192,12 @@ describe("[DomainService] - HRRequest", () => {
                                 { name: "Invalid", assigneeEmployee: invalid?.id ?? randomUUID() },
                             ],
                         },
+                        organization: request.organization.id,
+                        realm: request.organization.realm,
+                        actor: request.initiatorAccount,
+                        id: request.id,
+                        permissions,
+                        transaction,
                     }),
                 );
 

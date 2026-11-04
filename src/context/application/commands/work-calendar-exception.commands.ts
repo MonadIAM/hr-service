@@ -17,7 +17,7 @@ export class WorkCalendarExceptionCommands implements Commands.WorkCalendarExcep
     ) {}
 
     public async create(props: Commands.WorkCalendarException.Create.Props): Commands.WorkCalendarException.Create.Result {
-        const { organization, input } = props;
+        const { organization, input, realm } = props;
 
         await this.transactionalService.run({
             resource: this.resource,
@@ -29,8 +29,9 @@ export class WorkCalendarExceptionCommands implements Commands.WorkCalendarExcep
             changeLog: true,
             execute: async (transaction) => {
                 return await this.workCalendarExceptionService.create({
-                    transaction,
                     organization,
+                    transaction,
+                    realm,
                     input,
                 });
             },
@@ -40,7 +41,7 @@ export class WorkCalendarExceptionCommands implements Commands.WorkCalendarExcep
     }
 
     public async update(props: Commands.WorkCalendarException.Update.Props): Commands.WorkCalendarException.Update.Result {
-        const { organization, input, id } = props;
+        const { organization, input, realm, id } = props;
 
         await this.transactionalService.run({
             resource: this.resource,
@@ -53,8 +54,9 @@ export class WorkCalendarExceptionCommands implements Commands.WorkCalendarExcep
             execute: async (transaction) => {
                 return await this.workCalendarExceptionService.update({
                     patch: input.patch,
-                    transaction,
                     organization,
+                    transaction,
+                    realm,
                     id,
                 });
             },
@@ -64,7 +66,7 @@ export class WorkCalendarExceptionCommands implements Commands.WorkCalendarExcep
     }
 
     public async purge(props: Commands.WorkCalendarException.Purge.Props): Commands.WorkCalendarException.Purge.Result {
-        const { organization, id } = props;
+        const { organization, realm, id } = props;
 
         await this.transactionalService.run({
             resource: this.resource,
@@ -76,8 +78,9 @@ export class WorkCalendarExceptionCommands implements Commands.WorkCalendarExcep
             changeLog: true,
             execute: async (transaction) => {
                 return await this.workCalendarExceptionService.purge({
-                    transaction,
                     organization,
+                    transaction,
+                    realm,
                     id,
                 });
             },

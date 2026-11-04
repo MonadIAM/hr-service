@@ -52,7 +52,7 @@ export class EmployeeController {
     })
     @Swagger.Exceptions(INTERNAL_SERVER_ERROR, UNPROCESSABLE_ENTITY, UNAUTHORIZED, FORBIDDEN, NOT_FOUND)
     public findUnique(@Query() { organization, realm, view, id }: GetByIdQueryDTO): Queries.Employee.FindUnique.Result {
-        return this.employeeQueries.findUnique({ organization, realm, view, employee: id });
+        return this.employeeQueries.findUnique({ mode: QueryMode.DEFAULT, organization, employee: id, realm, view });
     }
 
     @HttpCode(OK)
@@ -75,6 +75,50 @@ export class EmployeeController {
             pagination,
             filters,
             realm,
+            view,
+            sort,
+        });
+    }
+
+    @Get("personal")
+    @HttpCode(OK)
+    @FormatResponse(EmployeeDTO)
+    @ApiResponse({ status: OK, type: EmployeeDTO })
+    @RequirePermission(PermissionCode.EMPLOYEE_READ_PERSONAL)
+    @ApiOperation({
+        summary: "Returns an employee by identifier",
+        security: [{ identity: [] }],
+    })
+    @Swagger.Exceptions(INTERNAL_SERVER_ERROR, UNPROCESSABLE_ENTITY, UNAUTHORIZED, FORBIDDEN, NOT_FOUND)
+    public findPersonal(
+        @Query() { organization, realm, view, id }: GetByIdQueryDTO,
+        @Extract.Session() { account: actor }: Extract.Session.Auth,
+    ): Queries.Employee.FindUnique.Result {
+        return this.employeeQueries.findUnique({ mode: QueryMode.DEFAULT, organization, employee: id, realm, actor, view });
+    }
+
+    @HttpCode(OK)
+    @Post("list/personal")
+    @FormatResponse(ListDTO)
+    @ApiResponse({ status: OK, type: ListDTO })
+    @RequirePermission(PermissionCode.EMPLOYEE_READ_PERSONAL)
+    @ApiOperation({
+        summary: "Returns a paginated list of employees",
+        security: [{ identity: [] }],
+    })
+    @Swagger.Exceptions(INTERNAL_SERVER_ERROR, UNPROCESSABLE_ENTITY, UNAUTHORIZED, FORBIDDEN)
+    public findPersonalMany(
+        @Query() { organization, realm, view }: GetListQueryDTO,
+        @Body() { pagination, filters, sort }: GetListBodyDTO,
+        @Extract.Session() { account: actor }: Extract.Session.Auth,
+    ): Queries.Employee.FindMany.Result {
+        return this.employeeQueries.findMany({
+            mode: QueryMode.DEFAULT,
+            organization,
+            pagination,
+            filters,
+            realm,
+            actor,
             view,
             sort,
         });

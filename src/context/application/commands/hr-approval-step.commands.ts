@@ -17,7 +17,7 @@ export class HRApprovalStepCommands implements Commands.HRApprovalStep.Contract 
     ) {}
 
     public async reassign(props: Commands.HRApprovalStep.Reassign.Props): Commands.HRApprovalStep.Reassign.Result {
-        const { organization, input, id } = props;
+        const { organization, input, realm, id } = props;
 
         await this.transactionalService.run({
             resource: this.resource,
@@ -30,8 +30,9 @@ export class HRApprovalStepCommands implements Commands.HRApprovalStep.Contract 
             execute: async (transaction) => {
                 return await this.hrApprovalStepService.reassign({
                     employee: input.employee,
-                    transaction,
                     organization,
+                    transaction,
+                    realm,
                     id,
                 });
             },
@@ -41,7 +42,7 @@ export class HRApprovalStepCommands implements Commands.HRApprovalStep.Contract 
     }
 
     public async approve(props: Commands.HRApprovalStep.Approve.Props): Commands.HRApprovalStep.Approve.Result {
-        const { organization, input, actor, id } = props;
+        const { organization, realm, input, actor, id } = props;
 
         await this.transactionalService.run({
             resource: this.resource,
@@ -55,10 +56,11 @@ export class HRApprovalStepCommands implements Commands.HRApprovalStep.Contract 
                 return await this.hrApprovalStepService.decide({
                     actorEmployee: input.actorEmployee,
                     decision: HRDecisionKind.APPROVE,
-                    actorAccount: actor,
                     comment: input.comment,
-                    transaction,
+                    actorAccount: actor,
                     organization,
+                    transaction,
+                    realm,
                     id,
                 });
             },
@@ -68,7 +70,7 @@ export class HRApprovalStepCommands implements Commands.HRApprovalStep.Contract 
     }
 
     public async reject(props: Commands.HRApprovalStep.Reject.Props): Commands.HRApprovalStep.Reject.Result {
-        const { organization, input, actor, id } = props;
+        const { organization, realm, input, actor, id } = props;
 
         await this.transactionalService.run({
             resource: this.resource,
@@ -82,10 +84,11 @@ export class HRApprovalStepCommands implements Commands.HRApprovalStep.Contract 
                 return await this.hrApprovalStepService.decide({
                     actorEmployee: input.actorEmployee,
                     decision: HRDecisionKind.REJECT,
-                    actorAccount: actor,
                     comment: input.comment,
-                    transaction,
+                    actorAccount: actor,
                     organization,
+                    transaction,
+                    realm,
                     id,
                 });
             },
@@ -97,7 +100,7 @@ export class HRApprovalStepCommands implements Commands.HRApprovalStep.Contract 
     public async returnForRevision(
         props: Commands.HRApprovalStep.ReturnForRevision.Props,
     ): Commands.HRApprovalStep.ReturnForRevision.Result {
-        const { organization, input, actor, id } = props;
+        const { organization, realm, input, actor, id } = props;
 
         await this.transactionalService.run({
             resource: this.resource,
@@ -111,10 +114,11 @@ export class HRApprovalStepCommands implements Commands.HRApprovalStep.Contract 
                 return await this.hrApprovalStepService.decide({
                     actorEmployee: input.actorEmployee,
                     decision: HRDecisionKind.RETURN,
-                    actorAccount: actor,
                     comment: input.comment,
-                    transaction,
+                    actorAccount: actor,
                     organization,
+                    transaction,
+                    realm,
                     id,
                 });
             },

@@ -27,8 +27,9 @@ describe("[DomainService] - Position", () => {
             // Act
             await service.archive({
                 organization: position.organization.id,
-                id: position.id,
                 transaction: transaction.entityManager,
+                realm: position.organization.realm,
+                id: position.id,
             });
 
             // Assert
@@ -67,18 +68,18 @@ describe("[DomainService] - Position", () => {
 
                 // Act
                 await service.completePlacement({
-                    actor: "actor",
-                    realm: entity.organization.realm,
                     rejected: state.startsWith("rejected"),
-                    input,
                     transaction: transaction.entityManager,
+                    realm: entity.organization.realm,
+                    actor: "actor",
+                    input,
                 });
 
                 // Assert
                 expect(repositories.position.findUnique).toHaveBeenCalledWith({
                     where: {
                         id: entity.id,
-                        organization: { id: entity.organization.id, realm: entity.organization.realm },
+                        organization: { realm: entity.organization.realm, id: entity.organization.id },
                         process: input.process,
                     },
                     options: { lockMode: LockMode.PESSIMISTIC_WRITE, refresh: true },
@@ -111,8 +112,6 @@ describe("[DomainService] - Position", () => {
 
                 // Act
                 await service.validateReference({
-                    actor: "actor",
-                    realm: entity.organization.realm,
                     input: {
                         type,
                         organization: entity.organization.id,
@@ -122,13 +121,15 @@ describe("[DomainService] - Position", () => {
                         process: "process",
                     },
                     transaction: transaction.entityManager,
+                    realm: entity.organization.realm,
+                    actor: "actor",
                 });
 
                 // Assert
                 expect(repositories.position.findUniqueOrThrow).toHaveBeenCalledWith({
                     where: {
                         ...(type === PositionReferenceType.TEAM_LEAD ? { team: entity.team } : {}),
-                        organization: { id: entity.organization.id, realm: entity.organization.realm },
+                        organization: { realm: entity.organization.realm, id: entity.organization.id },
                         department: entity.department,
                         status: RecordStatus.ACTIVE,
                         id: entity.id,
@@ -151,10 +152,10 @@ describe("[DomainService] - Position", () => {
 
                 // Act
                 const result = await service[method]({
-                    actor: "actor",
-                    realm: entity.organization.realm,
                     input: { organization: entity.organization.id, department: entity.department, team: entity.team },
                     transaction: transaction.entityManager,
+                    realm: entity.organization.realm,
+                    actor: "actor",
                 });
 
                 // Assert
@@ -162,7 +163,7 @@ describe("[DomainService] - Position", () => {
                 expect(transaction.remove).toHaveBeenCalledWith([entity]);
                 expect(repositories.position.find).toHaveBeenCalledWith({
                     where: {
-                        organization: { id: entity.organization.id, realm: entity.organization.realm },
+                        organization: { realm: entity.organization.realm, id: entity.organization.id },
                         ...(method === "purgeDepartment" ? { department: entity.department } : { team: entity.team }),
                     },
                     options: { lockMode: LockMode.PESSIMISTIC_WRITE, refresh: true },
@@ -181,14 +182,15 @@ describe("[DomainService] - Position", () => {
 
             // Act
             const result = await service.create({
-                organization: entity.organization.id,
                 transaction: transaction.entityManager,
+                organization: entity.organization.id,
+                realm: entity.organization.realm,
                 input: entity,
             });
 
             // Assert
             expect(repositories.organization.findUniqueOrThrow).toHaveBeenCalledWith({
-                where: { id: entity.organization.id },
+                where: { realm: entity.organization.realm, id: entity.organization.id },
                 transaction: transaction.entityManager,
             });
             expect(result).toMatchObject({
@@ -213,16 +215,17 @@ describe("[DomainService] - Position", () => {
 
             // Act
             const result = await service[method]({
-                id: entity.id,
-                organization: entity.organization.id,
                 transaction: transaction.entityManager,
+                organization: entity.organization.id,
+                realm: entity.organization.realm,
+                id: entity.id,
             });
 
             // Assert
             expect(result).toBe(entity);
             expect(entity.status).toBe(after);
             expect(repositories.position.findUniqueOrThrow).toHaveBeenCalledWith({
-                where: { id: entity.id, organization: entity.organization.id },
+                where: { organization: { realm: entity.organization.realm, id: entity.organization.id }, id: entity.id },
                 options: { lockMode: LockMode.PESSIMISTIC_WRITE, refresh: true },
                 transaction: transaction.entityManager,
             });
@@ -241,9 +244,10 @@ describe("[DomainService] - Position", () => {
 
                 // Act
                 const result = service.purge({
-                    id: entity.id,
-                    organization: entity.organization.id,
                     transaction: transaction.entityManager,
+                    organization: entity.organization.id,
+                    realm: entity.organization.realm,
+                    id: entity.id,
                 });
 
                 // Assert
@@ -268,10 +272,11 @@ describe("[DomainService] - Position", () => {
 
             // Act
             const result = await service.update({
-                id: entity.id,
-                organization: entity.organization.id,
                 transaction: transaction.entityManager,
+                organization: entity.organization.id,
+                realm: entity.organization.realm,
                 patch: { title: "Updated" },
+                id: entity.id,
             });
 
             // Assert

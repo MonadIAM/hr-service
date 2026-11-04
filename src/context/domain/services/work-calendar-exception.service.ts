@@ -24,7 +24,7 @@ export class WorkCalendarExceptionService implements Services.WorkCalendarExcept
         const { transaction, organization, input } = props;
         const [organizationEntity, calendarEntity] = await Promise.all([
             this.organizationRepository.findUniqueOrThrow({
-                where: { id: organization },
+                where: { realm: props.realm, id: organization },
                 transaction,
             }),
             this.workCalendarRepository.findUniqueOrThrow({
@@ -50,7 +50,7 @@ export class WorkCalendarExceptionService implements Services.WorkCalendarExcept
         const { transaction, organization, patch, id } = props;
         const exceptionEntity = await this.workCalendarExceptionRepository.findUniqueOrThrow({
             options: { lockMode: LockMode.PESSIMISTIC_WRITE },
-            where: { organization, id },
+            where: { organization: { realm: props.realm, id: organization }, id },
             transaction,
         });
 
@@ -63,7 +63,7 @@ export class WorkCalendarExceptionService implements Services.WorkCalendarExcept
         const { transaction, organization, id } = props;
         const exceptionEntity = await this.workCalendarExceptionRepository.findUniqueOrThrow({
             options: { lockMode: LockMode.PESSIMISTIC_WRITE },
-            where: { organization, id },
+            where: { organization: { realm: props.realm, id: organization }, id },
             transaction,
         });
 

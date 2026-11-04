@@ -22,9 +22,10 @@ describe("[DomainService] - WorkCalendarException", () => {
 
             // Act
             const result = service.create({
-                organization: entity.organization.id,
-                transaction: transaction.entityManager,
                 input: { ...entity, calendar: entity.calendar.id },
+                transaction: transaction.entityManager,
+                organization: entity.organization.id,
+                realm: entity.organization.realm,
             });
 
             // Assert
@@ -53,16 +54,20 @@ describe("[DomainService] - WorkCalendarException", () => {
 
                 // Act
                 const result = await service[method]({
-                    organization: entity.organization.id,
-                    id: entity.id,
                     transaction: transaction.entityManager,
+                    organization: entity.organization.id,
+                    realm: entity.organization.realm,
                     patch: { name: "Updated" },
+                    id: entity.id,
                 });
 
                 // Assert
                 expect(result).toBe(entity);
                 expect(repositories.workCalendarException.findUniqueOrThrow).toHaveBeenCalledWith({
-                    where: { organization: entity.organization.id, id: entity.id },
+                    where: {
+                        organization: { realm: entity.organization.realm, id: entity.organization.id },
+                        id: entity.id,
+                    },
                     transaction: transaction.entityManager,
                     options: { lockMode: LockMode.PESSIMISTIC_WRITE },
                 });

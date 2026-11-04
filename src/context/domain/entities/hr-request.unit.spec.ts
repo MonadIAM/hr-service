@@ -32,6 +32,29 @@ function createHRRequest(overrides?: Partial<Entities.HRRequest.ConstructorProps
 }
 
 describe("[Entity] - HRRequest", () => {
+    it("[case] - ignores protected fields in an untrusted update patch", () => {
+        // Arrange
+        const entity = createHRRequest();
+        const patch = {
+            executionStatus: HRExecutionStatus.APPLIED,
+            status: HRRequestStatus.APPROVED,
+            approvedRevision: 99,
+            initiatorAccount: "another-account",
+            payload: { reason: "Updated" },
+        };
+
+        // Act
+        entity.update({ patch });
+
+        // Assert
+        expect(entity.executionStatus).toBe(HRExecutionStatus.NOT_STARTED);
+        expect(entity.status).toBe(HRRequestStatus.DRAFT);
+        expect(entity.initiatorAccount).toBe("account");
+        expect(entity.approvedRevision).toBeUndefined();
+        expect(entity.payload).toEqual({ reason: "Updated" });
+        expect(entity.revision).toBe(2);
+    });
+
     describe("[Method] - constructor", () => {
         it("[case] - generates identity and creation metadata", () => {
             // Arrange
@@ -208,7 +231,7 @@ describe("[Entity] - HRRequest", () => {
 
         it("[case] - validates relations before submission", () => {
             // Arrange
-            const entity = createHRRequest({ employee: stubEmployee({ organization: { id: "other", realm: "realm" } }) });
+            const entity = createHRRequest({ employee: stubEmployee({ organization: { realm: "realm", id: "other" } }) });
 
             // Act
             const act = (): unknown => entity.submit({ workflowCode: "hire", workflowVersion: 1 });
@@ -427,7 +450,7 @@ describe("[Entity] - HRRequest", () => {
             const entity = createHRRequest();
             const request = reason === "self" ? entity : stubRequest();
             if (reason === "organization") {
-                request.organization = { id: "other", realm: "realm" };
+                request.organization = { realm: "realm", id: "other" };
             }
             if (reason === "employee") {
                 request.employee = stubEmployee({ id: "other" });

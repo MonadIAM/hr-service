@@ -17,7 +17,7 @@ export class WorkCalendarCommands implements Commands.WorkCalendar.Contract {
     ) {}
 
     public async create(props: Commands.WorkCalendar.Create.Props): Commands.WorkCalendar.Create.Result {
-        const { organization, input } = props;
+        const { organization, input, realm } = props;
 
         await this.transactionalService.run({
             resource: this.resource,
@@ -29,8 +29,9 @@ export class WorkCalendarCommands implements Commands.WorkCalendar.Contract {
             changeLog: true,
             execute: (transaction) => {
                 return this.workCalendarService.create({
-                    transaction,
                     organization,
+                    transaction,
+                    realm,
                     input,
                 });
             },
@@ -40,7 +41,7 @@ export class WorkCalendarCommands implements Commands.WorkCalendar.Contract {
     }
 
     public async update(props: Commands.WorkCalendar.Update.Props): Commands.WorkCalendar.Update.Result {
-        const { organization, input, id } = props;
+        const { organization, realm, input, id } = props;
 
         await this.transactionalService.run({
             resource: this.resource,
@@ -53,8 +54,9 @@ export class WorkCalendarCommands implements Commands.WorkCalendar.Contract {
             execute: async (transaction) => {
                 return await this.workCalendarService.update({
                     patch: input.patch,
-                    transaction,
                     organization,
+                    transaction,
+                    realm,
                     id,
                 });
             },
@@ -64,7 +66,7 @@ export class WorkCalendarCommands implements Commands.WorkCalendar.Contract {
     }
 
     public async archive(props: Commands.WorkCalendar.Archive.Props): Commands.WorkCalendar.Archive.Result {
-        const { organization, id } = props;
+        const { organization, realm, id } = props;
 
         await this.transactionalService.run({
             resource: this.resource,
@@ -76,8 +78,9 @@ export class WorkCalendarCommands implements Commands.WorkCalendar.Contract {
             changeLog: true,
             execute: async (transaction) => {
                 return await this.workCalendarService.archive({
-                    transaction,
                     organization,
+                    transaction,
+                    realm,
                     id,
                 });
             },
@@ -87,7 +90,7 @@ export class WorkCalendarCommands implements Commands.WorkCalendar.Contract {
     }
 
     public async restore(props: Commands.WorkCalendar.Restore.Props): Commands.WorkCalendar.Restore.Result {
-        const { organization, id } = props;
+        const { organization, realm, id } = props;
 
         await this.transactionalService.run({
             resource: this.resource,
@@ -99,8 +102,9 @@ export class WorkCalendarCommands implements Commands.WorkCalendar.Contract {
             changeLog: true,
             execute: async (transaction) => {
                 return await this.workCalendarService.restore({
-                    transaction,
                     organization,
+                    transaction,
+                    realm,
                     id,
                 });
             },
@@ -110,7 +114,7 @@ export class WorkCalendarCommands implements Commands.WorkCalendar.Contract {
     }
 
     public async purge(props: Commands.WorkCalendar.Purge.Props): Commands.WorkCalendar.Purge.Result {
-        const { organization, id } = props;
+        const { organization, realm, id } = props;
 
         await this.transactionalService.run({
             resource: this.resource,
@@ -122,8 +126,9 @@ export class WorkCalendarCommands implements Commands.WorkCalendar.Contract {
             changeLog: true,
             execute: async (transaction) => {
                 return await this.workCalendarService.purge({
-                    transaction,
                     organization,
+                    transaction,
+                    realm,
                     id,
                 });
             },

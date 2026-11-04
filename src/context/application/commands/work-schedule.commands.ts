@@ -17,7 +17,7 @@ export class WorkScheduleCommands implements Commands.WorkSchedule.Contract {
     ) {}
 
     public async create(props: Commands.WorkSchedule.Create.Props): Commands.WorkSchedule.Create.Result {
-        const { organization, input } = props;
+        const { organization, realm, input } = props;
 
         await this.transactionalService.run({
             resource: this.resource,
@@ -29,8 +29,9 @@ export class WorkScheduleCommands implements Commands.WorkSchedule.Contract {
             changeLog: true,
             execute: (transaction) => {
                 return this.workScheduleService.create({
-                    transaction,
                     organization,
+                    transaction,
+                    realm,
                     input,
                 });
             },
@@ -42,7 +43,7 @@ export class WorkScheduleCommands implements Commands.WorkSchedule.Contract {
     public async createRevision(
         props: Commands.WorkSchedule.CreateRevision.Props,
     ): Commands.WorkSchedule.CreateRevision.Result {
-        const { organization, input, id } = props;
+        const { organization, realm, input, id } = props;
 
         await this.transactionalService.run({
             resource: this.resource,
@@ -54,8 +55,9 @@ export class WorkScheduleCommands implements Commands.WorkSchedule.Contract {
             changeLog: true,
             execute: async (transaction) => {
                 return await this.workScheduleService.createRevision({
-                    transaction,
                     organization,
+                    transaction,
+                    realm,
                     input,
                     id,
                 });
@@ -66,7 +68,7 @@ export class WorkScheduleCommands implements Commands.WorkSchedule.Contract {
     }
 
     public async archive(props: Commands.WorkSchedule.Archive.Props): Commands.WorkSchedule.Archive.Result {
-        const { organization, id } = props;
+        const { organization, realm, id } = props;
 
         await this.transactionalService.run({
             resource: this.resource,
@@ -78,8 +80,9 @@ export class WorkScheduleCommands implements Commands.WorkSchedule.Contract {
             changeLog: true,
             execute: async (transaction) => {
                 return await this.workScheduleService.archive({
-                    transaction,
                     organization,
+                    transaction,
+                    realm,
                     id,
                 });
             },
@@ -89,7 +92,7 @@ export class WorkScheduleCommands implements Commands.WorkSchedule.Contract {
     }
 
     public async restore(props: Commands.WorkSchedule.Restore.Props): Commands.WorkSchedule.Restore.Result {
-        const { organization, id } = props;
+        const { organization, realm, id } = props;
 
         await this.transactionalService.run({
             resource: this.resource,
@@ -101,8 +104,9 @@ export class WorkScheduleCommands implements Commands.WorkSchedule.Contract {
             changeLog: true,
             execute: async (transaction) => {
                 return await this.workScheduleService.restore({
-                    transaction,
                     organization,
+                    transaction,
+                    realm,
                     id,
                 });
             },
@@ -112,7 +116,7 @@ export class WorkScheduleCommands implements Commands.WorkSchedule.Contract {
     }
 
     public async purge(props: Commands.WorkSchedule.Purge.Props): Commands.WorkSchedule.Purge.Result {
-        const { organization, id } = props;
+        const { organization, realm, id } = props;
 
         await this.transactionalService.run({
             resource: this.resource,
@@ -124,8 +128,9 @@ export class WorkScheduleCommands implements Commands.WorkSchedule.Contract {
             changeLog: true,
             execute: async (transaction) => {
                 return await this.workScheduleService.purge({
-                    transaction,
                     organization,
+                    transaction,
+                    realm,
                     id,
                 });
             },

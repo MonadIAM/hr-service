@@ -11,7 +11,10 @@ declare namespace Services.HRRequest {
     namespace Withdraw {
         type Props = {
             transaction: ORM.EntityManager;
+            permissions: string[];
             organization: string;
+            actor: string;
+            realm: string;
             id: string;
         };
 
@@ -22,17 +25,20 @@ declare namespace Services.HRRequest {
 
     namespace Create {
         type Props = {
-            transaction: ORM.EntityManager;
-            organization: string;
             input: Pick<
                 Entities.HRRequest.ConstructorProps,
-                "payloadSchemaVersion" | "idempotencyKey" | "payload" | "type" | "effectiveAt" | "initiatorAccount"
+                "payloadSchemaVersion" | "idempotencyKey" | "payload" | "type" | "effectiveAt"
             > & {
                 initiatorEmployee?: string;
                 targetPosition?: string;
                 relatedRequest?: string;
                 employee: string;
             };
+            transaction: ORM.EntityManager;
+            permissions: string[];
+            organization: string;
+            actor: string;
+            realm: string;
         };
 
         type Result = Promise<Entities.HRRequest>;
@@ -47,7 +53,10 @@ declare namespace Services.HRRequest {
                 relatedRequest?: string;
             };
             transaction: ORM.EntityManager;
+            permissions: string[];
             organization: string;
+            actor: string;
+            realm: string;
             id: string;
         };
 
@@ -66,7 +75,10 @@ declare namespace Services.HRRequest {
                 }[];
             };
             transaction: ORM.EntityManager;
+            permissions: string[];
             organization: string;
+            actor: string;
+            realm: string;
             id: string;
         };
 

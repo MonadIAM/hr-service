@@ -40,7 +40,7 @@ export class EmployeeService implements Services.Employee.Contract {
         const { transaction, input } = props;
 
         const organizationEntity = await this.organizationRepository.findUniqueOrThrow({
-            where: { id: props.organization },
+            where: { id: props.organization, realm: props.realm },
             transaction,
         });
 
@@ -62,7 +62,7 @@ export class EmployeeService implements Services.Employee.Contract {
         const { transaction, organization, patch, id } = props;
         const employeeEntity = await this.employeeRepository.findUniqueOrThrow({
             options: { lockMode: LockMode.PESSIMISTIC_WRITE },
-            where: { organization, id },
+            where: { organization: { realm: props.realm, id: organization }, id },
             transaction,
         });
 
@@ -75,7 +75,7 @@ export class EmployeeService implements Services.Employee.Contract {
         const { transaction, organization, account, id } = props;
         const employeeEntity = await this.employeeRepository.findUniqueOrThrow({
             options: { lockMode: LockMode.PESSIMISTIC_WRITE },
-            where: { organization, id },
+            where: { organization: { realm: props.realm, id: organization }, id },
             transaction,
         });
 
@@ -88,7 +88,7 @@ export class EmployeeService implements Services.Employee.Contract {
         const { transaction, organization, id } = props;
         const employeeEntity = await this.employeeRepository.findUniqueOrThrow({
             options: { lockMode: LockMode.PESSIMISTIC_WRITE },
-            where: { organization, id },
+            where: { organization: { realm: props.realm, id: organization }, id },
             transaction,
         });
 
@@ -101,7 +101,7 @@ export class EmployeeService implements Services.Employee.Contract {
         const { transaction, organization, id } = props;
         const employeeEntity = await this.employeeRepository.findUniqueOrThrow({
             options: { lockMode: LockMode.PESSIMISTIC_WRITE },
-            where: { organization, id },
+            where: { organization: { realm: props.realm, id: organization }, id },
             transaction,
         });
 
@@ -114,7 +114,7 @@ export class EmployeeService implements Services.Employee.Contract {
         const { transaction, organization, id } = props;
         const employeeEntity = await this.employeeRepository.findUniqueOrThrow({
             options: { lockMode: LockMode.PESSIMISTIC_WRITE },
-            where: { organization, id },
+            where: { organization: { realm: props.realm, id: organization }, id },
             transaction,
         });
 
@@ -128,7 +128,7 @@ export class EmployeeService implements Services.Employee.Contract {
         const [employeeEntity, hrBpEmployeeEntity] = await Promise.all([
             this.employeeRepository.findUniqueOrThrow({
                 options: { lockMode: LockMode.PESSIMISTIC_WRITE },
-                where: { organization, id },
+                where: { organization: { realm: props.realm, id: organization }, id },
                 transaction,
             }),
             props.employee

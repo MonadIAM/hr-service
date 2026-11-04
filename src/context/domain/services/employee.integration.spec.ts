@@ -15,6 +15,27 @@ describe("[DomainService] - Employee", () => {
         fixture: (entityManager) => new HRFixture(entityManager),
     });
 
+    it("[case] - rejects mutation through a foreign realm", async () => {
+        // Arrange
+        const entity = await suite.fixtures().createEmployee();
+
+        // Act
+        const result = suite.transaction((transaction) =>
+            suite.repository().service.update({
+                organization: entity.organization.id,
+                patch: { firstName: "Updated" },
+                realm: randomUUID(),
+                id: entity.id,
+                transaction,
+            }),
+        );
+
+        // Assert
+        await expect(result).rejects.toThrow();
+        const persisted = await suite.transaction((transaction) => transaction.findOneOrFail(Employee, { id: entity.id }));
+        expect(persisted).toMatchObject({ id: entity.id, organization: { id: entity.organization.id } });
+    });
+
     describe("[Behavior] - employment lifecycle", () => {
         it("[case] - hires, changes terms and terminates with historical snapshots", async () => {
             // Arrange
@@ -158,29 +179,40 @@ describe("[DomainService] - Employee", () => {
             // Act
             const employee = await suite.transaction((transaction) =>
                 suite.repository().service.create({
-                    organization: organization.id,
-                    transaction,
                     input: { employeeNumber: "EMP-1", firstName: "Alice", lastName: "Morgan" },
+                    organization: organization.id,
+                    realm: organization.realm,
+                    transaction,
                 }),
             );
             await suite.transaction((transaction) =>
                 suite.repository().service.update({
+                    patch: { firstName: "Updated" },
                     organization: organization.id,
+                    realm: organization.realm,
                     id: employee.id,
                     transaction,
-                    patch: { firstName: "Updated" },
                 }),
             );
             await suite.transaction((transaction) =>
-                suite
-                    .repository()
-                    .service.linkAccount({ organization: organization.id, id: employee.id, account, transaction }),
+                suite.repository().service.linkAccount({
+                    organization: organization.id,
+                    realm: organization.realm,
+                    id: employee.id,
+                    transaction,
+                    account,
+                }),
             );
             const linked = await suite.transaction((transaction) =>
                 transaction.findOneOrFail(Employee, { id: employee.id }),
             );
             await suite.transaction((transaction) =>
-                suite.repository().service.unlinkAccount({ organization: organization.id, id: employee.id, transaction }),
+                suite.repository().service.unlinkAccount({
+                    organization: organization.id,
+                    realm: organization.realm,
+                    id: employee.id,
+                    transaction,
+                }),
             );
             const unlinked = await suite.transaction((transaction) =>
                 transaction.findOneOrFail(Employee, { id: employee.id }),

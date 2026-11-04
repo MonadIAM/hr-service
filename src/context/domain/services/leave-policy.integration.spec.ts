@@ -23,28 +23,49 @@ describe("[DomainService] - LeavePolicy", () => {
             // Act
             const created = await suite.transaction((transaction) =>
                 suite.repository().service.create({
-                    organization: fixture.organization.id,
-                    transaction,
                     input: { ...fixture, code: randomUUID() },
+                    organization: fixture.organization.id,
+                    realm: fixture.organization.realm,
+                    transaction,
                 }),
             );
             await suite.transaction((transaction) =>
-                suite.repository().service.archive({ organization: fixture.organization.id, id: created.id, transaction }),
+                suite.repository().service.archive({
+                    organization: fixture.organization.id,
+                    realm: fixture.organization.realm,
+                    id: created.id,
+                    transaction,
+                }),
             );
             const archived = await suite.transaction((transaction) =>
                 transaction.findOneOrFail(LeavePolicy, { id: created.id }),
             );
             await suite.transaction((transaction) =>
-                suite.repository().service.restore({ organization: fixture.organization.id, id: created.id, transaction }),
+                suite.repository().service.restore({
+                    organization: fixture.organization.id,
+                    realm: fixture.organization.realm,
+                    id: created.id,
+                    transaction,
+                }),
             );
             const restored = await suite.transaction((transaction) =>
                 transaction.findOneOrFail(LeavePolicy, { id: created.id }),
             );
             await suite.transaction((transaction) =>
-                suite.repository().service.archive({ organization: fixture.organization.id, id: created.id, transaction }),
+                suite.repository().service.archive({
+                    organization: fixture.organization.id,
+                    realm: fixture.organization.realm,
+                    id: created.id,
+                    transaction,
+                }),
             );
             await suite.transaction((transaction) =>
-                suite.repository().service.purge({ organization: fixture.organization.id, id: created.id, transaction }),
+                suite.repository().service.purge({
+                    organization: fixture.organization.id,
+                    realm: fixture.organization.realm,
+                    id: created.id,
+                    transaction,
+                }),
             );
             const remaining = await suite.transaction((transaction) => transaction.count(LeavePolicy, { id: created.id }));
 
@@ -54,14 +75,19 @@ describe("[DomainService] - LeavePolicy", () => {
             expect(remaining).toBe(0);
         });
 
-        it("[case] - rejects mutation from another organization", async () => {
+        it.each(["organization", "realm"])("[case] - rejects mutation from another %s", async (scope) => {
             // Arrange
             const entity = await suite.fixtures().createLeavePolicy();
             const other = await suite.fixtures().createOrganization();
 
             // Act
             const result = suite.transaction((transaction) =>
-                suite.repository().service.archive({ organization: other.id, id: entity.id, transaction }),
+                suite.repository().service.archive({
+                    organization: scope === "organization" ? other.id : entity.organization.id,
+                    realm: other.realm,
+                    id: entity.id,
+                    transaction,
+                }),
             );
 
             // Assert
@@ -82,17 +108,19 @@ describe("[DomainService] - LeavePolicy", () => {
             const revision = await suite.transaction((transaction) =>
                 suite.repository().service.createRevision({
                     organization: entity.organization.id,
+                    realm: entity.organization.realm,
+                    input: { name: "Updated" },
                     id: entity.id,
                     transaction,
-                    input: { name: "Updated" },
                 }),
             );
             const result = suite.transaction((transaction) =>
                 suite.repository().service.createRevision({
                     organization: entity.organization.id,
+                    realm: entity.organization.realm,
+                    input: { name: "Stale" },
                     id: entity.id,
                     transaction,
-                    input: { name: "Stale" },
                 }),
             );
 

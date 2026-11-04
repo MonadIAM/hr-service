@@ -15,6 +15,27 @@ describe("[DomainService] - Position", () => {
         fixture: (entityManager) => new HRFixture(entityManager),
     });
 
+    it("[case] - rejects mutation through a foreign realm", async () => {
+        // Arrange
+        const entity = await suite.fixtures().createPosition();
+
+        // Act
+        const result = suite.transaction((transaction) =>
+            suite.repository().service.update({
+                organization: entity.organization.id,
+                patch: { title: "Updated" },
+                realm: randomUUID(),
+                id: entity.id,
+                transaction,
+            }),
+        );
+
+        // Assert
+        await expect(result).rejects.toThrow();
+        const persisted = await suite.transaction((transaction) => transaction.findOneOrFail(Position, { id: entity.id }));
+        expect(persisted).toMatchObject({ id: entity.id, organization: { id: entity.organization.id } });
+    });
+
     describe("[Method] - archive", () => {
         it.each(["2000-01-01", "2999-01-01"])("[case] - archives an assignment starting on %s", async (validFrom) => {
             // Arrange
@@ -28,9 +49,12 @@ describe("[DomainService] - Position", () => {
 
             // Act
             await suite.transaction((transaction) =>
-                suite
-                    .repository()
-                    .service.archive({ organization: position.organization.id, id: position.id, transaction }),
+                suite.repository().service.archive({
+                    organization: position.organization.id,
+                    realm: position.organization.realm,
+                    id: position.id,
+                    transaction,
+                }),
             );
             const persistedPosition = await suite.transaction((transaction) =>
                 transaction.findOneOrFail(Position, { id: position.id }),
@@ -67,11 +91,11 @@ describe("[DomainService] - Position", () => {
                 // Act
                 await suite.transaction((transaction) =>
                     suite.repository().service.completePlacement({
+                        input: { ...input, process: randomUUID() },
                         realm: position.organization.realm,
                         actor: randomUUID(),
-                        input: { ...input, process: randomUUID() },
-                        rejected,
                         transaction,
+                        rejected,
                     }),
                 );
                 const untouched = await suite.transaction((transaction) =>
@@ -81,9 +105,9 @@ describe("[DomainService] - Position", () => {
                     suite.repository().service.completePlacement({
                         realm: position.organization.realm,
                         actor: randomUUID(),
-                        input,
-                        rejected,
                         transaction,
+                        rejected,
+                        input,
                     }),
                 );
                 const persisted = await suite.transaction((transaction) =>
@@ -111,9 +135,9 @@ describe("[DomainService] - Position", () => {
             // Act
             await suite.transaction((transaction) =>
                 suite.repository().service.purgeDepartment({
+                    input: { organization: position.organization.id, department: position.department },
                     realm: position.organization.realm,
                     actor: randomUUID(),
-                    input: { organization: position.organization.id, department: position.department },
                     transaction,
                 }),
             );

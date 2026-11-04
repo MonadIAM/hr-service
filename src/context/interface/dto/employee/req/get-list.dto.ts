@@ -4,6 +4,7 @@ import { Expose, Type } from "class-transformer";
 
 import { BaseReadQueryDTO, PaginationDTO } from "~common/dto";
 import { Validator } from "~common/validator";
+import { QueryMode } from "~context/enums";
 
 import { FiltersDTO } from "../utils/filters.dto";
 import { SortDTO } from "../utils/sort.dto";
@@ -43,4 +44,11 @@ export class GetListQueryDTO extends BaseReadQueryDTO {
     @Validator.IsString()
     @ApiProperty({ required: true, type: String })
     declare public realm: string;
+}
+
+@ApiSchema({ name: "EmployeeManageListQuery" })
+export class ManageGetListQueryDTO extends BaseReadQueryDTO {
+    public get mode(): QueryMode.MANAGE {
+        return QueryMode.MANAGE;
+    }
 }

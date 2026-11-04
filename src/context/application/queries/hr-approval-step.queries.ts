@@ -16,18 +16,30 @@ export class HRApprovalStepQueries implements Queries.HRApprovalStep.Contract {
     ) {}
 
     public findUnique(props: Queries.HRApprovalStep.FindUnique.Props): Queries.HRApprovalStep.FindUnique.Result {
+        const where: ORM.ObjectQuery<Entities.HRApprovalStep> = { id: props.step };
+
+        if (props.mode === QueryMode.DEFAULT) {
+            where.organization = { id: props.organization, realm: props.realm };
+            if (props.assigneeAccount) {
+                where.assigneeEmployee = { account: props.assigneeAccount };
+            }
+        }
+
         return this.hrApprovalStepRepository.findUniqueOrThrow({
-            where: {
-                organization: { id: props.organization, realm: props.realm },
-                id: props.step,
-            },
             options: { populate: this.populate[props.view] },
+            where,
         });
     }
 
     public findMany(props: Queries.HRApprovalStep.FindMany.Props): Queries.HRApprovalStep.FindMany.Result {
-        const prefilter =
-            props.mode === QueryMode.DEFAULT ? { organization: { id: props.organization, realm: props.realm } } : {};
+        const prefilter: ORM.ObjectQuery<Entities.HRApprovalStep> = {};
+
+        if (props.mode === QueryMode.DEFAULT) {
+            prefilter.$and = [{ organization: { id: props.organization, realm: props.realm } }];
+            if (props.assigneeAccount) {
+                prefilter.$and.push({ assigneeEmployee: { account: props.assigneeAccount } });
+            }
+        }
 
         return this.hrApprovalStepRepository.findMany({
             options: { populate: this.populate[props.view] },

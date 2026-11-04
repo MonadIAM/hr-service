@@ -1,9 +1,16 @@
 import { afterEach, describe, expect, it, jest } from "@jest/globals";
 
-import { HRRequestStatus, HRExecutionStatus, HRApprovalStatus, EmployeeStatus } from "~context/enums";
+import { HRRequestStatus, HRExecutionStatus, HRApprovalStatus, EmployeeStatus, PermissionCode } from "~context/enums";
 import { HRRequestUnitHelpers } from "~testing/unit/domain-service/hr-request.helpers";
 
 const helpers = new HRRequestUnitHelpers();
+
+const permissions = [
+    PermissionCode.HR_REQUEST_WITHDRAW,
+    PermissionCode.HR_REQUEST_CREATE,
+    PermissionCode.HR_REQUEST_UPDATE,
+    PermissionCode.HR_REQUEST_SUBMIT,
+];
 
 describe("[DomainService] - HRRequest", () => {
     afterEach(() => {
@@ -24,8 +31,6 @@ describe("[DomainService] - HRRequest", () => {
 
             // Act
             const result = await service.create({
-                organization: entity.organization.id,
-                transaction: transaction.entityManager,
                 input: {
                     ...entity,
                     employee: entity.employee.id,
@@ -33,6 +38,11 @@ describe("[DomainService] - HRRequest", () => {
                     targetPosition: provided ? position.id : undefined,
                     relatedRequest: provided ? entity.id : undefined,
                 },
+                transaction: transaction.entityManager,
+                organization: entity.organization.id,
+                realm: entity.organization.realm,
+                actor: entity.initiatorAccount,
+                permissions,
             });
 
             // Assert
@@ -45,6 +55,10 @@ describe("[DomainService] - HRRequest", () => {
             expect(result.targetPosition).toBe(provided ? position : undefined);
             expect(result.relatedRequest).toBe(provided ? entity : undefined);
             expect(transaction.persist).toHaveBeenCalledWith(result);
+            expect(repositories.organization.findUniqueOrThrow).toHaveBeenCalledWith({
+                where: { realm: entity.organization.realm, id: entity.organization.id },
+                transaction: transaction.entityManager,
+            });
             if (provided) {
                 expect(repositories.employee.findUniqueOrThrow).toHaveBeenCalledWith({
                     where: {
@@ -71,14 +85,22 @@ describe("[DomainService] - HRRequest", () => {
 
             // Act
             const result = await service.update({
-                organization: entity.organization.id,
-                id: entity.id,
-                transaction: transaction.entityManager,
                 patch: { targetPosition: position.id, relatedRequest: related.id },
+                transaction: transaction.entityManager,
+                organization: entity.organization.id,
+                realm: entity.organization.realm,
+                actor: entity.initiatorAccount,
+                id: entity.id,
+                permissions,
             });
 
             // Assert
             expect(result).toMatchObject({ revision: 2, targetPosition: position, relatedRequest: related });
+            expect(repositories.hrRequest.findUniqueOrThrow).toHaveBeenNthCalledWith(1, {
+                where: { organization: { realm: entity.organization.realm, id: entity.organization.id }, id: entity.id },
+                options: { lockMode: expect.anything() },
+                transaction: transaction.entityManager,
+            });
         });
     });
 
@@ -97,9 +119,6 @@ describe("[DomainService] - HRRequest", () => {
 
             // Act
             const result = await service.submit({
-                organization: entity.organization.id,
-                id: entity.id,
-                transaction: transaction.entityManager,
                 input: {
                     workflowCode: "leave",
                     workflowVersion: 1,
@@ -108,10 +127,20 @@ describe("[DomainService] - HRRequest", () => {
                         { name: "HR", assigneeEmployee: assignee.id },
                     ],
                 },
+                transaction: transaction.entityManager,
+                organization: entity.organization.id,
+                realm: entity.organization.realm,
+                actor: entity.initiatorAccount,
+                id: entity.id,
+                permissions,
             });
 
             // Assert
             expect(result.status).toBe(HRRequestStatus.SUBMITTED);
+            expect(repositories.organization.findUniqueOrThrow).toHaveBeenCalledWith({
+                where: { realm: entity.organization.realm, id: entity.organization.id },
+                transaction: transaction.entityManager,
+            });
             expect(services.hrApprovalStep.create).toHaveBeenCalledTimes(2);
             expect(services.hrApprovalStep.create.mock.calls.map(([props]) => props.input.ordinal)).toEqual([1, 2]);
             expect(
@@ -128,14 +157,17 @@ describe("[DomainService] - HRRequest", () => {
 
             // Act
             const result = service.submit({
-                organization: entity.organization.id,
-                id: entity.id,
-                transaction: transaction.entityManager,
                 input: {
                     workflowCode: "leave",
                     workflowVersion: 1,
                     steps: state === "empty" ? [] : [{ name: "Missing", assigneeEmployee: "missing" }],
                 },
+                transaction: transaction.entityManager,
+                organization: entity.organization.id,
+                realm: entity.organization.realm,
+                actor: entity.initiatorAccount,
+                id: entity.id,
+                permissions,
             });
 
             // Assert
@@ -157,13 +189,21 @@ describe("[DomainService] - HRRequest", () => {
 
             // Act
             await service.withdraw({
-                organization: entity.organization.id,
-                id: entity.id,
                 transaction: transaction.entityManager,
+                organization: entity.organization.id,
+                realm: entity.organization.realm,
+                actor: entity.initiatorAccount,
+                id: entity.id,
+                permissions,
             });
 
             // Assert
             expect(entity.status).toBe(HRRequestStatus.WITHDRAWN);
+            expect(repositories.hrRequest.findUniqueOrThrow).toHaveBeenCalledWith({
+                where: { organization: { realm: entity.organization.realm, id: entity.organization.id }, id: entity.id },
+                options: { lockMode: expect.anything() },
+                transaction: transaction.entityManager,
+            });
             expect(step.status).toBe(HRApprovalStatus.SKIPPED);
             expect(repositories.hrApprovalStep.find).toHaveBeenCalledWith({
                 where: {

@@ -11,12 +11,22 @@ declare global {
         }
 
         namespace FindUnique {
-            type Props = {
+            type DefaultProps = {
+                mode: QueryMode.DEFAULT;
                 view: ResponseViewType;
                 organization: string;
                 employee: string;
+                actor?: string;
                 realm: string;
             };
+
+            type ManageProps = {
+                mode: QueryMode.MANAGE;
+                view: ResponseViewType;
+                employee: string;
+            };
+
+            type Props = DefaultProps | ManageProps;
 
             type Result = Promise<Entities.Employee>;
 
@@ -31,6 +41,7 @@ declare global {
                 view: ResponseViewType;
                 pagination: Pagination;
                 organization: string;
+                actor?: string;
                 realm: string;
             };
 
@@ -51,8 +62,8 @@ declare global {
 
         namespace GetLookupList {
             type Props = {
-                organization: string;
                 pagination: Pagination;
+                organization: string;
                 realm: string;
                 term: string;
             };

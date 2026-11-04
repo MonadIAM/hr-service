@@ -20,9 +20,10 @@ describe("[DomainService] - Employee", () => {
 
             // Act
             const result = await service.create({
-                organization: organization.id,
-                transaction: transaction.entityManager,
                 input: { employeeNumber: "EMP-1", firstName: "Alice", lastName: "Morgan" },
+                transaction: transaction.entityManager,
+                organization: organization.id,
+                realm: organization.realm,
             });
 
             // Assert
@@ -51,18 +52,22 @@ describe("[DomainService] - Employee", () => {
 
                 // Act
                 const result = await service[method]({
-                    organization: entity.organization.id,
-                    id: entity.id,
                     transaction: transaction.entityManager,
+                    organization: entity.organization.id,
+                    realm: entity.organization.realm,
                     patch: { firstName: "Updated" },
                     account: "new-account",
+                    id: entity.id,
                 });
 
                 // Assert
                 expect(result).toBe(entity);
                 expect(spy).toHaveBeenCalledTimes(1);
                 expect(repositories.employee.findUniqueOrThrow).toHaveBeenCalledWith({
-                    where: { organization: entity.organization.id, id: entity.id },
+                    where: {
+                        organization: { realm: entity.organization.realm, id: entity.organization.id },
+                        id: entity.id,
+                    },
                     transaction: transaction.entityManager,
                     options: { lockMode: LockMode.PESSIMISTIC_WRITE },
                 });
@@ -80,10 +85,11 @@ describe("[DomainService] - Employee", () => {
 
             // Act
             const result = await service.setHRBP({
-                organization: entity.organization.id,
-                id: entity.id,
                 employee: provided ? partner.id : undefined,
                 transaction: transaction.entityManager,
+                organization: entity.organization.id,
+                realm: entity.organization.realm,
+                id: entity.id,
             });
 
             // Assert

@@ -54,7 +54,7 @@ export class HRApprovalStepService implements Services.HRApprovalStep.Contract {
                 },
                 where: {
                     approvalSteps: { $some: { organization, id } },
-                    organization,
+                    organization: { realm: props.realm, id: organization },
                 },
                 transaction,
             }),
@@ -70,7 +70,7 @@ export class HRApprovalStepService implements Services.HRApprovalStep.Contract {
                 strategy: "select-in",
                 refresh: true,
             },
-            where: { organization, id },
+            where: { organization: { realm: props.realm, id: organization }, id },
             transaction,
         });
 
@@ -141,7 +141,7 @@ export class HRApprovalStepService implements Services.HRApprovalStep.Contract {
         const { transaction, organization, decision, id } = props;
         const [organizationEntity, requestEntity, actorEmployeeEntity] = await Promise.all([
             this.organizationRepository.findUniqueOrThrow({
-                where: { id: organization },
+                where: { realm: props.realm, id: organization },
                 transaction,
             }),
             this.hrRequestRepository.findUniqueOrThrow({
@@ -151,7 +151,7 @@ export class HRApprovalStepService implements Services.HRApprovalStep.Contract {
                 },
                 where: {
                     approvalSteps: { $some: { organization, id } },
-                    organization,
+                    organization: { realm: props.realm, id: organization },
                 },
                 transaction,
             }),
@@ -168,7 +168,7 @@ export class HRApprovalStepService implements Services.HRApprovalStep.Contract {
                     strategy: "select-in",
                     refresh: true,
                 },
-                where: { organization, id },
+                where: { organization: { realm: props.realm, id: organization }, id },
                 transaction,
             }),
             this.hrApprovalStepRepository.find({
@@ -184,7 +184,7 @@ export class HRApprovalStepService implements Services.HRApprovalStep.Contract {
                     requestRevision: requestEntity.revision,
                     request: { id: requestEntity.id },
                     id: { $ne: id },
-                    organization,
+                    organization: { realm: props.realm, id: organization },
                 },
                 transaction,
             }),

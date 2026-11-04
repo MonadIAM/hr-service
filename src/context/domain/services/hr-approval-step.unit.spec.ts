@@ -61,10 +61,11 @@ describe("[DomainService] - HRApprovalStep", () => {
 
                 // Act
                 const result = await service[method]({
-                    organization: request.organization.id,
-                    id: entity.id,
-                    employee: replacement.id,
                     transaction: transaction.entityManager,
+                    organization: request.organization.id,
+                    realm: request.organization.realm,
+                    employee: replacement.id,
+                    id: entity.id,
                 });
 
                 // Assert
@@ -74,7 +75,10 @@ describe("[DomainService] - HRApprovalStep", () => {
                     expect.objectContaining({
                         where: {
                             approvalSteps: { $some: { organization: request.organization.id, id: entity.id } },
-                            organization: request.organization.id,
+                            organization:
+                                method === "reassign"
+                                    ? { realm: request.organization.realm, id: request.organization.id }
+                                    : request.organization.id,
                         },
                         transaction: transaction.entityManager,
                     }),
@@ -134,13 +138,14 @@ describe("[DomainService] - HRApprovalStep", () => {
 
                 // Act
                 const result = await service.decide({
+                    transaction: transaction.entityManager,
                     organization: request.organization.id,
-                    id: entity.id,
+                    realm: request.organization.realm,
                     actorEmployee: actor.id,
                     actorAccount: "actor",
-                    decision,
                     comment: "Reviewed",
-                    transaction: transaction.entityManager,
+                    id: entity.id,
+                    decision,
                 });
 
                 // Assert
@@ -163,7 +168,7 @@ describe("[DomainService] - HRApprovalStep", () => {
                             requestRevision: 1,
                             request: { id: request.id },
                             id: { $ne: entity.id },
-                            organization: request.organization.id,
+                            organization: { realm: request.organization.realm, id: request.organization.id },
                         },
                     }),
                 );
@@ -190,12 +195,13 @@ describe("[DomainService] - HRApprovalStep", () => {
 
             // Act
             const result = service.decide({
+                transaction: transaction.entityManager,
                 organization: request.organization.id,
-                id: entity.id,
+                realm: request.organization.realm,
+                decision: HRDecisionKind.APPROVE,
                 actorEmployee: actor.id,
                 actorAccount: "wrong",
-                decision: HRDecisionKind.APPROVE,
-                transaction: transaction.entityManager,
+                id: entity.id,
             });
 
             // Assert

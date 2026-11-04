@@ -20,14 +20,15 @@ describe("[DomainService] - LeavePolicy", () => {
 
             // Act
             const result = await service.create({
-                organization: entity.organization.id,
                 transaction: transaction.entityManager,
+                organization: entity.organization.id,
+                realm: entity.organization.realm,
                 input: entity,
             });
 
             // Assert
             expect(repositories.organization.findUniqueOrThrow).toHaveBeenCalledWith({
-                where: { id: entity.organization.id },
+                where: { realm: entity.organization.realm, id: entity.organization.id },
                 transaction: transaction.entityManager,
             });
             expect(result).toMatchObject({
@@ -53,16 +54,17 @@ describe("[DomainService] - LeavePolicy", () => {
 
             // Act
             const result = await service[method]({
-                id: entity.id,
-                organization: entity.organization.id,
                 transaction: transaction.entityManager,
+                organization: entity.organization.id,
+                realm: entity.organization.realm,
+                id: entity.id,
             });
 
             // Assert
             expect(result).toBe(entity);
             expect(entity.status).toBe(after);
             expect(repositories.leavePolicy.findUniqueOrThrow).toHaveBeenCalledWith({
-                where: { id: entity.id, organization: entity.organization.id },
+                where: { organization: { realm: entity.organization.realm, id: entity.organization.id }, id: entity.id },
                 options: { lockMode: LockMode.PESSIMISTIC_WRITE },
                 transaction: transaction.entityManager,
             });
@@ -81,9 +83,10 @@ describe("[DomainService] - LeavePolicy", () => {
 
                 // Act
                 const result = service.purge({
-                    id: entity.id,
-                    organization: entity.organization.id,
                     transaction: transaction.entityManager,
+                    organization: entity.organization.id,
+                    realm: entity.organization.realm,
+                    id: entity.id,
                 });
 
                 // Assert
@@ -108,10 +111,11 @@ describe("[DomainService] - LeavePolicy", () => {
 
             // Act
             const result = await service.createRevision({
-                id: entity.id,
-                organization: entity.organization.id,
                 transaction: transaction.entityManager,
+                organization: entity.organization.id,
+                realm: entity.organization.realm,
                 input: { name: "Updated" },
+                id: entity.id,
             });
 
             // Assert
@@ -144,10 +148,11 @@ describe("[DomainService] - LeavePolicy", () => {
 
             // Act
             const result = service.createRevision({
-                id: entity.id,
-                organization: entity.organization.id,
                 transaction: transaction.entityManager,
+                organization: entity.organization.id,
+                realm: entity.organization.realm,
                 input: { name: "Updated" },
+                id: entity.id,
             });
 
             // Assert
