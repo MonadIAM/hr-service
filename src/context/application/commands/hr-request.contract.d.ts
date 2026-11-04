@@ -5,10 +5,10 @@ declare global {
         interface Contract extends ProcessorContract, ConsumerContract, ControllerContract {}
 
         interface ProcessorContract {
-            terminate: Terminate.Signature;
+            execute: Execute.Signature;
         }
 
-        namespace Terminate {
+        namespace Execute {
             type Props = {
                 batchSize: number;
             };
@@ -51,15 +51,15 @@ declare global {
         }
 
         namespace Create {
-            type Props = {
+            type Props<T extends HRRequestType = HRRequestType> = {
                 input: {
                     payloadSchemaVersion: number;
                     initiatorEmployee?: string;
                     relatedRequest?: string;
                     targetPosition?: string;
                     idempotencyKey: string;
-                    payload: UnknownObject;
-                    type: HRRequestType;
+                    payload: Entities.HRRequest.Payload.ByType[T];
+                    type: T;
                     effectiveAt?: Date;
                     employee: string;
                 };
@@ -83,6 +83,7 @@ declare global {
                         relatedRequest?: string;
                     };
                     reason: string;
+                    type: HRRequestType;
                 };
                 permissions: string[];
                 context: Extract.Meta;

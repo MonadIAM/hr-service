@@ -5,6 +5,7 @@ import { randomUUID } from "node:crypto";
 import { PublicLinkOperator, PublicStringOperator } from "~infrastructure/database/enums";
 import { postgresSuite } from "~testing/integration/containers/postgres.suite";
 import { HRFixture } from "~testing/integration/repositories/hr.fixture";
+import { Employee } from "~context/domain/entities";
 import { EmployeeStatus } from "~context/enums";
 
 import { EmployeeRepository } from "./employee.repository";
@@ -13,6 +14,32 @@ describe("[Repository] - Employee", () => {
     const suite = postgresSuite({
         repository: ({ readManager }) => new EmployeeRepository(readManager),
         fixture: (entityManager) => new HRFixture(entityManager),
+    });
+
+    describe("[Behavior] - employment terms", () => {
+        it.each(["workCalendar", "workSchedule", "leavePolicy"] as const)(
+            "[case] - keeps the database organization constraint for %s",
+            async (field) => {
+                // Arrange
+                const employee = await suite.fixtures().createEmployee();
+                const foreign =
+                    field === "workCalendar"
+                        ? await suite.fixtures().createWorkCalendar()
+                        : field === "workSchedule"
+                          ? await suite.fixtures().createWorkSchedule()
+                          : await suite.fixtures().createLeavePolicy();
+
+                // Act
+                const result = suite.transaction((transaction) =>
+                    transaction.nativeUpdate(Employee, { id: employee.id }, { [field]: foreign.id }),
+                );
+
+                // Assert
+                await expect(result).rejects.toThrow(/foreign key constraint/i);
+                const persisted = await suite.repository().findUniqueOrThrow({ where: { id: employee.id } });
+                expect(persisted[field]).toBeFalsy();
+            },
+        );
     });
 
     describe("[Method] - findUniqueOrThrow", () => {

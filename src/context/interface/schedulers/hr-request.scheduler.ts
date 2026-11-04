@@ -13,10 +13,10 @@ export class HRRequestScheduler {
     ) {}
 
     @Cron(CronExpression.EVERY_MINUTE)
-    public async scheduleTermination(): Promise<void> {
+    public async scheduleExecution(): Promise<void> {
         const now = new Date();
         await this.hrRequestQueue.schedule({
-            event: `terminate.${Math.floor(now.getTime() / 60_000)}`,
+            event: `execute.${Math.floor(now.getTime() / 60_000)}`,
             batchSize: this.batchSize,
             batch: 0,
         });

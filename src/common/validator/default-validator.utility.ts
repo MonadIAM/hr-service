@@ -1,5 +1,5 @@
 import { CountryCode } from "libphonenumber-js/max";
-import { Transform, Type } from "class-transformer";
+import { ClassConstructor, Transform, Type } from "class-transformer";
 import {
     ValidationOptions,
     ValidateNested,
@@ -8,6 +8,8 @@ import {
     ArrayMinSize,
     ArrayUnique,
     IsPositive,
+    ValidateIf,
+    IsTimeZone,
     IsOptional,
     IsDefined,
     MinLength,
@@ -30,6 +32,8 @@ import {
     Max,
 } from "class-validator";
 
+import { ValidateByType } from "./algorithms/validate-by-type.validator";
+import { IsDateOnly } from "./algorithms/is-date-only.validator";
 import { NotEqualTo } from "./algorithms/not-equal-to.validator";
 import { IsMsString } from "./algorithms/is-ms-string.validator";
 import { IsOrdinal } from "./algorithms/is-ordinal.validator";
@@ -54,8 +58,11 @@ export abstract class StandardValidationDecorators {
         };
     }
 
-    public static IsOptional(options?: ValidationOptions): PropertyDecorator {
-        return (target, key) => IsOptional(options)(target, key);
+    public static IsOptional(options?: ValidationOptions & { nullable?: boolean }): PropertyDecorator {
+        return (target, key) =>
+            options?.nullable === false
+                ? ValidateIf((_, value: unknown) => value !== undefined, options)(target, key)
+                : IsOptional(options)(target, key);
     }
 
     public static IsRequired(options?: ValidationOptions, label?: string): PropertyDecorator {
@@ -172,6 +179,14 @@ export abstract class StandardValidationDecorators {
         };
     }
 
+    public static IsDateOnly(options?: ValidationOptions, label?: string): PropertyDecorator {
+        return (target, key) => IsDateOnly(this.wrap("IS_DATE", { property: key }, options, label))(target, key);
+    }
+
+    public static IsTimeZone(options?: ValidationOptions, label?: string): PropertyDecorator {
+        return (target, key) => IsTimeZone(this.wrap("IS_TIME_ZONE", { property: key }, options, label))(target, key);
+    }
+
     public static IsEnum(entity: object, options?: ValidationOptions, label?: string): PropertyDecorator {
         return (target, key) => IsEnum(entity, this.wrap("IS_ENUM", { property: key }, options, label))(target, key);
     }
@@ -186,6 +201,22 @@ export abstract class StandardValidationDecorators {
 
     public static ValidateNested(options?: ValidationOptions, label?: string): PropertyDecorator {
         return (target, key) => ValidateNested(this.wrap("NESTED", { property: key }, options, label))(target, key);
+    }
+
+    public static ValidateByType(
+        discriminator: string,
+        types: Record<string, ClassConstructor<object>>,
+        property?: string,
+        options?: ValidationOptions,
+        label?: string,
+    ): PropertyDecorator {
+        return (target, key) =>
+            ValidateByType(
+                discriminator,
+                types,
+                property,
+                this.wrap("NESTED", { property: key }, options, label),
+            )(target, key);
     }
 
     public static IsIn<T>(list: readonly T[], options?: ValidationOptions, label?: string): PropertyDecorator {

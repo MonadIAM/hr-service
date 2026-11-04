@@ -20,7 +20,7 @@ export class HRRequestProcessor extends WorkerHost {
     }
 
     public async process(job: Job<Queues.HRRequest.JobData>): Promise<number> {
-        const processed = await this.hrRequestCommands.terminate({ batchSize: job.data.batchSize });
+        const processed = await this.hrRequestCommands.execute({ batchSize: job.data.batchSize });
 
         if (processed === job.data.batchSize) {
             await this.hrRequestQueue.schedule({ ...job.data, batch: job.data.batch + 1 });

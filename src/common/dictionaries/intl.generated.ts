@@ -220,13 +220,16 @@ export type I18nTranslations = {
         "leave-ledger-entry": {
             "INVALID_REVERSAL": string;
         };
+        "hr-request-execution": {
+            "TERMS_NOT_FOUND": string;
+        };
         "hr-request": {
-            "INVALID_TERMINATION_PAYLOAD": string;
             "EMPTY_APPROVAL_ROUTE": string;
             "ASSIGNEE_NOT_FOUND": string;
         };
     };
     "validator": {
+        "IS_TIME_ZONE": string;
         "REQUIRED": string;
         "IS_OBJECT": string;
         "IS_STRING": string;

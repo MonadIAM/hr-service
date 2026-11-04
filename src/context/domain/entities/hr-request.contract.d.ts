@@ -2,10 +2,10 @@ import { HRExecutionStatus, HRRequestStatus, HRRequestType } from "~context/enum
 
 declare global {
     namespace Entities {
-        type HRRequest = HRRequest.Contract;
+        type HRRequest<T extends HRRequestType = HRRequestType> = HRRequest.Contract<T>;
 
         namespace HRRequest {
-            interface Contract {
+            interface Contract<T extends HRRequestType = HRRequestType> {
                 id: string;
                 version: number;
                 createdAt: Date;
@@ -19,10 +19,10 @@ declare global {
                 initiatorAccount: string;
                 status: HRRequestStatus;
                 idempotencyKey: string;
-                payload: UnknownObject;
+                payload: Payload.ByType[T];
                 result?: UnknownObject;
                 workflowCode?: string;
-                type: HRRequestType;
+                type: T;
                 effectiveAt?: Date;
                 submittedAt?: Date;
                 approvedAt?: Date;
@@ -60,12 +60,42 @@ declare global {
                 cancel(): void;
             }
 
+            namespace Payload {
+                type ByType = {
+                    [HRRequestType.LEAVE_ADJUSTMENT]: UnknownObject;
+                    [HRRequestType.CANCEL_REQUEST]: UnknownObject;
+                    [HRRequestType.CHANGE_TERMS]: ChangeTerms;
+                    [HRRequestType.TERMINATE]: Terminate;
+                    [HRRequestType.TRANSFER]: UnknownObject;
+                    [HRRequestType.OVERTIME]: UnknownObject;
+                    [HRRequestType.ABSENCE]: UnknownObject;
+                    [HRRequestType.REHIRE]: UnknownObject;
+                    [HRRequestType.HIRE]: UnknownObject;
+                };
+
+                type ChangeTerms = {
+                    scheduleAnchorDate?: string | null;
+                    scheduleTimezone?: string;
+                    termsValidFrom: string;
+                    contractEndsOn?: string | null;
+                    contractType?: string | null;
+                    workCalendar?: string;
+                    workSchedule?: string;
+                    leavePolicy?: string;
+                };
+
+                type Terminate = {
+                    employmentEndedOn: string;
+                    reason?: string;
+                };
+            }
+
             type MutableFields = Pick<
                 Contract,
                 "payloadSchemaVersion" | "payload" | "effectiveAt" | "targetPosition" | "relatedRequest"
             >;
 
-            type ConstructorProps = {
+            type ConstructorProps<T extends HRRequestType = HRRequestType> = {
                 executionStatus: HRExecutionStatus;
                 payloadSchemaVersion: number;
                 approvedRevision?: number;
@@ -74,10 +104,10 @@ declare global {
                 initiatorAccount: string;
                 status: HRRequestStatus;
                 idempotencyKey: string;
-                payload: UnknownObject;
+                payload: Payload.ByType[T];
                 result?: UnknownObject;
                 workflowCode?: string;
-                type: HRRequestType;
+                type: T;
                 effectiveAt?: Date;
                 submittedAt?: Date;
                 approvedAt?: Date;

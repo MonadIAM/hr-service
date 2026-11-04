@@ -1,6 +1,7 @@
 import { ClassProvider } from "@nestjs/common";
 
 import { WorkCalendarExceptionService } from "./work-calendar-exception.service";
+import { HRRequestExecutionService } from "./hr-request-execution.service";
 import { HRApprovalDecisionService } from "./hr-approval-decision.service";
 import { PositionAssignmentService } from "./position-assignment.service";
 import { LeaveLedgerEntryService } from "./leave-ledger-entry.service";
@@ -18,6 +19,7 @@ import { EmployeeService } from "./employee.service";
 import { AbsenceService } from "./absence.service";
 import {
     WORK_CALENDAR_EXCEPTION_SERVICE,
+    HR_REQUEST_EXECUTION_SERVICE,
     HR_APPROVAL_DECISION_SERVICE,
     POSITION_ASSIGNMENT_SERVICE,
     LEAVE_LEDGER_ENTRY_SERVICE,
@@ -39,6 +41,10 @@ export const DOMAIN_SERVICES: ClassProvider[] = [
     {
         provide: WORK_CALENDAR_EXCEPTION_SERVICE,
         useClass: WorkCalendarExceptionService,
+    },
+    {
+        provide: HR_REQUEST_EXECUTION_SERVICE,
+        useClass: HRRequestExecutionService,
     },
     {
         provide: HR_APPROVAL_DECISION_SERVICE,
@@ -104,6 +110,7 @@ export const DOMAIN_SERVICES: ClassProvider[] = [
 
 export {
     WORK_CALENDAR_EXCEPTION_SERVICE,
+    HR_REQUEST_EXECUTION_SERVICE,
     HR_APPROVAL_DECISION_SERVICE,
     POSITION_ASSIGNMENT_SERVICE,
     LEAVE_LEDGER_ENTRY_SERVICE,

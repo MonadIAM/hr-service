@@ -16,7 +16,7 @@ export class HRRequestQueue implements Queues.HRRequest.Contract, OnModuleInit {
     }
 
     public async schedule(props: Queues.HRRequest.Schedule.Props): Queues.HRRequest.Schedule.Result {
-        await this.queue.add("terminate", props, {
+        await this.queue.add("execute", props, {
             jobId: `${props.event}.${props.batch}`,
             removeOnComplete: true,
         });

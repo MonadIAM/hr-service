@@ -60,13 +60,27 @@ describe("[DomainService] - Employee", () => {
                     .repository()
                     .service.hire({ ...props, transaction, input: { ...terms, employmentStartedOn: "2026-01-01" } }),
             );
-            await suite.transaction((transaction) =>
-                suite.repository().service.changeTerms({
-                    ...props,
+            await suite.transaction(async (transaction) => {
+                const entity = await transaction.findOneOrFail(
+                    Employee,
+                    { id: employee.id },
+                    {
+                        populate: ["workCalendar", "workSchedule", "leavePolicy"],
+                    },
+                );
+                return suite.repository().service.changeTerms({
+                    input: {
+                        ...terms,
+                        workCalendar: entity.workCalendar!,
+                        workSchedule: entity.workSchedule!,
+                        leavePolicy: entity.leavePolicy!,
+                        termsValidFrom: "2026-04-01",
+                        contractType: "fixed-term",
+                    },
                     transaction,
-                    input: { ...terms, termsValidFrom: "2026-04-01", contractType: "fixed-term" },
-                }),
-            );
+                    entity,
+                });
+            });
             await suite.transaction(async (transaction) => {
                 const entity = await transaction.findOneOrFail(
                     Employee,

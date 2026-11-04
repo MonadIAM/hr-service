@@ -1,4 +1,5 @@
 export const WORK_CALENDAR_EXCEPTION_SERVICE = Symbol("Services.WorkCalendarException.Contract");
+export const HR_REQUEST_EXECUTION_SERVICE = Symbol("Services.HRRequestExecution.Contract");
 export const HR_APPROVAL_DECISION_SERVICE = Symbol("Services.HRApprovalDecision.Contract");
 export const POSITION_ASSIGNMENT_SERVICE = Symbol("Services.PositionAssignment.Contract");
 export const LEAVE_LEDGER_ENTRY_SERVICE = Symbol("Services.LeaveLedgerEntry.Contract");

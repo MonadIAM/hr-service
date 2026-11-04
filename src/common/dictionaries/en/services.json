@@ -26,8 +26,10 @@
   "leave-ledger-entry": {
     "INVALID_REVERSAL": "A reversal must be created from an original entry that has not already been reversed."
   },
+  "hr-request-execution": {
+    "TERMS_NOT_FOUND": "The employee work calendar, work schedule or leave policy was not found."
+  },
   "hr-request": {
-    "INVALID_TERMINATION_PAYLOAD": "The termination request must contain a valid employment end date.",
     "EMPTY_APPROVAL_ROUTE": "At least one approval step is required.",
     "ASSIGNEE_NOT_FOUND": "The approval step assignee does not exist."
   }

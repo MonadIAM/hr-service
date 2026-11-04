@@ -28,18 +28,13 @@ declare namespace Services.Employee {
 
     namespace ChangeTerms {
         type Props = {
-            input: Omit<Entities.Employee.ChangeTerms.Props, "workCalendar" | "workSchedule" | "leavePolicy"> & {
-                workCalendar: string;
-                workSchedule: string;
-                leavePolicy: string;
-            };
+            input: Entities.Employee.ChangeTerms.Props;
             transaction: ORM.EntityManager;
-            organization: string;
-            request?: string;
-            id: string;
+            request?: Entities.HRRequest;
+            entity: Entities.Employee;
         };
 
-        type Result = Promise<Entities.Employee>;
+        type Result = Entities.Employee;
 
         type Signature = (props: Props) => Result;
     }
