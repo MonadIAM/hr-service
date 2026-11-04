@@ -87,7 +87,9 @@ export class HRRequest implements Entities.HRRequest.Contract {
         } else {
             const now = new Date();
             let affected = 0;
-            for (const [key, value] of Object.typedEntries(patch)) {
+            const fields = ["payloadSchemaVersion", "relatedRequest", "targetPosition", "effectiveAt", "payload"] as const;
+            for (const key of fields) {
+                const value = patch[key];
                 if (typeof value !== "undefined" && value !== this[key]) {
                     (this[key] as unknown) = value;
                     ++affected;

@@ -20,14 +20,15 @@ describe("[DomainService] - WorkCalendar", () => {
 
             // Act
             const result = await service.create({
-                organization: entity.organization.id,
                 transaction: transaction.entityManager,
+                organization: entity.organization.id,
+                realm: entity.organization.realm,
                 input: entity,
             });
 
             // Assert
             expect(repositories.organization.findUniqueOrThrow).toHaveBeenCalledWith({
-                where: { id: entity.organization.id },
+                where: { realm: entity.organization.realm, id: entity.organization.id },
                 transaction: transaction.entityManager,
             });
             expect(result).toMatchObject({
@@ -52,16 +53,17 @@ describe("[DomainService] - WorkCalendar", () => {
 
             // Act
             const result = await service[method]({
-                id: entity.id,
-                organization: entity.organization.id,
                 transaction: transaction.entityManager,
+                organization: entity.organization.id,
+                realm: entity.organization.realm,
+                id: entity.id,
             });
 
             // Assert
             expect(result).toBe(entity);
             expect(entity.status).toBe(after);
             expect(repositories.workCalendar.findUniqueOrThrow).toHaveBeenCalledWith({
-                where: { id: entity.id, organization: entity.organization.id },
+                where: { organization: { realm: entity.organization.realm, id: entity.organization.id }, id: entity.id },
                 options: { lockMode: LockMode.PESSIMISTIC_WRITE },
                 transaction: transaction.entityManager,
             });
@@ -80,9 +82,10 @@ describe("[DomainService] - WorkCalendar", () => {
 
                 // Act
                 const result = service.purge({
-                    id: entity.id,
-                    organization: entity.organization.id,
                     transaction: transaction.entityManager,
+                    organization: entity.organization.id,
+                    realm: entity.organization.realm,
+                    id: entity.id,
                 });
 
                 // Assert
@@ -107,10 +110,11 @@ describe("[DomainService] - WorkCalendar", () => {
 
             // Act
             const result = await service.update({
-                id: entity.id,
-                organization: entity.organization.id,
                 transaction: transaction.entityManager,
+                organization: entity.organization.id,
+                realm: entity.organization.realm,
                 patch: { name: "Updated" },
+                id: entity.id,
             });
 
             // Assert

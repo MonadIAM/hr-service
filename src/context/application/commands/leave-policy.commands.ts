@@ -17,7 +17,7 @@ export class LeavePolicyCommands implements Commands.LeavePolicy.Contract {
     ) {}
 
     public async create(props: Commands.LeavePolicy.Create.Props): Commands.LeavePolicy.Create.Result {
-        const { organization, input } = props;
+        const { organization, input, realm } = props;
 
         await this.transactionalService.run({
             resource: this.resource,
@@ -29,8 +29,9 @@ export class LeavePolicyCommands implements Commands.LeavePolicy.Contract {
             changeLog: true,
             execute: (transaction) => {
                 return this.leavePolicyService.create({
-                    transaction,
                     organization,
+                    transaction,
+                    realm,
                     input,
                 });
             },
@@ -42,7 +43,7 @@ export class LeavePolicyCommands implements Commands.LeavePolicy.Contract {
     public async createRevision(
         props: Commands.LeavePolicy.CreateRevision.Props,
     ): Commands.LeavePolicy.CreateRevision.Result {
-        const { organization, input, id } = props;
+        const { organization, realm, input, id } = props;
 
         await this.transactionalService.run({
             resource: this.resource,
@@ -54,8 +55,9 @@ export class LeavePolicyCommands implements Commands.LeavePolicy.Contract {
             changeLog: true,
             execute: async (transaction) => {
                 return await this.leavePolicyService.createRevision({
-                    transaction,
                     organization,
+                    transaction,
+                    realm,
                     input,
                     id,
                 });
@@ -66,7 +68,7 @@ export class LeavePolicyCommands implements Commands.LeavePolicy.Contract {
     }
 
     public async archive(props: Commands.LeavePolicy.Archive.Props): Commands.LeavePolicy.Archive.Result {
-        const { organization, id } = props;
+        const { organization, realm, id } = props;
 
         await this.transactionalService.run({
             resource: this.resource,
@@ -78,8 +80,9 @@ export class LeavePolicyCommands implements Commands.LeavePolicy.Contract {
             changeLog: true,
             execute: async (transaction) => {
                 return await this.leavePolicyService.archive({
-                    transaction,
                     organization,
+                    transaction,
+                    realm,
                     id,
                 });
             },
@@ -89,7 +92,7 @@ export class LeavePolicyCommands implements Commands.LeavePolicy.Contract {
     }
 
     public async restore(props: Commands.LeavePolicy.Restore.Props): Commands.LeavePolicy.Restore.Result {
-        const { organization, id } = props;
+        const { organization, realm, id } = props;
 
         await this.transactionalService.run({
             resource: this.resource,
@@ -101,8 +104,9 @@ export class LeavePolicyCommands implements Commands.LeavePolicy.Contract {
             changeLog: true,
             execute: async (transaction) => {
                 return await this.leavePolicyService.restore({
-                    transaction,
                     organization,
+                    transaction,
+                    realm,
                     id,
                 });
             },
@@ -112,7 +116,7 @@ export class LeavePolicyCommands implements Commands.LeavePolicy.Contract {
     }
 
     public async purge(props: Commands.LeavePolicy.Purge.Props): Commands.LeavePolicy.Purge.Result {
-        const { organization, id } = props;
+        const { organization, realm, id } = props;
 
         await this.transactionalService.run({
             resource: this.resource,
@@ -124,8 +128,9 @@ export class LeavePolicyCommands implements Commands.LeavePolicy.Contract {
             changeLog: true,
             execute: async (transaction) => {
                 return await this.leavePolicyService.purge({
-                    transaction,
                     organization,
+                    transaction,
+                    realm,
                     id,
                 });
             },

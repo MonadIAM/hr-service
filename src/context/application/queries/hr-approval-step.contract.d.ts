@@ -10,12 +10,22 @@ declare global {
         }
 
         namespace FindUnique {
-            type Props = {
+            type DefaultProps = {
+                assigneeAccount?: string;
+                mode: QueryMode.DEFAULT;
                 view: ResponseViewType;
                 organization: string;
-                step: string;
                 realm: string;
+                step: string;
             };
+
+            type ManageProps = {
+                mode: QueryMode.MANAGE;
+                view: ResponseViewType;
+                step: string;
+            };
+
+            type Props = DefaultProps | ManageProps;
 
             type Result = Promise<Entities.HRApprovalStep>;
 
@@ -26,6 +36,7 @@ declare global {
             type DefaultProps = {
                 filters: Omit<Repositories.Mappers.HRApprovalStep.Filters, "organization">;
                 sort: Repositories.Mappers.HRApprovalStep.Sort;
+                assigneeAccount?: string;
                 mode: QueryMode.DEFAULT;
                 view: ResponseViewType;
                 pagination: Pagination;

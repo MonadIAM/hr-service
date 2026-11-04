@@ -48,7 +48,7 @@ export class HRApprovalStepController {
     public findUnique(
         @Query() { organization, realm, view, id }: GetByIdQueryDTO,
     ): Queries.HRApprovalStep.FindUnique.Result {
-        return this.hrApprovalStepQueries.findUnique({ organization, realm, view, step: id });
+        return this.hrApprovalStepQueries.findUnique({ mode: QueryMode.DEFAULT, organization, step: id, realm, view });
     }
 
     @HttpCode(OK)
@@ -67,6 +67,57 @@ export class HRApprovalStepController {
     ): Queries.HRApprovalStep.FindMany.Result {
         return this.hrApprovalStepQueries.findMany({
             mode: QueryMode.DEFAULT,
+            organization,
+            pagination,
+            filters,
+            realm,
+            view,
+            sort,
+        });
+    }
+
+    @Get("assigned")
+    @HttpCode(OK)
+    @FormatResponse(HRApprovalStepDTO)
+    @ApiResponse({ status: OK, type: HRApprovalStepDTO })
+    @RequirePermission(PermissionCode.HR_APPROVAL_STEP_READ_ASSIGNED)
+    @ApiOperation({
+        summary: "Returns an HR approval step by identifier",
+        security: [{ identity: [] }],
+    })
+    @Swagger.Exceptions(INTERNAL_SERVER_ERROR, UNPROCESSABLE_ENTITY, UNAUTHORIZED, FORBIDDEN, NOT_FOUND)
+    public findAssigned(
+        @Query() { organization, realm, view, id }: GetByIdQueryDTO,
+        @Extract.Session() { account: actor }: Extract.Session.Auth,
+    ): Queries.HRApprovalStep.FindUnique.Result {
+        return this.hrApprovalStepQueries.findUnique({
+            mode: QueryMode.DEFAULT,
+            assigneeAccount: actor,
+            organization,
+            step: id,
+            realm,
+            view,
+        });
+    }
+
+    @HttpCode(OK)
+    @Post("list/assigned")
+    @FormatResponse(ListDTO)
+    @ApiResponse({ status: OK, type: ListDTO })
+    @RequirePermission(PermissionCode.HR_APPROVAL_STEP_READ_ASSIGNED)
+    @ApiOperation({
+        summary: "Returns a paginated list of HR approval steps",
+        security: [{ identity: [] }],
+    })
+    @Swagger.Exceptions(INTERNAL_SERVER_ERROR, UNPROCESSABLE_ENTITY, UNAUTHORIZED, FORBIDDEN)
+    public findAssignedMany(
+        @Query() { organization, realm, view }: GetListQueryDTO,
+        @Body() { pagination, filters, sort }: GetListBodyDTO,
+        @Extract.Session() { account: actor }: Extract.Session.Auth,
+    ): Queries.HRApprovalStep.FindMany.Result {
+        return this.hrApprovalStepQueries.findMany({
+            mode: QueryMode.DEFAULT,
+            assigneeAccount: actor,
             organization,
             pagination,
             filters,

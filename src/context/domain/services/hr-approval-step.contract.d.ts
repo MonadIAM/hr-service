@@ -11,6 +11,7 @@ declare namespace Services.HRApprovalStep {
             transaction: ORM.EntityManager;
             organization: string;
             employee: string;
+            realm: string;
             id: string;
         };
 
@@ -27,6 +28,7 @@ declare namespace Services.HRApprovalStep {
             organization: string;
             actorAccount: string;
             comment?: string;
+            realm: string;
             id: string;
         };
 
@@ -50,8 +52,8 @@ declare namespace Services.HRApprovalStep {
                 name: string;
                 dueAt?: Date;
             };
-            transaction: ORM.EntityManager;
             organization: Entities.Organization;
+            transaction: ORM.EntityManager;
         };
 
         type Result = Entities.HRApprovalStep;

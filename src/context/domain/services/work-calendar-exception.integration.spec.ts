@@ -14,6 +14,28 @@ describe("[DomainService] - WorkCalendarException", () => {
         fixture: (entityManager) => new HRFixture(entityManager),
     });
 
+    it("[case] - rejects mutation through a foreign realm", async () => {
+        // Arrange
+        const entity = await suite.fixtures().createWorkCalendarException();
+
+        // Act
+        const result = suite.transaction((transaction) =>
+            suite.repository().service.purge({
+                organization: entity.organization.id,
+                realm: randomUUID(),
+                id: entity.id,
+                transaction,
+            }),
+        );
+
+        // Assert
+        await expect(result).rejects.toThrow();
+        const persisted = await suite.transaction((transaction) =>
+            transaction.findOneOrFail(WorkCalendarException, { id: entity.id }),
+        );
+        expect(persisted).toMatchObject({ id: entity.id, organization: { id: entity.organization.id } });
+    });
+
     describe("[Behavior] - calendar exceptions", () => {
         it("[case] - creates, updates and purges a calendar exception", async () => {
             // Arrange
@@ -22,24 +44,31 @@ describe("[DomainService] - WorkCalendarException", () => {
             // Act
             const created = await suite.transaction((transaction) =>
                 suite.repository().service.create({
-                    organization: calendar.organization.id,
-                    transaction,
                     input: { calendar: calendar.id, date: "2026-12-25", name: "Holiday" },
+                    organization: calendar.organization.id,
+                    realm: calendar.organization.realm,
+                    transaction,
                 }),
             );
             await suite.transaction((transaction) =>
                 suite.repository().service.update({
                     organization: calendar.organization.id,
+                    realm: calendar.organization.realm,
+                    patch: { name: "Updated" },
                     id: created.id,
                     transaction,
-                    patch: { name: "Updated" },
                 }),
             );
             const persisted = await suite.transaction((transaction) =>
                 transaction.findOneOrFail(WorkCalendarException, { id: created.id }),
             );
             await suite.transaction((transaction) =>
-                suite.repository().service.purge({ organization: calendar.organization.id, id: created.id, transaction }),
+                suite.repository().service.purge({
+                    organization: calendar.organization.id,
+                    realm: calendar.organization.realm,
+                    id: created.id,
+                    transaction,
+                }),
             );
 
             // Assert
@@ -57,9 +86,10 @@ describe("[DomainService] - WorkCalendarException", () => {
             // Act
             const result = suite.transaction((transaction) =>
                 suite.repository().service.create({
-                    organization: organization.id,
-                    transaction,
                     input: { calendar: calendar.id, date: "2026-12-25", name: randomUUID() },
+                    organization: organization.id,
+                    realm: organization.realm,
+                    transaction,
                 }),
             );
 

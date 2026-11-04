@@ -25,7 +25,7 @@ export class PositionService implements Services.Position.Contract {
         const { transaction, organization, input } = props;
 
         const organizationEntity = await this.organizationRepository.findUniqueOrThrow({
-            where: { id: organization },
+            where: { realm: props.realm, id: organization },
             transaction,
         });
 
@@ -44,7 +44,7 @@ export class PositionService implements Services.Position.Contract {
         const { transaction, organization, patch, id } = props;
         const positionEntity = await this.positionRepository.findUniqueOrThrow({
             options: { lockMode: LockMode.PESSIMISTIC_WRITE, refresh: true },
-            where: { organization, id },
+            where: { organization: { realm: props.realm, id: organization }, id },
             transaction,
         });
 
@@ -57,7 +57,7 @@ export class PositionService implements Services.Position.Contract {
         const { transaction, organization, id } = props;
         const positionEntity = await this.positionRepository.findUniqueOrThrow({
             options: { lockMode: LockMode.PESSIMISTIC_WRITE, refresh: true },
-            where: { organization, id },
+            where: { organization: { realm: props.realm, id: organization }, id },
             transaction,
         });
 
@@ -85,7 +85,7 @@ export class PositionService implements Services.Position.Contract {
         const { transaction, organization, id } = props;
         const positionEntity = await this.positionRepository.findUniqueOrThrow({
             options: { lockMode: LockMode.PESSIMISTIC_WRITE, refresh: true },
-            where: { organization, id },
+            where: { organization: { realm: props.realm, id: organization }, id },
             transaction,
         });
 
@@ -98,7 +98,7 @@ export class PositionService implements Services.Position.Contract {
         const { transaction, organization, id } = props;
         const positionEntity = await this.positionRepository.findUniqueOrThrow({
             options: { lockMode: LockMode.PESSIMISTIC_WRITE, refresh: true },
-            where: { organization, id },
+            where: { organization: { realm: props.realm, id: organization }, id },
             transaction,
         });
 

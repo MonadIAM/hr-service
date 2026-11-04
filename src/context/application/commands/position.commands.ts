@@ -24,7 +24,7 @@ export class PositionCommands implements Commands.Position.Contract {
     }
 
     public async create(props: Commands.Position.Create.Props): Commands.Position.Create.Result {
-        const { organization, input, actor, realm } = props;
+        const { organization, realm, input, actor } = props;
 
         await this.transactionalService.run({
             resource: this.resource,
@@ -41,8 +41,9 @@ export class PositionCommands implements Commands.Position.Contract {
             changeLog: true,
             execute: async (transaction) => {
                 const position = await this.positionService.create({
-                    transaction,
                     organization,
+                    transaction,
+                    realm,
                     input,
                 });
                 return { position, actor, realm };
@@ -53,7 +54,7 @@ export class PositionCommands implements Commands.Position.Contract {
     }
 
     public async update(props: Commands.Position.Update.Props): Commands.Position.Update.Result {
-        const { organization, input, id } = props;
+        const { organization, realm, input, id } = props;
 
         await this.transactionalService.run({
             resource: this.resource,
@@ -66,8 +67,9 @@ export class PositionCommands implements Commands.Position.Contract {
             execute: async (transaction) => {
                 return await this.positionService.update({
                     patch: input.patch,
-                    transaction,
                     organization,
+                    transaction,
+                    realm,
                     id,
                 });
             },
@@ -77,7 +79,7 @@ export class PositionCommands implements Commands.Position.Contract {
     }
 
     public async archive(props: Commands.Position.Archive.Props): Commands.Position.Archive.Result {
-        const { organization, id, actor, realm } = props;
+        const { organization, realm, actor, id } = props;
 
         await this.transactionalService.run({
             resource: this.resource,
@@ -94,8 +96,9 @@ export class PositionCommands implements Commands.Position.Contract {
             changeLog: true,
             execute: async (transaction) => {
                 const position = await this.positionService.archive({
-                    transaction,
                     organization,
+                    transaction,
+                    realm,
                     id,
                 });
                 return { positions: [position], organization, actor, realm };
@@ -106,7 +109,7 @@ export class PositionCommands implements Commands.Position.Contract {
     }
 
     public async restore(props: Commands.Position.Restore.Props): Commands.Position.Restore.Result {
-        const { organization, id, actor, realm } = props;
+        const { organization, actor, realm, id } = props;
 
         await this.transactionalService.run({
             resource: this.resource,
@@ -123,8 +126,9 @@ export class PositionCommands implements Commands.Position.Contract {
             changeLog: true,
             execute: async (transaction) => {
                 const position = await this.positionService.restore({
-                    transaction,
                     organization,
+                    transaction,
+                    realm,
                     id,
                 });
                 return { position, actor, realm };
@@ -135,7 +139,7 @@ export class PositionCommands implements Commands.Position.Contract {
     }
 
     public async purge(props: Commands.Position.Purge.Props): Commands.Position.Purge.Result {
-        const { organization, id, actor, realm } = props;
+        const { organization, actor, realm, id } = props;
 
         await this.transactionalService.run({
             resource: this.resource,
@@ -152,8 +156,9 @@ export class PositionCommands implements Commands.Position.Contract {
             changeLog: true,
             execute: async (transaction) => {
                 const position = await this.positionService.purge({
-                    transaction,
                     organization,
+                    transaction,
+                    realm,
                     id,
                 });
                 return { positions: [position], organization, actor, realm };
@@ -259,7 +264,7 @@ export class PositionCommands implements Commands.Position.Contract {
             changeLog: true,
             execute: async (transaction) => {
                 const positions = await this.positionService.purgeDepartment({ ...request, transaction });
-                return { positions, organization: request.input.organization, actor: request.actor, realm: request.realm };
+                return { organization: request.input.organization, actor: request.actor, realm: request.realm, positions };
             },
         });
     }
@@ -284,7 +289,7 @@ export class PositionCommands implements Commands.Position.Contract {
             changeLog: true,
             execute: async (transaction) => {
                 const positions = await this.positionService.purgeTeam({ ...request, transaction });
-                return { positions, organization: request.input.organization, actor: request.actor, realm: request.realm };
+                return { organization: request.input.organization, actor: request.actor, realm: request.realm, positions };
             },
         });
     }

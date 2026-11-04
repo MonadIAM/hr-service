@@ -73,6 +73,7 @@ declare namespace Services.Employee {
             input: Entities.Employee.MutableFields;
             transaction: ORM.EntityManager;
             organization: string;
+            realm: string;
         };
 
         type Result = Promise<Entities.Employee>;
@@ -85,6 +86,7 @@ declare namespace Services.Employee {
             patch: Partial<Entities.Employee.MutableFields>;
             transaction: ORM.EntityManager;
             organization: string;
+            realm: string;
             id: string;
         };
 
@@ -98,6 +100,7 @@ declare namespace Services.Employee {
             transaction: ORM.EntityManager;
             organization: string;
             account: string;
+            realm: string;
             id: string;
         };
 
@@ -110,6 +113,7 @@ declare namespace Services.Employee {
         type Props = {
             transaction: ORM.EntityManager;
             organization: string;
+            realm: string;
             id: string;
         };
 
@@ -122,6 +126,7 @@ declare namespace Services.Employee {
         type Props = {
             transaction: ORM.EntityManager;
             organization: string;
+            realm: string;
             id: string;
         };
 
@@ -134,6 +139,7 @@ declare namespace Services.Employee {
         type Props = {
             transaction: ORM.EntityManager;
             organization: string;
+            realm: string;
             id: string;
         };
 
@@ -147,6 +153,7 @@ declare namespace Services.Employee {
             transaction: ORM.EntityManager;
             organization: string;
             employee?: string;
+            realm: string;
             id: string;
         };
 

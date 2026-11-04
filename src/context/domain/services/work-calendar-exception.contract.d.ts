@@ -14,6 +14,7 @@ declare namespace Services.WorkCalendarException {
             };
             transaction: ORM.EntityManager;
             organization: string;
+            realm: string;
         };
 
         type Result = Promise<Entities.WorkCalendarException>;
@@ -26,6 +27,7 @@ declare namespace Services.WorkCalendarException {
             patch: Partial<Entities.WorkCalendarException.MutableFields>;
             transaction: ORM.EntityManager;
             organization: string;
+            realm: string;
             id: string;
         };
 
@@ -38,6 +40,7 @@ declare namespace Services.WorkCalendarException {
         type Props = {
             transaction: ORM.EntityManager;
             organization: string;
+            realm: string;
             id: string;
         };
 

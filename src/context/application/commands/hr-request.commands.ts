@@ -17,7 +17,7 @@ export class HRRequestCommands implements Commands.HRRequest.Contract {
     ) {}
 
     public async create(props: Commands.HRRequest.Create.Props): Commands.HRRequest.Create.Result {
-        const { organization, input, actor } = props;
+        const { organization, permissions, realm, actor, input } = props;
 
         await this.transactionalService.run({
             resource: this.resource,
@@ -29,12 +29,12 @@ export class HRRequestCommands implements Commands.HRRequest.Contract {
             changeLog: true,
             execute: async (transaction) => {
                 return await this.hrRequestService.create({
-                    input: {
-                        ...input,
-                        initiatorAccount: actor,
-                    },
-                    transaction,
                     organization,
+                    permissions,
+                    transaction,
+                    input,
+                    realm,
+                    actor,
                 });
             },
         });
@@ -43,7 +43,7 @@ export class HRRequestCommands implements Commands.HRRequest.Contract {
     }
 
     public async update(props: Commands.HRRequest.Update.Props): Commands.HRRequest.Update.Result {
-        const { organization, input, id } = props;
+        const { organization, permissions, actor, realm, input, id } = props;
 
         await this.transactionalService.run({
             resource: this.resource,
@@ -56,8 +56,11 @@ export class HRRequestCommands implements Commands.HRRequest.Contract {
             execute: async (transaction) => {
                 return await this.hrRequestService.update({
                     patch: input.patch,
-                    transaction,
                     organization,
+                    permissions,
+                    transaction,
+                    actor,
+                    realm,
                     id,
                 });
             },
@@ -67,7 +70,7 @@ export class HRRequestCommands implements Commands.HRRequest.Contract {
     }
 
     public async submit(props: Commands.HRRequest.Submit.Props): Commands.HRRequest.Submit.Result {
-        const { organization, input, id } = props;
+        const { organization, permissions, actor, realm, input, id } = props;
 
         await this.transactionalService.run({
             resource: this.resource,
@@ -79,8 +82,11 @@ export class HRRequestCommands implements Commands.HRRequest.Contract {
             changeLog: true,
             execute: async (transaction) => {
                 return await this.hrRequestService.submit({
-                    transaction,
                     organization,
+                    permissions,
+                    transaction,
+                    actor,
+                    realm,
                     input,
                     id,
                 });
@@ -91,7 +97,7 @@ export class HRRequestCommands implements Commands.HRRequest.Contract {
     }
 
     public async withdraw(props: Commands.HRRequest.Withdraw.Props): Commands.HRRequest.Withdraw.Result {
-        const { organization, id } = props;
+        const { organization, permissions, actor, realm, id } = props;
 
         await this.transactionalService.run({
             resource: this.resource,
@@ -103,8 +109,11 @@ export class HRRequestCommands implements Commands.HRRequest.Contract {
             changeLog: true,
             execute: async (transaction) => {
                 return await this.hrRequestService.withdraw({
-                    transaction,
                     organization,
+                    permissions,
+                    transaction,
+                    realm,
+                    actor,
                     id,
                 });
             },

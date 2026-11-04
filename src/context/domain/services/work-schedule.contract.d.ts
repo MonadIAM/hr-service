@@ -14,6 +14,7 @@ declare namespace Services.WorkSchedule {
             input: Omit<Entities.WorkSchedule.ConstructorProps, "organization" | "status" | "revision">;
             transaction: ORM.EntityManager;
             organization: string;
+            realm: string;
         };
 
         type Result = Promise<Entities.WorkSchedule>;
@@ -26,6 +27,7 @@ declare namespace Services.WorkSchedule {
             input: Entities.WorkSchedule.CreateRevision.Props;
             transaction: ORM.EntityManager;
             organization: string;
+            realm: string;
             id: string;
         };
 
@@ -38,6 +40,7 @@ declare namespace Services.WorkSchedule {
         type Props = {
             transaction: ORM.EntityManager;
             organization: string;
+            realm: string;
             id: string;
         };
 
@@ -50,6 +53,7 @@ declare namespace Services.WorkSchedule {
         type Props = {
             transaction: ORM.EntityManager;
             organization: string;
+            realm: string;
             id: string;
         };
 
@@ -62,6 +66,7 @@ declare namespace Services.WorkSchedule {
         type Props = {
             transaction: ORM.EntityManager;
             organization: string;
+            realm: string;
             id: string;
         };
 

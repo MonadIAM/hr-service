@@ -1,7 +1,7 @@
 import { Injectable, Inject, Scope } from "@nestjs/common";
 import { LockMode } from "@mikro-orm/core";
 
-import { HRExecutionStatus, HRApprovalStatus, HRRequestStatus } from "~context/enums";
+import { HRExecutionStatus, HRApprovalStatus, HRRequestStatus, HRRequestType, PermissionCode } from "~context/enums";
 import { Exception } from "~common/exceptions";
 import {
     HR_APPROVAL_STEP_REPOSITORY,
@@ -16,6 +16,7 @@ import { HRRequest } from "../entities";
 
 @Injectable({ scope: Scope.DEFAULT })
 export class HRRequestService implements Services.HRRequest.Contract {
+    private readonly permissionDictionaryPath = "guard.permission";
     private readonly dictionaryPath = "services.hr-request";
 
     public constructor(
@@ -34,21 +35,35 @@ export class HRRequestService implements Services.HRRequest.Contract {
     ) {}
 
     public async create(props: Services.HRRequest.Create.Props): Services.HRRequest.Create.Result {
-        const { transaction, organization, input } = props;
+        const { transaction, organization, realm, input } = props;
+        const common = props.permissions.includes(PermissionCode.HR_REQUEST_CREATE);
+        const types = [HRRequestType.CANCEL_REQUEST, HRRequestType.ABSENCE, HRRequestType.OVERTIME];
+
+        if (!common && !props.permissions.includes(PermissionCode.HR_REQUEST_CREATE_PERSONAL)) {
+            throw Exception.forbidden({ messageKey: `${this.permissionDictionaryPath}.INSUFFICIENT_PERMISSIONS` });
+        }
+        if (!common && !types.includes(input.type)) {
+            throw Exception.forbidden({ messageKey: `${this.permissionDictionaryPath}.INSUFFICIENT_PERMISSIONS` });
+        }
+
         const [organizationEntity, employeeEntity, initiatorEmployeeEntity, targetPositionEntity, relatedRequestEntity] =
             await Promise.all([
                 this.organizationRepository.findUniqueOrThrow({
-                    where: { id: organization },
+                    where: { id: organization, realm },
                     transaction,
                 }),
                 this.employeeRepository.findUniqueOrThrow({
-                    where: { id: input.employee, organization },
+                    where: {
+                        ...(common ? {} : { account: props.actor }),
+                        id: input.employee,
+                        organization,
+                    },
                     transaction,
                 }),
                 input.initiatorEmployee
                     ? this.employeeRepository.findUniqueOrThrow({
                           where: {
-                              account: input.initiatorAccount,
+                              account: props.actor,
                               id: input.initiatorEmployee,
                               organization,
                           },
@@ -80,6 +95,7 @@ export class HRRequestService implements Services.HRRequest.Contract {
             ...input,
             executionStatus: HRExecutionStatus.NOT_STARTED,
             status: HRRequestStatus.DRAFT,
+            initiatorAccount: props.actor,
             initiatorEmployee: initiatorEmployeeEntity,
             targetPosition: targetPositionEntity,
             relatedRequest: relatedRequestEntity,
@@ -96,11 +112,28 @@ export class HRRequestService implements Services.HRRequest.Contract {
     }
 
     public async update(props: Services.HRRequest.Update.Props): Services.HRRequest.Update.Result {
-        const { transaction, organization, patch, id } = props;
+        const { transaction, organization, realm, patch, id } = props;
+        const common = props.permissions.includes(PermissionCode.HR_REQUEST_UPDATE);
+        const types = [HRRequestType.CANCEL_REQUEST, HRRequestType.ABSENCE, HRRequestType.OVERTIME];
+
+        if (!common && !props.permissions.includes(PermissionCode.HR_REQUEST_UPDATE_PERSONAL)) {
+            throw Exception.forbidden({ messageKey: `${this.permissionDictionaryPath}.INSUFFICIENT_PERMISSIONS` });
+        }
+
         const [requestEntity, targetPositionEntity, relatedRequestEntity] = await Promise.all([
             this.hrRequestRepository.findUniqueOrThrow({
                 options: { lockMode: LockMode.PESSIMISTIC_WRITE },
-                where: { organization, id },
+                where: {
+                    organization: { id: organization, realm },
+                    ...(common
+                        ? {}
+                        : {
+                              initiatorAccount: props.actor,
+                              employee: { account: props.actor },
+                              type: { $in: types },
+                          }),
+                    id,
+                },
                 transaction,
             }),
             patch.targetPosition
@@ -132,7 +165,13 @@ export class HRRequestService implements Services.HRRequest.Contract {
     }
 
     public async submit(props: Services.HRRequest.Submit.Props): Services.HRRequest.Submit.Result {
-        const { transaction, organization, input, id } = props;
+        const { transaction, organization, realm, input, id } = props;
+        const common = props.permissions.includes(PermissionCode.HR_REQUEST_SUBMIT);
+        const types = [HRRequestType.CANCEL_REQUEST, HRRequestType.ABSENCE, HRRequestType.OVERTIME];
+
+        if (!common && !props.permissions.includes(PermissionCode.HR_REQUEST_SUBMIT_PERSONAL)) {
+            throw Exception.forbidden({ messageKey: `${this.permissionDictionaryPath}.INSUFFICIENT_PERMISSIONS` });
+        }
 
         if (!input.steps.length) {
             throw Exception.invariantViolation({ messageKey: `${this.dictionaryPath}.EMPTY_APPROVAL_ROUTE` });
@@ -140,11 +179,21 @@ export class HRRequestService implements Services.HRRequest.Contract {
 
         const [organizationEntity, requestEntity, employeeEntities] = await Promise.all([
             this.organizationRepository.findUniqueOrThrow({
-                where: { id: organization },
+                where: { id: organization, realm },
                 transaction,
             }),
             this.hrRequestRepository.findUniqueOrThrow({
-                where: { organization, id },
+                where: {
+                    organization: { id: organization, realm },
+                    ...(common
+                        ? {}
+                        : {
+                              initiatorAccount: props.actor,
+                              employee: { account: props.actor },
+                              type: { $in: types },
+                          }),
+                    id,
+                },
                 transaction,
                 options: {
                     populate: ["employee", "initiatorEmployee", "targetPosition", "relatedRequest"],
@@ -192,10 +241,27 @@ export class HRRequestService implements Services.HRRequest.Contract {
     }
 
     public async withdraw(props: Services.HRRequest.Withdraw.Props): Services.HRRequest.Withdraw.Result {
-        const { transaction, organization, id } = props;
+        const { transaction, organization, realm, id } = props;
+        const common = props.permissions.includes(PermissionCode.HR_REQUEST_WITHDRAW);
+        const types = [HRRequestType.CANCEL_REQUEST, HRRequestType.ABSENCE, HRRequestType.OVERTIME];
+
+        if (!common && !props.permissions.includes(PermissionCode.HR_REQUEST_WITHDRAW_PERSONAL)) {
+            throw Exception.forbidden({ messageKey: `${this.permissionDictionaryPath}.INSUFFICIENT_PERMISSIONS` });
+        }
+
         const requestEntity = await this.hrRequestRepository.findUniqueOrThrow({
             options: { lockMode: LockMode.PESSIMISTIC_WRITE },
-            where: { organization, id },
+            where: {
+                organization: { id: organization, realm },
+                ...(common
+                    ? {}
+                    : {
+                          initiatorAccount: props.actor,
+                          employee: { account: props.actor },
+                          type: { $in: types },
+                      }),
+                id,
+            },
             transaction,
         });
 

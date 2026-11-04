@@ -16,18 +16,30 @@ export class EmployeeQueries implements Queries.Employee.Contract {
     ) {}
 
     public findUnique(props: Queries.Employee.FindUnique.Props): Queries.Employee.FindUnique.Result {
+        const where: ORM.ObjectQuery<Entities.Employee> = { id: props.employee };
+
+        if (props.mode === QueryMode.DEFAULT) {
+            where.organization = { id: props.organization, realm: props.realm };
+            if (props.actor) {
+                where.account = props.actor;
+            }
+        }
+
         return this.employeeRepository.findUniqueOrThrow({
-            where: {
-                organization: { id: props.organization, realm: props.realm },
-                id: props.employee,
-            },
             options: { populate: this.populate[props.view] },
+            where,
         });
     }
 
     public findMany(props: Queries.Employee.FindMany.Props): Queries.Employee.FindMany.Result {
-        const prefilter =
-            props.mode === QueryMode.DEFAULT ? { organization: { id: props.organization, realm: props.realm } } : {};
+        const prefilter: ORM.ObjectQuery<Entities.Employee> = {};
+
+        if (props.mode === QueryMode.DEFAULT) {
+            prefilter.$and = [{ organization: { id: props.organization, realm: props.realm } }];
+            if (props.actor) {
+                prefilter.$and.push({ account: props.actor });
+            }
+        }
 
         return this.employeeRepository.findMany({
             options: { populate: this.populate[props.view] },

@@ -13,9 +13,6 @@ declare global {
 
         namespace Create {
             type Props = {
-                organization: string;
-                actor: string;
-                realm: string;
                 input: {
                     payloadSchemaVersion: number;
                     initiatorEmployee?: string;
@@ -27,7 +24,11 @@ declare global {
                     effectiveAt?: Date;
                     employee: string;
                 };
+                permissions: string[];
                 context: Extract.Meta;
+                organization: string;
+                actor: string;
+                realm: string;
             };
 
             type Result = Promise<MessageResult>;
@@ -37,10 +38,6 @@ declare global {
 
         namespace Update {
             type Props = {
-                id: string;
-                organization: string;
-                actor: string;
-                realm: string;
                 input: {
                     patch: Partial<Omit<Entities.HRRequest.MutableFields, "targetPosition" | "relatedRequest">> & {
                         targetPosition?: string;
@@ -48,7 +45,12 @@ declare global {
                     };
                     reason: string;
                 };
+                permissions: string[];
                 context: Extract.Meta;
+                organization: string;
+                actor: string;
+                realm: string;
+                id: string;
             };
 
             type Result = Promise<MessageResult>;
@@ -58,20 +60,21 @@ declare global {
 
         namespace Submit {
             type Props = {
-                id: string;
-                organization: string;
-                actor: string;
-                realm: string;
                 input: {
-                    workflowVersion: number;
-                    workflowCode: string;
                     steps: {
                         assigneeEmployee: string;
                         dueAt?: Date;
                         name: string;
                     }[];
+                    workflowVersion: number;
+                    workflowCode: string;
                 };
+                permissions: string[];
                 context: Extract.Meta;
+                organization: string;
+                actor: string;
+                realm: string;
+                id: string;
             };
 
             type Result = Promise<MessageResult>;
@@ -81,14 +84,15 @@ declare global {
 
         namespace Withdraw {
             type Props = {
-                id: string;
-                organization: string;
-                actor: string;
-                realm: string;
                 input: {
                     reason: string;
                 };
+                permissions: string[];
                 context: Extract.Meta;
+                organization: string;
+                actor: string;
+                realm: string;
+                id: string;
             };
 
             type Result = Promise<MessageResult>;

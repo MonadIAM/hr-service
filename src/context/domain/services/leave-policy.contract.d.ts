@@ -14,6 +14,7 @@ declare namespace Services.LeavePolicy {
             input: Omit<Entities.LeavePolicy.ConstructorProps, "organization" | "status" | "revision">;
             transaction: ORM.EntityManager;
             organization: string;
+            realm: string;
         };
 
         type Result = Promise<Entities.LeavePolicy>;
@@ -26,6 +27,7 @@ declare namespace Services.LeavePolicy {
             input: Entities.LeavePolicy.CreateRevision.Props;
             transaction: ORM.EntityManager;
             organization: string;
+            realm: string;
             id: string;
         };
 
@@ -38,6 +40,7 @@ declare namespace Services.LeavePolicy {
         type Props = {
             transaction: ORM.EntityManager;
             organization: string;
+            realm: string;
             id: string;
         };
 
@@ -50,6 +53,7 @@ declare namespace Services.LeavePolicy {
         type Props = {
             transaction: ORM.EntityManager;
             organization: string;
+            realm: string;
             id: string;
         };
 
@@ -62,6 +66,7 @@ declare namespace Services.LeavePolicy {
         type Props = {
             transaction: ORM.EntityManager;
             organization: string;
+            realm: string;
             id: string;
         };
 

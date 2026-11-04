@@ -18,6 +18,7 @@ declare namespace Services.Position {
             input: Omit<Entities.Position.ConstructorProps, "organization" | "status">;
             transaction: ORM.EntityManager;
             organization: string;
+            realm: string;
         };
 
         type Result = Promise<Entities.Position>;
@@ -30,6 +31,7 @@ declare namespace Services.Position {
             patch: Partial<Entities.Position.MutableFields>;
             transaction: ORM.EntityManager;
             organization: string;
+            realm: string;
             id: string;
         };
 
@@ -42,6 +44,7 @@ declare namespace Services.Position {
         type Props = {
             transaction: ORM.EntityManager;
             organization: string;
+            realm: string;
             id: string;
         };
 
@@ -54,6 +57,7 @@ declare namespace Services.Position {
         type Props = {
             transaction: ORM.EntityManager;
             organization: string;
+            realm: string;
             id: string;
         };
 
@@ -66,6 +70,7 @@ declare namespace Services.Position {
         type Props = {
             transaction: ORM.EntityManager;
             organization: string;
+            realm: string;
             id: string;
         };
 

@@ -29,8 +29,9 @@ export class EmployeeCommands implements Commands.Employee.Contract {
             changeLog: true,
             execute: (transaction) => {
                 return this.employeeService.create({
-                    transaction,
+                    realm: props.realm,
                     organization,
+                    transaction,
                     input,
                 });
             },
@@ -53,8 +54,9 @@ export class EmployeeCommands implements Commands.Employee.Contract {
             execute: async (transaction) => {
                 return await this.employeeService.update({
                     patch: input.patch,
-                    transaction,
+                    realm: props.realm,
                     organization,
+                    transaction,
                     id,
                 });
             },
@@ -77,6 +79,7 @@ export class EmployeeCommands implements Commands.Employee.Contract {
             execute: async (transaction) => {
                 return await this.employeeService.linkAccount({
                     account: input.account,
+                    realm: props.realm,
                     organization,
                     transaction,
                     id,
@@ -100,6 +103,7 @@ export class EmployeeCommands implements Commands.Employee.Contract {
             changeLog: true,
             execute: async (transaction) => {
                 return await this.employeeService.unlinkAccount({
+                    realm: props.realm,
                     organization,
                     transaction,
                     id,
@@ -123,6 +127,7 @@ export class EmployeeCommands implements Commands.Employee.Contract {
             changeLog: true,
             execute: async (transaction) => {
                 return await this.employeeService.archive({
+                    realm: props.realm,
                     organization,
                     transaction,
                     id,
@@ -146,8 +151,9 @@ export class EmployeeCommands implements Commands.Employee.Contract {
             changeLog: true,
             execute: async (transaction) => {
                 return await this.employeeService.restore({
-                    transaction,
+                    realm: props.realm,
                     organization,
+                    transaction,
                     id,
                 });
             },
@@ -170,8 +176,9 @@ export class EmployeeCommands implements Commands.Employee.Contract {
             execute: async (transaction) => {
                 return await this.employeeService.setHRBP({
                     employee: input.employee,
-                    transaction,
+                    realm: props.realm,
                     organization,
+                    transaction,
                     id,
                 });
             },

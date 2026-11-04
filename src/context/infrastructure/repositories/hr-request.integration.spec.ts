@@ -1,4 +1,5 @@
 import { describe, expect, it } from "@jest/globals";
+import { randomUUID } from "node:crypto";
 import { QueryOrder } from "@mikro-orm/postgresql";
 
 import { PublicLinkOperator, PublicStringOperator, PublicOrdinalOperator } from "~infrastructure/database/enums";
@@ -41,6 +42,37 @@ describe("[Repository] - HRRequest", () => {
     });
 
     describe("[Method] - findMany", () => {
+        it.each(["employee", "organization"] as const)(
+            "[case] - cannot replace ownership constraints with a client %s filter",
+            async (field) => {
+                // Arrange
+                const employee = await suite.fixtures().createEmployee({ account: randomUUID() });
+                const owned = await suite.fixtures().createHRRequest({ organization: employee.organization, employee });
+                const foreign = await suite.fixtures().createHRRequest({
+                    organization: field === "employee" ? owned.organization : undefined,
+                });
+
+                // Act
+                const [entries, total] = await suite.repository().findMany({
+                    pagination: { currentPage: 1, elementsPerPage: 10 },
+                    prefilter: {
+                        $and: [
+                            { organization: { realm: owned.organization.realm, id: owned.organization.id } },
+                            { employee: { account: owned.employee.account } },
+                        ],
+                    },
+                    filters: {
+                        [field]: { operator: PublicLinkOperator.EQUAL, value: foreign[field].id },
+                    },
+                    sort: {},
+                });
+
+                // Assert
+                expect(entries).toEqual([]);
+                expect(total).toBe(0);
+            },
+        );
+
         it("[case] - filters by organization and type", async () => {
             // Arrange
             const organization = await suite.fixtures().createOrganization();

@@ -15,6 +15,29 @@ describe("[DomainService] - HRApprovalStep", () => {
         fixture: (entityManager) => new HRFixture(entityManager),
     });
 
+    it("[case] - rejects mutation through a foreign realm", async () => {
+        // Arrange
+        const entity = await suite.fixtures().createHRApprovalStep();
+
+        // Act
+        const result = suite.transaction((transaction) =>
+            suite.repository().service.reassign({
+                organization: entity.organization.id,
+                employee: entity.assigneeEmployee.id,
+                realm: randomUUID(),
+                id: entity.id,
+                transaction,
+            }),
+        );
+
+        // Assert
+        await expect(result).rejects.toThrow();
+        const persisted = await suite.transaction((transaction) =>
+            transaction.findOneOrFail(HRApprovalStep, { id: entity.id }),
+        );
+        expect(persisted).toMatchObject({ id: entity.id, organization: { id: entity.organization.id } });
+    });
+
     describe("[Method] - decide", () => {
         it.each([
             {
@@ -62,11 +85,12 @@ describe("[DomainService] - HRApprovalStep", () => {
                 await suite.transaction((transaction) =>
                     suite.repository().service.decide({
                         organization: request.organization.id,
-                        id: step.id,
-                        actorEmployee: actor.id,
+                        realm: request.organization.realm,
                         actorAccount: actor.account!,
-                        decision,
+                        actorEmployee: actor.id,
+                        id: step.id,
                         transaction,
+                        decision,
                     }),
                 );
                 const persistedRequest = await suite.transaction((transaction) =>
@@ -113,10 +137,11 @@ describe("[DomainService] - HRApprovalStep", () => {
             const result = suite.transaction((transaction) =>
                 suite.repository().service.decide({
                     organization: request.organization.id,
-                    id: step.id,
-                    actorEmployee: actor.id,
-                    actorAccount: actor.account!,
+                    realm: request.organization.realm,
                     decision: HRDecisionKind.APPROVE,
+                    actorAccount: actor.account!,
+                    actorEmployee: actor.id,
+                    id: step.id,
                     transaction,
                 }),
             );
@@ -146,10 +171,11 @@ describe("[DomainService] - HRApprovalStep", () => {
                 .createHRApprovalStep({ request, assigneeEmployee: actor, status: HRApprovalStatus.ACTIVE });
             const props = {
                 organization: request.organization.id,
-                id: step.id,
-                actorEmployee: actor.id,
-                actorAccount: actor.account!,
+                realm: request.organization.realm,
                 decision: HRDecisionKind.APPROVE,
+                actorAccount: actor.account!,
+                actorEmployee: actor.id,
+                id: step.id,
             };
 
             // Act
@@ -178,8 +204,9 @@ describe("[DomainService] - HRApprovalStep", () => {
             await suite.transaction((transaction) =>
                 suite.repository().service.reassign({
                     organization: request.organization.id,
-                    id: step.id,
+                    realm: request.organization.realm,
                     employee: replacement.id,
+                    id: step.id,
                     transaction,
                 }),
             );
