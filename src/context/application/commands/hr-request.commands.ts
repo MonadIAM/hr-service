@@ -2,7 +2,7 @@ import { Injectable, Inject, Scope } from "@nestjs/common";
 
 import { HR_REQUEST_REPOSITORY } from "~context/infrastructure/repositories";
 import { TRANSACTIONAL_SERVICE } from "~common/transaction-manager";
-import { HR_REQUEST_SERVICE } from "~context/domain/services";
+import { HR_REQUEST_EXECUTION_SERVICE, HR_REQUEST_SERVICE } from "~context/domain/services";
 import { SYSTEM_ACCOUNT_ID, CONSUMER_META } from "~context/constants";
 import {
     HRExecutionStatus,
@@ -25,22 +25,24 @@ export class HRRequestCommands implements Commands.HRRequest.Contract {
     public constructor(
         @Inject(TRANSACTIONAL_SERVICE)
         private readonly transactionalService: TransactionManager.Service.PublicContract,
+        @Inject(HR_REQUEST_EXECUTION_SERVICE)
+        private readonly hrRequestExecutionService: Services.HRRequestExecution.Contract,
         @Inject(HR_REQUEST_SERVICE)
-        private readonly hrRequestService: Services.HRRequest.Contract,
+        private readonly hrRequestService: Services.HRRequest.CommandContract,
         @Inject(HR_REQUEST_REPOSITORY)
         private readonly hrRequestRepository: Repositories.HRRequest.Contract,
     ) {
         this.mapper = new HRRequestMapper();
     }
 
-    public async terminate(props: Commands.HRRequest.Terminate.Props): Commands.HRRequest.Terminate.Result {
+    public async execute(props: Commands.HRRequest.Execute.Props): Commands.HRRequest.Execute.Result {
         const requests = await this.hrRequestRepository.find({
             options: { orderBy: { createdAt: "ASC" }, limit: props.batchSize },
             where: {
                 executionStatus: { $in: [HRExecutionStatus.NOT_STARTED, HRExecutionStatus.SCHEDULED] },
                 $or: [{ effectiveAt: { $lte: new Date() } }, { effectiveAt: null }],
                 status: HRRequestStatus.APPROVED,
-                type: HRRequestType.TERMINATE,
+                type: { $in: [HRRequestType.CHANGE_TERMS, HRRequestType.TERMINATE] },
             },
         });
 
@@ -67,8 +69,12 @@ export class HRRequestCommands implements Commands.HRRequest.Contract {
                 },
                 changeLog: true,
                 execute: async (transaction) => {
-                    const entities = await this.hrRequestService.beginLeave({
-                        identifiers: requests.map(({ id }) => id),
+                    await this.hrRequestExecutionService.changeTerms({
+                        identifiers: requests.filter(({ type }) => type === HRRequestType.CHANGE_TERMS).map(({ id }) => id),
+                        transaction,
+                    });
+                    const entities = await this.hrRequestExecutionService.beginLeave({
+                        identifiers: requests.filter(({ type }) => type === HRRequestType.TERMINATE).map(({ id }) => id),
                         transaction,
                     });
                     processed = requests.length;
@@ -96,7 +102,7 @@ export class HRRequestCommands implements Commands.HRRequest.Contract {
             },
             changeLog: true,
             execute: (transaction) => {
-                return this.hrRequestService.confirmLeave({ ...request, transaction });
+                return this.hrRequestExecutionService.confirmLeave({ ...request, transaction });
             },
         });
     }
@@ -115,7 +121,7 @@ export class HRRequestCommands implements Commands.HRRequest.Contract {
             },
             changeLog: true,
             execute: (transaction) => {
-                return this.hrRequestService.rejectLeave({ ...request, transaction });
+                return this.hrRequestExecutionService.rejectLeave({ ...request, transaction });
             },
         });
     }
@@ -165,6 +171,7 @@ export class HRRequestCommands implements Commands.HRRequest.Contract {
                     transaction,
                     actor,
                     realm,
+                    type: input.type,
                     id,
                 });
             },

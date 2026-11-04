@@ -51,7 +51,6 @@ export class EmployeeUnitHelpers extends HRDomainUnitHelpers implements Unit.Dom
                 this.contract<Repositories.WorkSchedule.Contract>(repositories.workSchedule),
                 this.contract<Repositories.Organization.Contract>(repositories.organization),
                 this.contract<Repositories.LeavePolicy.Contract>(repositories.leavePolicy),
-                this.contract<Repositories.HRRequest.Contract>(repositories.hrRequest),
                 this.contract<Repositories.Employee.Contract>(repositories.employee),
             ),
             repositories,

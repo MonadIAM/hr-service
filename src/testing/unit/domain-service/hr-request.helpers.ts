@@ -8,11 +8,6 @@ export class HRRequestUnitHelpers extends HRDomainUnitHelpers implements Unit.Do
     public service(): Unit.Domain.HRRequest.Service.Result {
         const transaction = this.transaction();
         const repositories = {
-            positionAssignment: {
-                findUniqueOrThrow: jest.fn<(props: unknown) => Promise<Entities.PositionAssignment>>(),
-                findUnique: jest.fn<(props: unknown) => Promise<Optional<Entities.PositionAssignment>>>(),
-                find: jest.fn<(props: unknown) => Promise<Entities.PositionAssignment[]>>().mockResolvedValue([]),
-            },
             hrApprovalStep: {
                 findUniqueOrThrow: jest.fn<(props: unknown) => Promise<Entities.HRApprovalStep>>(),
                 findUnique: jest.fn<(props: unknown) => Promise<Optional<Entities.HRApprovalStep>>>(),
@@ -41,14 +36,11 @@ export class HRRequestUnitHelpers extends HRDomainUnitHelpers implements Unit.Do
         };
         const services = {
             hrApprovalStep: { create: jest.fn<Services.HRApprovalStep.Create.Signature>() },
-            employee: { terminate: jest.fn<Services.Employee.Terminate.Signature>() },
         };
 
         return {
             service: new HRRequestService(
                 this.contract<Services.HRApprovalStep.ServiceContract>(services.hrApprovalStep),
-                this.contract<Services.Employee.ProcessorContract>(services.employee),
-                this.contract<Repositories.PositionAssignment.Contract>(repositories.positionAssignment),
                 this.contract<Repositories.HRApprovalStep.Contract>(repositories.hrApprovalStep),
                 this.contract<Repositories.Organization.Contract>(repositories.organization),
                 this.contract<Repositories.HRRequest.Contract>(repositories.hrRequest),

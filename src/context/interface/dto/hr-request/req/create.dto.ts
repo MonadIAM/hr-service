@@ -4,10 +4,13 @@ import { Expose } from "class-transformer";
 import { HRRequestType } from "~context/enums";
 import { Validator } from "~common/validator";
 
+import { ChangeTermsPayloadDTO } from "../utils/change-terms-payload.dto";
+import { TerminatePayloadDTO } from "../utils/terminate-payload.dto";
+
 @ApiSchema({ name: "HRRequestCreateBody" })
-export class CreateBodyDTO {
+export class CreateBodyDTO<T extends HRRequestType = HRRequestType> {
     @Expose()
-    @Validator.IsNumber()
+    @Validator.IsIn([1])
     @ApiProperty({ required: true })
     declare public payloadSchemaVersion: number;
 
@@ -36,13 +39,17 @@ export class CreateBodyDTO {
 
     @Expose()
     @Validator.IsObject()
+    @Validator.ValidateByType("type", {
+        [HRRequestType.CHANGE_TERMS]: ChangeTermsPayloadDTO,
+        [HRRequestType.TERMINATE]: TerminatePayloadDTO,
+    })
     @ApiProperty({ required: true, type: Object })
-    declare public payload: UnknownObject;
+    declare public payload: Entities.HRRequest.Payload.ByType[T];
 
     @Expose()
     @Validator.IsEnum(HRRequestType)
     @ApiProperty({ required: true })
-    declare public type: HRRequestType;
+    declare public type: T;
 
     @Expose()
     @Validator.IsOptional()

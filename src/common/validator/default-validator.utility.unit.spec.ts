@@ -35,6 +35,8 @@ const rules = [
     { name: "ordinal", decorator: Validator.IsOrdinal(), valid: 1, invalid: Infinity, message: "IS_ORDINAL" },
     { name: "different property", decorator: Validator.NotEqualTo("other"), valid: "different", invalid: "same", message: "NOT_EQUAL_TO" },
     { name: "duration", decorator: Validator.IsMsString(), valid: "1s", invalid: "1oops", message: "IS_MS_STRING" },
+    { name: "date only", decorator: Validator.IsDateOnly(), valid: "2026-02-28", invalid: "2026-02-30", message: "IS_DATE" },
+    { name: "time zone", decorator: Validator.IsTimeZone(), valid: "Europe/London", invalid: "invalid/timezone", message: "IS_TIME_ZONE" },
     /* eslint-enable prettier/prettier */
 ];
 
@@ -65,6 +67,42 @@ describe("[Validator] - Default", () => {
                 );
             },
         );
+    });
+
+    describe("[Function] - IsDateOnly", () => {
+        it.each(["2026-02-30", "2026-01-01T00:00:00Z", "invalid", 42, null, undefined])(
+            "[case] - rejects an invalid calendar date %s",
+            (value) => {
+                // Arrange
+                class Input {
+                    @Validator.IsDateOnly()
+                    declare public date: string;
+                }
+
+                // Act
+                const errors = validateSync(plainToInstance(Input, { date: value }));
+
+                // Assert
+                expect(errors).toHaveLength(1);
+            },
+        );
+    });
+
+    describe("[Function] - IsOptional", () => {
+        it.each([undefined, null, "value"])("[case] - skips only undefined when nullable is false: %s", (value) => {
+            // Arrange
+            class Input {
+                @Validator.IsOptional({ nullable: false })
+                @Validator.IsString()
+                declare public value?: string;
+            }
+
+            // Act
+            const errors = validateSync(plainToInstance(Input, { value }));
+
+            // Assert
+            expect(errors).toHaveLength(value === null ? 1 : 0);
+        });
     });
 
     describe("[Function] - Length", () => {
@@ -116,6 +154,80 @@ describe("[Validator] - Default", () => {
             expect(primitiveErrors[0].constraints).toEqual({
                 nestedValidation: "validator.NESTED",
             });
+        });
+    });
+
+    describe("[Function] - ValidateByType", () => {
+        it.each([
+            { type: "name", value: { name: "valid" }, valid: true },
+            { type: "name", value: { name: 1 }, valid: false },
+            { type: "name", value: { name: "valid", extra: true }, valid: false },
+            { type: "name", value: {}, valid: false },
+            { type: "name", value: null, valid: false },
+            { type: "name", value: [], valid: false },
+            { type: "name", value: undefined, valid: false },
+            { type: "date", value: { date: "2026-02-28" }, valid: true },
+            { type: "date", value: { date: "2026-02-30" }, valid: false },
+            { type: "date", value: { name: "valid" }, valid: false },
+            { type: "other", value: { note: "preserved" }, valid: true },
+            { type: "other", value: "invalid", valid: false },
+        ])("[case] - validates $type payload $value (valid: $valid)", ({ type, value, valid }) => {
+            // Arrange
+            class Name {
+                @Validator.IsString()
+                declare public name: string;
+            }
+            class Date {
+                @Validator.IsDateOnly()
+                declare public date: string;
+            }
+            class Input {
+                @Validator.IsString()
+                declare public type: string;
+
+                @Validator.ValidateByType("type", { name: Name, date: Date }, undefined, {}, "Payload")
+                declare public payload: unknown;
+            }
+            const input = plainToInstance(Input, { payload: value, type });
+
+            // Act
+            const errors = validateSync(input);
+
+            // Assert
+            expect(errors.length === 0).toBe(valid);
+            expect(input.payload).toEqual(value);
+            if (!valid) {
+                expect(errors[0].constraints).toEqual({ ValidateByType: "validator.NESTED" });
+                expect(errors[0].contexts).toEqual({ ValidateByType: { property: "payload", label: "Payload" } });
+            }
+        });
+
+        it.each([
+            { patch: {}, valid: true },
+            { patch: { payload: { name: "valid" } }, valid: true },
+            { patch: { payload: { name: 1 } }, valid: false },
+            { patch: { payload: null }, valid: false },
+            { patch: null, valid: false },
+            { patch: [], valid: false },
+        ])("[case] - validates an optional payload in $patch (valid: $valid)", ({ patch, valid }) => {
+            // Arrange
+            class Payload {
+                @Validator.IsString()
+                declare public name: string;
+            }
+            class Input {
+                @Validator.IsString()
+                public type = "name";
+
+                @Validator.ValidateByType("type", { name: Payload }, "payload")
+                declare public patch: unknown;
+            }
+
+            // Act
+            const errors = validateSync(plainToInstance(Input, { patch }));
+
+            // Assert
+            expect(errors.length === 0).toBe(valid);
         });
     });
 

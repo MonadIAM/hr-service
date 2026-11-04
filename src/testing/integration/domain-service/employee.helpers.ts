@@ -25,7 +25,6 @@ export class EmployeeIntegrationHelpers implements Integration.Domain.Employee.C
                 repositories.workSchedule,
                 repositories.organization,
                 repositories.leavePolicy,
-                repositories.hrRequest,
                 repositories.employee,
             ),
             repositories,

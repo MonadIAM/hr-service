@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import { HRExecutionStatus, HRRequestStatus, HRRequestType } from "~context/enums";
 import { Exception } from "~common/exceptions";
 
-export class HRRequest implements Entities.HRRequest.Contract {
+export class HRRequest<T extends HRRequestType = HRRequestType> implements Entities.HRRequest.Contract<T> {
     private static readonly dictionaryPath = "entities.hr-request";
 
     public id: string;
@@ -20,10 +20,10 @@ export class HRRequest implements Entities.HRRequest.Contract {
     public initiatorAccount: string;
     public status: HRRequestStatus;
     public idempotencyKey: string;
-    public payload: UnknownObject;
+    public payload: Entities.HRRequest.Payload.ByType[T];
     public result?: UnknownObject;
     public workflowCode?: string;
-    public type: HRRequestType;
+    public type: T;
     public effectiveAt?: Date;
     public submittedAt?: Date;
     public approvedAt?: Date;
@@ -46,7 +46,7 @@ export class HRRequest implements Entities.HRRequest.Contract {
     public cancelledAbsences = new Collection<Entities.Absence>(this);
     public createdAbsences = new Collection<Entities.Absence>(this);
 
-    public constructor(props: Entities.HRRequest.ConstructorProps) {
+    public constructor(props: Entities.HRRequest.ConstructorProps<T>) {
         this.id = randomUUID();
         this.createdAt = new Date();
 
@@ -54,7 +54,7 @@ export class HRRequest implements Entities.HRRequest.Contract {
         this.payloadSchemaVersion = props.payloadSchemaVersion ?? 1;
         this.status = props.status ?? HRRequestStatus.DRAFT;
         this.revision = props.revision ?? 1;
-        this.payload = props.payload ?? {};
+        this.payload = props.payload;
 
         this.approvedRevision = props.approvedRevision;
         this.initiatorAccount = props.initiatorAccount;

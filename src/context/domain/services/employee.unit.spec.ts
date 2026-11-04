@@ -122,20 +122,30 @@ describe("[DomainService] - Employee", () => {
             repositories.leavePolicy.findUniqueOrThrow.mockResolvedValue(leavePolicy);
 
             // Act
-            const result = await service[method]({
-                organization: organization.id,
-                id: entity.id,
-                transaction: transaction.entityManager,
-                input: {
-                    workCalendar: workCalendar.id,
-                    workSchedule: workSchedule.id,
-                    leavePolicy: leavePolicy.id,
-                    termsValidFrom: "2026-02-01",
-                    employmentStartedOn: "2026-02-01",
-                    scheduleTimezone: "Europe/London",
-                    contractType: "new-contract",
-                },
-            });
+            const input = {
+                scheduleTimezone: "Europe/London",
+                termsValidFrom: "2026-02-01",
+                contractType: "new-contract",
+            };
+            const result =
+                method === "hire"
+                    ? await service.hire({
+                          input: {
+                              ...input,
+                              employmentStartedOn: "2026-02-01",
+                              workCalendar: workCalendar.id,
+                              workSchedule: workSchedule.id,
+                              leavePolicy: leavePolicy.id,
+                          },
+                          transaction: transaction.entityManager,
+                          organization: organization.id,
+                          id: entity.id,
+                      })
+                    : service.changeTerms({
+                          input: { ...input, workCalendar, workSchedule, leavePolicy },
+                          transaction: transaction.entityManager,
+                          entity,
+                      });
 
             // Assert
             expect(result).toMatchObject({
@@ -151,10 +161,14 @@ describe("[DomainService] - Employee", () => {
                 [repositories.workSchedule, workSchedule],
                 [repositories.leavePolicy, leavePolicy],
             ] as const) {
-                expect(repository.findUniqueOrThrow).toHaveBeenCalledWith({
-                    where: { id: record.id, organization: organization.id },
-                    transaction: transaction.entityManager,
-                });
+                if (method === "hire") {
+                    expect(repository.findUniqueOrThrow).toHaveBeenCalledWith({
+                        where: { id: record.id, organization: organization.id },
+                        transaction: transaction.entityManager,
+                    });
+                } else {
+                    expect(repository.findUniqueOrThrow).not.toHaveBeenCalled();
+                }
             }
             if (method === "changeTerms") {
                 expect(services.employment.create).toHaveBeenCalledWith({

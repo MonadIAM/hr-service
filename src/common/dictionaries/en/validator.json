@@ -1,4 +1,5 @@
 {
+  "IS_TIME_ZONE": "The field {property} must be a valid time zone.",
   "REQUIRED": "The \"{label}\" field is required.",
   "IS_OBJECT": "The \"{label}\" field must be an object.",
   "IS_STRING": "The \"{label}\" field must be a string.",

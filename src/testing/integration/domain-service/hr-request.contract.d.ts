@@ -12,7 +12,6 @@ declare global {
             type Context = {
                 service: Services.HRRequest.Contract;
                 repositories: {
-                    positionAssignment: globalThis.Repositories.PositionAssignment.Contract;
                     hrApprovalStep: globalThis.Repositories.HRApprovalStep.Contract;
                     organization: globalThis.Repositories.Organization.Contract;
                     hrRequest: globalThis.Repositories.HRRequest.Contract;

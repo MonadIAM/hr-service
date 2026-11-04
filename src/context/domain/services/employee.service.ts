@@ -7,7 +7,6 @@ import {
     WORK_SCHEDULE_REPOSITORY,
     LEAVE_POLICY_REPOSITORY,
     ORGANIZATION_REPOSITORY,
-    HR_REQUEST_REPOSITORY,
     EMPLOYEE_REPOSITORY,
 } from "~context/infrastructure/repositories";
 
@@ -27,8 +26,6 @@ export class EmployeeService implements Services.Employee.Contract {
         private readonly organizationRepository: Repositories.Organization.Contract,
         @Inject(LEAVE_POLICY_REPOSITORY)
         private readonly leavePolicyRepository: Repositories.LeavePolicy.Contract,
-        @Inject(HR_REQUEST_REPOSITORY)
-        private readonly hrRequestRepository: Repositories.HRRequest.Contract,
         @Inject(EMPLOYEE_REPOSITORY)
         private readonly employeeRepository: Repositories.Employee.Contract,
     ) {}
@@ -176,88 +173,38 @@ export class EmployeeService implements Services.Employee.Contract {
         return employeeEntity;
     }
 
-    public async changeTerms(props: Services.Employee.ChangeTerms.Props): Services.Employee.ChangeTerms.Result {
-        const { transaction, organization, input, id } = props;
-
-        const [
-            organizationEntity,
-            employeeEntity,
-            workCalendarEntity,
-            workScheduleEntity,
-            leavePolicyEntity,
-            replacedByRequestEntity,
-        ] = await Promise.all([
-            this.organizationRepository.findUniqueOrThrow({
-                where: { id: organization },
-                transaction,
-            }),
-            this.employeeRepository.findUniqueOrThrow({
-                where: { organization, id },
-                transaction,
-                options: {
-                    populate: ["workCalendar", "workSchedule", "leavePolicy"],
-                    lockMode: LockMode.PESSIMISTIC_WRITE,
-                    strategy: "select-in",
-                },
-            }),
-            this.workCalendarRepository.findUniqueOrThrow({
-                where: { id: input.workCalendar, organization },
-                transaction,
-            }),
-            this.workScheduleRepository.findUniqueOrThrow({
-                where: { id: input.workSchedule, organization },
-                transaction,
-            }),
-            this.leavePolicyRepository.findUniqueOrThrow({
-                where: { id: input.leavePolicy, organization },
-                transaction,
-            }),
-            props.request
-                ? this.hrRequestRepository.findUniqueOrThrow({
-                      where: {
-                          id: props.request,
-                          employee: { id },
-                          organization,
-                      },
-                      transaction,
-                  })
-                : undefined,
-        ]);
+    public changeTerms(props: Services.Employee.ChangeTerms.Props): Services.Employee.ChangeTerms.Result {
+        const { transaction, request, entity, input } = props;
 
         const previous = {
-            termsRevision: employeeEntity.termsRevision,
-            replacedByRequest: replacedByRequestEntity,
-            workCalendar: employeeEntity.workCalendar,
-            workSchedule: employeeEntity.workSchedule,
-            validFrom: employeeEntity.termsValidFrom!,
-            leavePolicy: employeeEntity.leavePolicy,
+            termsRevision: entity.termsRevision,
+            replacedByRequest: request,
+            workCalendar: entity.workCalendar,
+            workSchedule: entity.workSchedule,
+            validFrom: entity.termsValidFrom!,
+            leavePolicy: entity.leavePolicy,
             validTo: input.termsValidFrom,
-            employee: employeeEntity,
+            employee: entity,
             termsSnapshot: {
-                employmentStartedOn: employeeEntity.employmentStartedOn,
-                scheduleAnchorDate: employeeEntity.scheduleAnchorDate,
-                employmentEndedOn: employeeEntity.employmentEndedOn,
-                scheduleTimezone: employeeEntity.scheduleTimezone,
-                contractEndsOn: employeeEntity.contractEndsOn,
-                contractType: employeeEntity.contractType,
-                status: employeeEntity.status,
+                employmentStartedOn: entity.employmentStartedOn,
+                scheduleAnchorDate: entity.scheduleAnchorDate,
+                employmentEndedOn: entity.employmentEndedOn,
+                scheduleTimezone: entity.scheduleTimezone,
+                contractEndsOn: entity.contractEndsOn,
+                contractType: entity.contractType,
+                status: entity.status,
             },
         };
 
-        employeeEntity.changeTerms({
-            ...input,
-            workCalendar: workCalendarEntity,
-            workSchedule: workScheduleEntity,
-            leavePolicy: leavePolicyEntity,
-        });
+        entity.changeTerms(input);
 
         this.employmentService.create({
-            organization: organizationEntity,
+            organization: entity.organization,
             input: previous,
             transaction,
         });
 
-        return employeeEntity;
+        return entity;
     }
 
     public terminate(props: Services.Employee.Terminate.Props): Services.Employee.Terminate.Result {
