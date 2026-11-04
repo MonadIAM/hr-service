@@ -1,5 +1,41 @@
 declare namespace Services.HRRequest {
-    interface Contract extends ProcessorContract, CommandContract, ServiceContract {}
+    interface Contract extends ProcessorContract, ConsumerContract, CommandContract, ServiceContract {}
+
+    interface ConsumerContract {
+        confirmLeave: ConfirmLeave.Signature;
+        rejectLeave: RejectLeave.Signature;
+    }
+
+    namespace ConfirmLeave {
+        type Props = Topics.Realm.MembershipLeaveConfirmedMessage["payload"] & {
+            transaction: ORM.EntityManager;
+        };
+
+        type Result = Promise<void>;
+
+        type Signature = (props: Props) => Result;
+    }
+
+    namespace RejectLeave {
+        type Props = Topics.Realm.MembershipLeaveRejectedMessage["payload"] & {
+            transaction: ORM.EntityManager;
+        };
+
+        type Result = Promise<void>;
+
+        type Signature = (props: Props) => Result;
+    }
+
+    namespace BeginLeave {
+        type Props = {
+            transaction: ORM.EntityManager;
+            identifiers: string[];
+        };
+
+        type Result = Promise<Entities.HRRequest[]>;
+
+        type Signature = (props: Props) => Result;
+    }
 
     interface CommandContract {
         withdraw: Withdraw.Signature;
@@ -133,6 +169,7 @@ declare namespace Services.HRRequest {
         scheduleApplication: ScheduleApplication.Signature;
         beginApplication: BeginApplication.Signature;
         markApplied: MarkApplied.Signature;
+        beginLeave: BeginLeave.Signature;
         markFailed: MarkFailed.Signature;
         cancel: Cancel.Signature;
     }

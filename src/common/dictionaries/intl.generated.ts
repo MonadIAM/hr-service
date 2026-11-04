@@ -221,6 +221,7 @@ export type I18nTranslations = {
             "INVALID_REVERSAL": string;
         };
         "hr-request": {
+            "INVALID_TERMINATION_PAYLOAD": string;
             "EMPTY_APPROVAL_ROUTE": string;
             "ASSIGNEE_NOT_FOUND": string;
         };

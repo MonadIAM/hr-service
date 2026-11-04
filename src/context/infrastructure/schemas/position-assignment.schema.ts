@@ -102,10 +102,7 @@ export const PositionAssignmentSchema = new EntitySchema<PositionAssignment>({
         closedByRequest: {
             kind: "m:1",
             entity: () => HRRequest,
-            joinColumns: ["closed_by_request_id", "employee_id", "organization_id"],
-            columnTypes: ["uuid", "uuid", "uuid"],
-            referencedColumnNames: ["id", "employee_id", "organization_id"],
-            ownColumns: ["closed_by_request_id"],
+            fieldName: "closed_by_request_id",
             deleteRule: "no action",
             nullable: true,
         },

@@ -45,6 +45,7 @@ declare global {
 
                 linkAccount(props: LinkAccount.Props): void;
                 changeTerms(props: ChangeTerms.Props): void;
+                canTerminate(props: Terminate.Props): void;
                 terminate(props: Terminate.Props): void;
                 update(props: ChangeDataProps): void;
                 setHRBP(props: SetHRBP.Props): void;

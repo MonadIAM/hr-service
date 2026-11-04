@@ -187,18 +187,21 @@ export class Employee implements Entities.Employee.Contract {
         }
     }
 
-    public terminate({ employmentEndedOn }: Entities.Employee.Terminate.Props): void {
+    public canTerminate({ employmentEndedOn }: Entities.Employee.Terminate.Props): void {
         if (this.status !== EmployeeStatus.ACTIVE) {
             throw Exception.invariantViolation({ messageKey: `${Employee.dictionaryPath}.INVALID_STATUS` });
         } else if (employmentEndedOn < this.employmentStartedOn! || employmentEndedOn < this.termsValidFrom!) {
             throw Exception.invariantViolation({ messageKey: `${Employee.dictionaryPath}.INVALID_PERIOD` });
-        } else {
-            this.employmentEndedOn = employmentEndedOn;
-            this.status = EmployeeStatus.TERMINATED;
-            ++this.termsRevision;
-            this.termsValidFrom = employmentEndedOn;
-            this.updatedAt = new Date();
         }
+    }
+
+    public terminate(props: Entities.Employee.Terminate.Props): void {
+        this.canTerminate(props);
+        this.employmentEndedOn = props.employmentEndedOn;
+        this.status = EmployeeStatus.TERMINATED;
+        ++this.termsRevision;
+        this.termsValidFrom = props.employmentEndedOn;
+        this.updatedAt = new Date();
     }
 
     public archive(): void {

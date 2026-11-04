@@ -4,7 +4,7 @@ import { RealmTopicAction } from "@monadiam/shared";
 import { lastValueFrom } from "rxjs";
 
 import { KAFKA_RETRY_SERVICE, KAFKA_SCHEMA_REGISTRY, KAFKA_SERVICE, KafkaIncomingMapper } from "~infrastructure/kafka";
-import { ORGANIZATION_COMMANDS } from "~context/application/commands/tokens";
+import { ORGANIZATION_COMMANDS, HR_REQUEST_COMMANDS } from "~context/application/commands/tokens";
 import { KAFKA_METRICS_RECORDER } from "~observability/metrics/tokens";
 import { KafkaTopic } from "~context/enums";
 
@@ -17,6 +17,8 @@ export class RealmConsumer implements Consumers.Realm.Contract, OnModuleInit {
     public constructor(
         @Inject(ORGANIZATION_COMMANDS)
         private readonly organizationCommands: Commands.Organization.ConsumerContract,
+        @Inject(HR_REQUEST_COMMANDS)
+        private readonly hrRequestCommands: Commands.HRRequest.ConsumerContract,
         @Inject(KAFKA_METRICS_RECORDER)
         private readonly kafkaMetrics: Observability.Metrics.Kafka.PublicContract,
         @Inject(KAFKA_SCHEMA_REGISTRY)
@@ -63,6 +65,12 @@ export class RealmConsumer implements Consumers.Realm.Contract, OnModuleInit {
         });
         this.schemaRegistry.validate({ topic: KafkaTopic.REALM, value: message });
         switch (message.actionType) {
+            case RealmTopicAction.MEMBERSHIP_LEAVE_CONFIRMED:
+                await this.hrRequestCommands.confirmLeave({ incoming, ...message.payload });
+                break;
+            case RealmTopicAction.MEMBERSHIP_LEAVE_REJECTED:
+                await this.hrRequestCommands.rejectLeave({ incoming, ...message.payload });
+                break;
             case RealmTopicAction.BOOTSTRAP_ORGANIZATION_REQUESTED:
                 await this.organizationCommands.bootstrap({ incoming, ...message.payload });
                 break;
@@ -87,7 +95,19 @@ export class RealmConsumer implements Consumers.Realm.Contract, OnModuleInit {
 
         if (decoded.actionType === RealmTopicAction.BOOTSTRAP_ORGANIZATION_REQUESTED) {
             await this.organizationCommands.rejectBootstrap({ incoming, request: decoded.payload, reason: String(error) });
-        } else if (decoded.actionType === RealmTopicAction.SYSTEM_PURGE) {
+        } else if (decoded.actionType === RealmTopicAction.MEMBERSHIP_LEAVE_CONFIRMED) {
+            await this.hrRequestCommands.rejectLeave({
+                incoming,
+                ...decoded.payload,
+                input: {
+                    ...decoded.payload.input,
+                    reason: String(error),
+                },
+            });
+        } else if (
+            decoded.actionType === RealmTopicAction.MEMBERSHIP_LEAVE_REJECTED ||
+            decoded.actionType === RealmTopicAction.SYSTEM_PURGE
+        ) {
             throw error;
         }
 

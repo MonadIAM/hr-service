@@ -1,9 +1,8 @@
 import { Injectable, Inject, Scope } from "@nestjs/common";
 import { LockMode } from "@mikro-orm/core";
 
-import { PositionAssignmentStatus, EmployeeStatus } from "~context/enums";
+import { EmployeeStatus } from "~context/enums";
 import {
-    POSITION_ASSIGNMENT_REPOSITORY,
     WORK_CALENDAR_REPOSITORY,
     WORK_SCHEDULE_REPOSITORY,
     LEAVE_POLICY_REPOSITORY,
@@ -20,8 +19,6 @@ export class EmployeeService implements Services.Employee.Contract {
     public constructor(
         @Inject(EMPLOYMENT_SERVICE)
         private readonly employmentService: Services.Employment.ServiceContract,
-        @Inject(POSITION_ASSIGNMENT_REPOSITORY)
-        private readonly positionAssignmentRepository: Repositories.PositionAssignment.Contract,
         @Inject(WORK_CALENDAR_REPOSITORY)
         private readonly workCalendarRepository: Repositories.WorkCalendar.Contract,
         @Inject(WORK_SCHEDULE_REPOSITORY)
@@ -263,79 +260,44 @@ export class EmployeeService implements Services.Employee.Contract {
         return employeeEntity;
     }
 
-    public async terminate(props: Services.Employee.Terminate.Props): Services.Employee.Terminate.Result {
-        const { transaction, organization, input, id } = props;
-
-        const [organizationEntity, employeeEntity, assignmentEntities, replacedByRequestEntity] = await Promise.all([
-            this.organizationRepository.findUniqueOrThrow({
-                where: { id: organization },
-                transaction,
-            }),
-            this.employeeRepository.findUniqueOrThrow({
-                where: { organization, id },
-                transaction,
-                options: {
-                    populate: ["workCalendar", "workSchedule", "leavePolicy"],
-                    lockMode: LockMode.PESSIMISTIC_WRITE,
-                    strategy: "select-in",
-                },
-            }),
-            this.positionAssignmentRepository.find({
-                options: { lockMode: LockMode.PESSIMISTIC_WRITE },
-                where: {
-                    status: PositionAssignmentStatus.ACTIVE,
-                    employee: { id },
-                    organization,
-                },
-                transaction,
-            }),
-            props.request
-                ? this.hrRequestRepository.findUniqueOrThrow({
-                      where: {
-                          id: props.request,
-                          employee: { id },
-                          organization,
-                      },
-                      transaction,
-                  })
-                : undefined,
-        ]);
+    public terminate(props: Services.Employee.Terminate.Props): Services.Employee.Terminate.Result {
+        const { transaction, assignments, request, entity, input } = props;
 
         const previous = {
-            termsRevision: employeeEntity.termsRevision,
-            replacedByRequest: replacedByRequestEntity,
-            workCalendar: employeeEntity.workCalendar,
-            workSchedule: employeeEntity.workSchedule,
-            validFrom: employeeEntity.termsValidFrom!,
-            leavePolicy: employeeEntity.leavePolicy,
+            termsRevision: entity.termsRevision,
+            replacedByRequest: request,
+            workCalendar: entity.workCalendar,
+            workSchedule: entity.workSchedule,
+            validFrom: entity.termsValidFrom!,
+            leavePolicy: entity.leavePolicy,
             validTo: props.input.employmentEndedOn,
-            employee: employeeEntity,
+            employee: entity,
             termsSnapshot: {
-                employmentStartedOn: employeeEntity.employmentStartedOn,
-                scheduleAnchorDate: employeeEntity.scheduleAnchorDate,
-                employmentEndedOn: employeeEntity.employmentEndedOn,
-                scheduleTimezone: employeeEntity.scheduleTimezone,
-                contractEndsOn: employeeEntity.contractEndsOn,
-                contractType: employeeEntity.contractType,
-                status: employeeEntity.status,
+                employmentStartedOn: entity.employmentStartedOn,
+                scheduleAnchorDate: entity.scheduleAnchorDate,
+                employmentEndedOn: entity.employmentEndedOn,
+                scheduleTimezone: entity.scheduleTimezone,
+                contractEndsOn: entity.contractEndsOn,
+                contractType: entity.contractType,
+                status: entity.status,
             },
         };
 
-        employeeEntity.terminate(input);
+        entity.terminate(input);
 
         this.employmentService.create({
-            organization: organizationEntity,
+            organization: entity.organization,
             input: previous,
             transaction,
         });
 
-        for (const assignmentEntity of assignmentEntities) {
+        for (const assignmentEntity of assignments) {
             assignmentEntity.close({
                 validTo: input.employmentEndedOn,
-                request: replacedByRequestEntity,
+                request,
             });
         }
 
-        return employeeEntity;
+        return entity;
     }
 }

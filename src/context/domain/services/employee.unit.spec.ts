@@ -175,7 +175,7 @@ describe("[DomainService] - Employee", () => {
     });
 
     describe("[Method] - terminate", () => {
-        it("[case] - snapshots previous terms and closes active assignments", async () => {
+        it("[case] - snapshots previous terms and closes active assignments", () => {
             // Arrange
             const { service, repositories, transaction, services } = helpers.service();
             const entity = helpers.createEmployee({
@@ -185,16 +185,12 @@ describe("[DomainService] - Employee", () => {
             });
             const assignment = helpers.createPositionAssignment({ employee: entity });
             const request = helpers.createHRRequest({ employee: entity });
-            repositories.organization.findUniqueOrThrow.mockResolvedValue(entity.organization);
-            repositories.employee.findUniqueOrThrow.mockResolvedValue(entity);
-            repositories.positionAssignment.find.mockResolvedValue([assignment]);
-            repositories.hrRequest.findUniqueOrThrow.mockResolvedValue(request);
 
             // Act
-            const result = await service.terminate({
-                organization: entity.organization.id,
-                id: entity.id,
-                request: request.id,
+            const result = service.terminate({
+                assignments: [assignment],
+                request,
+                entity,
                 transaction: transaction.entityManager,
                 input: { employmentEndedOn: "2026-07-01" },
             });
@@ -217,15 +213,9 @@ describe("[DomainService] - Employee", () => {
                     termsSnapshot: expect.objectContaining({ status: EmployeeStatus.ACTIVE }),
                 }),
             });
-            expect(repositories.positionAssignment.find).toHaveBeenCalledWith({
-                where: {
-                    status: PositionAssignmentStatus.ACTIVE,
-                    employee: { id: entity.id },
-                    organization: entity.organization.id,
-                },
-                options: { lockMode: LockMode.PESSIMISTIC_WRITE },
-                transaction: transaction.entityManager,
-            });
+            expect(repositories.employee.findUniqueOrThrow).not.toHaveBeenCalled();
+            expect(repositories.organization.findUniqueOrThrow).not.toHaveBeenCalled();
+            expect(repositories.hrRequest.findUniqueOrThrow).not.toHaveBeenCalled();
         });
     });
 });

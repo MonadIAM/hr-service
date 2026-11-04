@@ -13,6 +13,26 @@ declare global {
             type JobCounts = Partial<Record<JobState, number>>;
         }
 
+        namespace HRRequest {
+            type JobData = {
+                batchSize: number;
+                event: string;
+                batch: number;
+            };
+
+            interface Contract {
+                schedule: Schedule.Signature;
+            }
+
+            namespace Schedule {
+                type Props = JobData;
+
+                type Result = Promise<void>;
+
+                type Signature = (props: Props) => Result;
+            }
+        }
+
         namespace Cleanup {
             type Result = {
                 nextBatch: boolean;
