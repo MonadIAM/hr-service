@@ -1,4 +1,3 @@
-import { PositionAssignmentRepository } from "~context/infrastructure/repositories/position-assignment.repository";
 import { WorkCalendarRepository } from "~context/infrastructure/repositories/work-calendar.repository";
 import { WorkScheduleRepository } from "~context/infrastructure/repositories/work-schedule.repository";
 import { OrganizationRepository } from "~context/infrastructure/repositories/organization.repository";
@@ -11,7 +10,6 @@ import { EmployeeService } from "~context/domain/services/employee.service";
 export class EmployeeIntegrationHelpers implements Integration.Domain.Employee.Contract {
     public service(context: Integration.Postgres.Suite.FactoryContext): Integration.Domain.Employee.Service.Context {
         const repositories = {
-            positionAssignment: new PositionAssignmentRepository(context.readManager),
             workCalendar: new WorkCalendarRepository(context.readManager),
             workSchedule: new WorkScheduleRepository(context.readManager),
             organization: new OrganizationRepository(context.readManager),
@@ -23,7 +21,6 @@ export class EmployeeIntegrationHelpers implements Integration.Domain.Employee.C
         return {
             service: new EmployeeService(
                 new EmploymentService(),
-                repositories.positionAssignment,
                 repositories.workCalendar,
                 repositories.workSchedule,
                 repositories.organization,

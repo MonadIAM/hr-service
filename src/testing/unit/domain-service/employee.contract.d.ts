@@ -10,7 +10,6 @@ declare global {
                 service: Services.Employee.Contract;
                 transaction: Unit.Domain.Core.Transaction;
                 repositories: {
-                    positionAssignment: Unit.Domain.HR.RepositoryMock<Entities.PositionAssignment>;
                     workCalendar: Unit.Domain.HR.RepositoryMock<Entities.WorkCalendar>;
                     workSchedule: Unit.Domain.HR.RepositoryMock<Entities.WorkSchedule>;
                     organization: Unit.Domain.HR.RepositoryMock<Entities.Organization>;

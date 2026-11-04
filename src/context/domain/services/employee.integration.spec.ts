@@ -67,9 +67,21 @@ describe("[DomainService] - Employee", () => {
                     input: { ...terms, termsValidFrom: "2026-04-01", contractType: "fixed-term" },
                 }),
             );
-            await suite.transaction((transaction) =>
-                suite.repository().service.terminate({ ...props, transaction, input: { employmentEndedOn: "2026-07-01" } }),
-            );
+            await suite.transaction(async (transaction) => {
+                const entity = await transaction.findOneOrFail(
+                    Employee,
+                    { id: employee.id },
+                    {
+                        populate: ["workCalendar", "workSchedule", "leavePolicy"],
+                    },
+                );
+                return suite.repository().service.terminate({
+                    input: { employmentEndedOn: "2026-07-01" },
+                    assignments: [],
+                    transaction,
+                    entity,
+                });
+            });
             const persisted = await suite.transaction((transaction) =>
                 transaction.findOneOrFail(Employee, { id: employee.id }),
             );
@@ -114,14 +126,16 @@ describe("[DomainService] - Employee", () => {
             const assignment = await suite.fixtures().createPositionAssignment({ employee, validFrom: "2026-08-01" });
 
             // Act
-            const result = suite.transaction((transaction) =>
-                suite.repository().service.terminate({
-                    organization: employee.organization.id,
-                    id: employee.id,
-                    transaction,
+            const result = suite.transaction(async (transaction) => {
+                const entity = await transaction.findOneOrFail(Employee, { id: employee.id });
+                const assignments = await transaction.find(PositionAssignment, { employee: { id: employee.id } });
+                return suite.repository().service.terminate({
                     input: { employmentEndedOn: "2026-07-01" },
-                }),
-            );
+                    assignments,
+                    transaction,
+                    entity,
+                });
+            });
 
             // Assert
             await expect(result).rejects.toThrow("entities.position-assignment.INVALID_PERIOD");

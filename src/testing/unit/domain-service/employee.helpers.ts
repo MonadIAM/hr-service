@@ -8,11 +8,6 @@ export class EmployeeUnitHelpers extends HRDomainUnitHelpers implements Unit.Dom
     public service(): Unit.Domain.Employee.Service.Result {
         const transaction = this.transaction();
         const repositories = {
-            positionAssignment: {
-                findUniqueOrThrow: jest.fn<(props: unknown) => Promise<Entities.PositionAssignment>>(),
-                findUnique: jest.fn<(props: unknown) => Promise<Optional<Entities.PositionAssignment>>>(),
-                find: jest.fn<(props: unknown) => Promise<Entities.PositionAssignment[]>>().mockResolvedValue([]),
-            },
             workCalendar: {
                 findUniqueOrThrow: jest.fn<(props: unknown) => Promise<Entities.WorkCalendar>>(),
                 findUnique: jest.fn<(props: unknown) => Promise<Optional<Entities.WorkCalendar>>>(),
@@ -52,7 +47,6 @@ export class EmployeeUnitHelpers extends HRDomainUnitHelpers implements Unit.Dom
         return {
             service: new EmployeeService(
                 this.contract<Services.Employment.ServiceContract>(services.employment),
-                this.contract<Repositories.PositionAssignment.Contract>(repositories.positionAssignment),
                 this.contract<Repositories.WorkCalendar.Contract>(repositories.workCalendar),
                 this.contract<Repositories.WorkSchedule.Contract>(repositories.workSchedule),
                 this.contract<Repositories.Organization.Contract>(repositories.organization),

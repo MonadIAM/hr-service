@@ -12,7 +12,6 @@ declare global {
             type Context = {
                 service: Services.Employee.Contract;
                 repositories: {
-                    positionAssignment: globalThis.Repositories.PositionAssignment.Contract;
                     workCalendar: globalThis.Repositories.WorkCalendar.Contract;
                     workSchedule: globalThis.Repositories.WorkSchedule.Contract;
                     organization: globalThis.Repositories.Organization.Contract;

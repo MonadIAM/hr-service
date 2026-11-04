@@ -2,7 +2,46 @@ import { HRRequestType } from "~context/enums";
 
 declare global {
     namespace Commands.HRRequest {
-        interface Contract extends ControllerContract {}
+        interface Contract extends ProcessorContract, ConsumerContract, ControllerContract {}
+
+        interface ProcessorContract {
+            terminate: Terminate.Signature;
+        }
+
+        namespace Terminate {
+            type Props = {
+                batchSize: number;
+            };
+
+            type Result = Promise<number>;
+
+            type Signature = (props: Props) => Result;
+        }
+
+        interface ConsumerContract {
+            confirmLeave: ConfirmLeave.Signature;
+            rejectLeave: RejectLeave.Signature;
+        }
+
+        namespace ConfirmLeave {
+            type Props = Topics.Realm.MembershipLeaveConfirmedMessage["payload"] & {
+                incoming: TransactionManager.Service.IncomingMessage;
+            };
+
+            type Result = Promise<void>;
+
+            type Signature = (props: Props) => Result;
+        }
+
+        namespace RejectLeave {
+            type Props = Topics.Realm.MembershipLeaveRejectedMessage["payload"] & {
+                incoming: TransactionManager.Service.IncomingMessage;
+            };
+
+            type Result = Promise<void>;
+
+            type Signature = (props: Props) => Result;
+        }
 
         interface ControllerContract {
             withdraw: Withdraw.Signature;

@@ -1,11 +1,20 @@
 import { Provider } from "@nestjs/common";
 
-import { CLEANUP_PROCESSOR, CLEANUP_QUEUE } from "./tokens";
+import { HR_REQUEST_PROCESSOR, HR_REQUEST_QUEUE, CLEANUP_PROCESSOR, CLEANUP_QUEUE } from "./tokens";
+import { HRRequestProcessor, HRRequestQueue } from "./hr-request";
 import { CleanupProcessor, CleanupQueue } from "./cleanup";
 import { BULLMQ_JOBS_PROVIDER } from "./metrics.provider";
 
 export const QUEUES: Provider[] = [
     BULLMQ_JOBS_PROVIDER,
+    {
+        provide: HR_REQUEST_PROCESSOR,
+        useClass: HRRequestProcessor,
+    },
+    {
+        provide: HR_REQUEST_QUEUE,
+        useClass: HRRequestQueue,
+    },
     {
         provide: CLEANUP_PROCESSOR,
         useClass: CleanupProcessor,
@@ -16,5 +25,5 @@ export const QUEUES: Provider[] = [
     },
 ];
 
-export { CLEANUP_PROCESSOR, CLEANUP_QUEUE };
+export { HR_REQUEST_PROCESSOR, HR_REQUEST_QUEUE, CLEANUP_PROCESSOR, CLEANUP_QUEUE };
 export { BullQueue } from "./enums";

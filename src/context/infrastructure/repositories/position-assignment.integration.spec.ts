@@ -4,6 +4,7 @@ import { QueryOrder } from "@mikro-orm/postgresql";
 import { PublicLinkOperator, PublicOrdinalOperator } from "~infrastructure/database/enums";
 import { postgresSuite } from "~testing/integration/containers/postgres.suite";
 import { HRFixture } from "~testing/integration/repositories/hr.fixture";
+import { PositionAssignment } from "~context/domain/entities";
 import { PositionAssignmentStatus, PayPeriod } from "~context/enums";
 
 import { PositionAssignmentRepository } from "./position-assignment.repository";
@@ -12,6 +13,22 @@ describe("[Repository] - PositionAssignment", () => {
     const suite = postgresSuite({
         repository: ({ readManager }) => new PositionAssignmentRepository(readManager),
         fixture: (entityManager) => new HRFixture(entityManager),
+    });
+
+    describe("[Behavior] - request ownership", () => {
+        it("[case] - preserves the composite database constraint for a closing request", async () => {
+            // Arrange
+            const assignment = await suite.fixtures().createPositionAssignment();
+            const request = await suite.fixtures().createHRRequest({ organization: assignment.organization });
+
+            // Act
+            const result = suite.transaction((transaction) =>
+                transaction.nativeUpdate(PositionAssignment, { id: assignment.id }, { closedByRequest: request.id }),
+            );
+
+            // Assert
+            await expect(result).rejects.toThrow(/foreign key constraint/i);
+        });
     });
 
     describe("[Method] - findUniqueOrThrow", () => {

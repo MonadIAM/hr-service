@@ -11,6 +11,7 @@ declare global {
                 service: Services.HRRequest.Contract;
                 transaction: Unit.Domain.Core.Transaction;
                 repositories: {
+                    positionAssignment: Unit.Domain.HR.RepositoryMock<Entities.PositionAssignment>;
                     hrApprovalStep: Unit.Domain.HR.RepositoryMock<Entities.HRApprovalStep>;
                     organization: Unit.Domain.HR.RepositoryMock<Entities.Organization>;
                     hrRequest: Unit.Domain.HR.RepositoryMock<Entities.HRRequest>;
@@ -19,6 +20,7 @@ declare global {
                 };
                 services: {
                     hrApprovalStep: { create: jest.Mock<Services.HRApprovalStep.Create.Signature> };
+                    employee: { terminate: jest.Mock<Services.Employee.Terminate.Signature> };
                 };
             };
 

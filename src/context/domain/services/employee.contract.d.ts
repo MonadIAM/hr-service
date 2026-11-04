@@ -46,14 +46,14 @@ declare namespace Services.Employee {
 
     namespace Terminate {
         type Props = {
+            assignments: Entities.PositionAssignment[];
             input: Entities.Employee.Terminate.Props;
             transaction: ORM.EntityManager;
-            organization: string;
-            request?: string;
-            id: string;
+            request?: Entities.HRRequest;
+            entity: Entities.Employee;
         };
 
-        type Result = Promise<Entities.Employee>;
+        type Result = Entities.Employee;
 
         type Signature = (props: Props) => Result;
     }

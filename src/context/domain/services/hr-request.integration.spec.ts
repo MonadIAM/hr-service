@@ -1,4 +1,4 @@
-import { describe, expect, it } from "@jest/globals";
+import { describe, expect, it, jest } from "@jest/globals";
 import { randomUUID } from "node:crypto";
 
 import {
@@ -12,7 +12,7 @@ import {
 import { HRRequestIntegrationHelpers } from "~testing/integration/domain-service/hr-request.helpers";
 import { postgresSuite } from "~testing/integration/containers/postgres.suite";
 import { HRFixture } from "~testing/integration/repositories/hr.fixture";
-import { HRRequest, HRApprovalStep } from "~context/domain/entities";
+import { PositionAssignment, HRRequest, HRApprovalStep, Employment, Employee } from "~context/domain/entities";
 
 const helpers = new HRRequestIntegrationHelpers();
 
@@ -27,6 +27,143 @@ describe("[DomainService] - HRRequest", () => {
     const suite = postgresSuite({
         repository: (context) => helpers.service(context),
         fixture: (entityManager) => new HRFixture(entityManager),
+    });
+
+    describe("[Method] - beginLeave", () => {
+        it("[case] - keeps SQL query count constant when the termination batch grows", async () => {
+            // Arrange
+            const measure = async (size: number): Promise<{ reads: number; writes: number }> => {
+                const organization = await suite.fixtures().createOrganization();
+                const workCalendar = await suite.fixtures().createWorkCalendar({ organization });
+                const workSchedule = await suite.fixtures().createWorkSchedule({ organization });
+                const leavePolicy = await suite.fixtures().createLeavePolicy({ organization });
+                const requests = await Promise.all(
+                    Array.from({ length: size }, async () => {
+                        const employee = await suite.fixtures().createEmployee({
+                            employmentStartedOn: "2026-01-01",
+                            termsValidFrom: "2026-01-01",
+                            status: EmployeeStatus.ACTIVE,
+                            workCalendar,
+                            workSchedule,
+                            organization,
+                            leavePolicy,
+                        });
+                        await suite.fixtures().createPositionAssignment({ employee, validFrom: "2026-01-01" });
+                        return await suite.fixtures().createHRRequest({
+                            payload: { employmentEndedOn: "2026-02-01" },
+                            status: HRRequestStatus.APPROVED,
+                            type: HRRequestType.TERMINATE,
+                            approvedRevision: 1,
+                            organization,
+                            employee,
+                        });
+                    }),
+                );
+
+                // Act
+                const queries = await suite.transaction(async (transaction) => {
+                    const execute = jest.spyOn(transaction.getConnection(), "execute");
+                    try {
+                        const processed = await suite.repository().service.beginLeave({
+                            identifiers: requests.map(({ id }) => id),
+                            transaction,
+                        });
+                        expect(processed).toHaveLength(size);
+                        expect(
+                            processed.every(({ executionStatus }) => executionStatus === HRExecutionStatus.APPLIED),
+                        ).toBe(true);
+                        await transaction.flush();
+                        return execute.mock.calls.map(([query]) => String(query));
+                    } finally {
+                        execute.mockRestore();
+                    }
+                });
+                const assignments = await suite.transaction((transaction) =>
+                    transaction.find(PositionAssignment, { organization: organization.id }),
+                );
+                expect(assignments).toHaveLength(size);
+                expect(
+                    assignments.every(
+                        (assignment) =>
+                            assignment.closedByRequest?.id ===
+                            requests.find((request) => request.employee.id === assignment.employee.id)?.id,
+                    ),
+                ).toBe(true);
+                expect(
+                    await suite.transaction((transaction) =>
+                        transaction.count(Employment, { organization: organization.id }),
+                    ),
+                ).toBe(size);
+                return {
+                    reads: queries.filter((query) => /^select /i.test(query)).length,
+                    writes: queries.filter((query) => /^(insert|update|delete) /i.test(query)).length,
+                };
+            };
+            const counts = [await measure(1), await measure(2), await measure(10)];
+
+            // Assert
+            expect(counts[0].reads).toBeGreaterThan(0);
+            expect(counts[0].writes).toBeGreaterThan(0);
+            expect(counts[2]).toEqual(counts[1]);
+            expect(counts[1].reads).toBeLessThanOrEqual(counts[0].reads + 3);
+            expect(counts[1].writes).toBe(counts[0].writes);
+        });
+
+        it("[case] - processes a mixed batch once and preserves future and running requests", async () => {
+            // Arrange
+            const kinds = ["linked", "unlinked", "invalid", "future", "running"];
+            const requests = await Promise.all(
+                kinds.map(async (kind) => {
+                    const employee = await suite.fixtures().createEmployee({
+                        account: kind === "unlinked" ? undefined : randomUUID(),
+                        employmentStartedOn: "2026-01-01",
+                        termsValidFrom: "2026-01-01",
+                        status: EmployeeStatus.ACTIVE,
+                    });
+                    return await suite.fixtures().createHRRequest({
+                        executionStatus: kind === "running" ? HRExecutionStatus.RUNNING : HRExecutionStatus.NOT_STARTED,
+                        payload: { employmentEndedOn: kind === "invalid" ? "2026-02-30" : "2026-02-01" },
+                        effectiveAt: kind === "future" ? new Date("2999-01-01T00:00:00Z") : undefined,
+                        organization: employee.organization,
+                        status: HRRequestStatus.APPROVED,
+                        type: HRRequestType.TERMINATE,
+                        approvedRevision: 1,
+                        employee,
+                    });
+                }),
+            );
+            const identifiers = requests.map(({ id }) => id);
+
+            // Act
+            const processed = await suite.transaction((transaction) =>
+                suite.repository().service.beginLeave({ identifiers, transaction }),
+            );
+            const repeated = await suite.transaction((transaction) =>
+                suite.repository().service.beginLeave({ identifiers, transaction }),
+            );
+            const persisted = await suite.transaction((transaction) =>
+                transaction.find(HRRequest, { id: { $in: identifiers } }),
+            );
+            const employee = await suite.transaction((transaction) =>
+                transaction.findOneOrFail(Employee, { id: requests[1].employee.id }),
+            );
+            const history = await suite.transaction((transaction) =>
+                transaction.count(Employment, { employee: { id: requests[1].employee.id } }),
+            );
+
+            // Assert
+            expect(processed).toHaveLength(3);
+            expect(repeated).toEqual([]);
+            expect(requests.map(({ id }) => persisted.find((request) => request.id === id)?.executionStatus)).toEqual([
+                HRExecutionStatus.RUNNING,
+                HRExecutionStatus.APPLIED,
+                HRExecutionStatus.FAILED,
+                HRExecutionStatus.NOT_STARTED,
+                HRExecutionStatus.RUNNING,
+            ]);
+            expect(employee.status).toBe(EmployeeStatus.TERMINATED);
+            expect(history).toBe(1);
+        });
     });
 
     describe("[Behavior] - personal requests", () => {

@@ -18,7 +18,10 @@ import { COMMANDS } from "./application/commands";
 import { QUERIES } from "./application/queries";
 
 @Module({
-    imports: [TransactionManagerModule, BullModule.registerQueue({ name: BullQueue.CLEANUP })],
+    imports: [
+        TransactionManagerModule,
+        BullModule.registerQueue({ name: BullQueue.HR_REQUEST }, { name: BullQueue.CLEANUP }),
+    ],
     providers: [
         ...INFRASTRUCTURE_SERVICES,
         ...DOMAIN_SERVICES,
