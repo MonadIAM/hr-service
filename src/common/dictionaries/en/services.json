@@ -32,6 +32,7 @@
     "INVALID_REVERSAL": "A reversal must be created from an original entry that has not already been reversed."
   },
   "hr-request-execution": {
+    "ARCHIVED_LEAVE_POLICY": "The leave policy for the adjustment is archived.",
     "INVALID_EMPLOYEE_STATUS": "The request type does not match the employee status.",
     "TERMS_NOT_FOUND": "The employee work calendar, work schedule or leave policy was not found.",
     "PLACEMENT_NOT_FOUND": "The active assignment or target position was not found.",

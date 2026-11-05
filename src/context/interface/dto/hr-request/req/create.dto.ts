@@ -4,6 +4,7 @@ import { Expose } from "class-transformer";
 import { HRRequestType } from "~context/enums";
 import { Validator } from "~common/validator";
 
+import { LeaveAdjustmentPayloadDTO } from "../utils/leave-adjustment-payload.dto";
 import { ChangeTermsPayloadDTO } from "../utils/change-terms-payload.dto";
 import { TerminatePayloadDTO } from "../utils/terminate-payload.dto";
 import { TransferPayloadDTO } from "../utils/transfer-payload.dto";
@@ -42,6 +43,7 @@ export class CreateBodyDTO<T extends HRRequestType = HRRequestType> {
     @Expose()
     @Validator.IsObject()
     @Validator.ValidateByType("type", {
+        [HRRequestType.LEAVE_ADJUSTMENT]: LeaveAdjustmentPayloadDTO,
         [HRRequestType.CHANGE_TERMS]: ChangeTermsPayloadDTO,
         [HRRequestType.TERMINATE]: TerminatePayloadDTO,
         [HRRequestType.TRANSFER]: TransferPayloadDTO,

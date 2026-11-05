@@ -228,6 +228,7 @@ export type I18nTranslations = {
             "INVALID_REVERSAL": string;
         };
         "hr-request-execution": {
+            "ARCHIVED_LEAVE_POLICY": string;
             "INVALID_EMPLOYEE_STATUS": string;
             "TERMS_NOT_FOUND": string;
             "PLACEMENT_NOT_FOUND": string;

@@ -1,4 +1,4 @@
-import { HRExecutionStatus, HRRequestStatus, HRRequestType, PayPeriod } from "~context/enums";
+import { HRExecutionStatus, HRRequestStatus, HRRequestType, LeaveUnit, PayPeriod } from "~context/enums";
 
 declare global {
     namespace Entities {
@@ -62,7 +62,7 @@ declare global {
 
             namespace Payload {
                 type ByType = {
-                    [HRRequestType.LEAVE_ADJUSTMENT]: UnknownObject;
+                    [HRRequestType.LEAVE_ADJUSTMENT]: LeaveAdjustment;
                     [HRRequestType.CANCEL_REQUEST]: UnknownObject;
                     [HRRequestType.CHANGE_TERMS]: ChangeTerms;
                     [HRRequestType.TERMINATE]: Terminate;
@@ -71,6 +71,15 @@ declare global {
                     [HRRequestType.ABSENCE]: UnknownObject;
                     [HRRequestType.REHIRE]: Hire;
                     [HRRequestType.HIRE]: Hire;
+                };
+
+                type LeaveAdjustment = {
+                    balanceDelta: string;
+                    leavePolicy: string;
+                    effectiveOn: string;
+                    poolCode: string;
+                    reason: string;
+                    unit: LeaveUnit;
                 };
 
                 type Hire = {
