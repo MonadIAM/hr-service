@@ -56,13 +56,25 @@ declare namespace Services.HRRequestExecution {
     interface ProcessorContract {
         scheduleApplication: ScheduleApplication.Signature;
         beginApplication: BeginApplication.Signature;
+        adjustLeave: AdjustLeave.Signature;
         markApplied: MarkApplied.Signature;
         changeTerms: ChangeTerms.Signature;
         beginLeave: BeginLeave.Signature;
-        beginHire: BeginHire.Signature;
         markFailed: MarkFailed.Signature;
+        beginHire: BeginHire.Signature;
         transfer: Transfer.Signature;
         cancel: Cancel.Signature;
+    }
+
+    namespace AdjustLeave {
+        type Props = {
+            transaction: ORM.EntityManager;
+            identifiers: string[];
+        };
+
+        type Result = Promise<Entities.HRRequest[]>;
+
+        type Signature = (props: Props) => Result;
     }
 
     namespace ChangeTerms {

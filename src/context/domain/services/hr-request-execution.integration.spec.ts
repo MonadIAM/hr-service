@@ -1,8 +1,8 @@
 import { describe, expect, it, jest } from "@jest/globals";
 import { randomUUID } from "node:crypto";
 
+import { PositionAssignment, LeaveLedgerEntry, HRRequest, Employment, Employee, Position } from "~context/domain/entities";
 import { HRRequestExecutionIntegrationHelpers } from "~testing/integration/domain-service/hr-request-execution.helpers";
-import { PositionAssignment, HRRequest, Employment, Employee, Position } from "~context/domain/entities";
 import { postgresSuite } from "~testing/integration/containers/postgres.suite";
 import { HRFixture } from "~testing/integration/repositories/hr.fixture";
 import {
@@ -12,6 +12,7 @@ import {
     EmployeeStatus,
     HRRequestType,
     RecordStatus,
+    LeaveUnit,
 } from "~context/enums";
 
 const helpers = new HRRequestExecutionIntegrationHelpers();
@@ -20,6 +21,196 @@ describe("[DomainService] - HRRequestExecution", () => {
     const suite = postgresSuite({
         repository: (context) => helpers.service(context),
         fixture: (entityManager) => new HRFixture(entityManager),
+    });
+
+    describe("[Method] - adjustLeave", () => {
+        async function createBatch(count: number): Promise<HRRequest<HRRequestType.LEAVE_ADJUSTMENT>[]> {
+            const organization = await suite.fixtures().createOrganization();
+            const leavePolicy = await suite.fixtures().createLeavePolicy({ organization });
+            const employee = await suite.fixtures().createEmployee({ status: EmployeeStatus.ACTIVE, organization });
+
+            return await suite.transaction(async (transaction) => {
+                const requests = Array.from(
+                    { length: count },
+                    () =>
+                        new HRRequest({
+                            executionStatus: HRExecutionStatus.NOT_STARTED,
+                            payloadSchemaVersion: 1,
+                            initiatorAccount: randomUUID(),
+                            approvedRevision: 1,
+                            revision: 1,
+                            idempotencyKey: randomUUID(),
+                            organization,
+                            employee,
+                            status: HRRequestStatus.APPROVED,
+                            type: HRRequestType.LEAVE_ADJUSTMENT,
+                            payload: {
+                                balanceDelta: "2.250001",
+                                leavePolicy: leavePolicy.id,
+                                effectiveOn: "2026-01-01",
+                                poolCode: "ANNUAL",
+                                reason: "Correct opening balance",
+                                unit: LeaveUnit.DAY,
+                            },
+                        }),
+                );
+                transaction.persist(requests);
+                await transaction.flush();
+                return requests;
+            });
+        }
+
+        it("[case] - posts signed corrections once without changing reservations", async () => {
+            // Arrange
+            const requests = await createBatch(2);
+            const identifiers = requests.map(({ id }) => id);
+            await suite.transaction(async (transaction) => {
+                const request = await transaction.findOneOrFail(HRRequest, { id: requests[1].id });
+                request.payload = { ...request.payload, balanceDelta: "-1.250000" };
+            });
+
+            // Act
+            await suite.transaction((transaction) => suite.repository().service.adjustLeave({ identifiers, transaction }));
+            await suite.transaction((transaction) => suite.repository().service.adjustLeave({ identifiers, transaction }));
+
+            // Assert
+            await suite.transaction(async (transaction) => {
+                const entries = await transaction.find(LeaveLedgerEntry, { sourceRequest: { id: { $in: identifiers } } });
+                const persisted = await transaction.find(HRRequest, { id: { $in: identifiers } });
+                expect(entries).toHaveLength(2);
+                expect(entries.map(({ balanceDelta }) => balanceDelta).sort()).toEqual(["-1.250000", "2.250001"]);
+                expect(entries.every(({ reservedDelta }) => reservedDelta === "0.000000")).toBe(true);
+                expect(persisted.every(({ executionStatus }) => executionStatus === HRExecutionStatus.APPLIED)).toBe(true);
+                for (const entry of entries) {
+                    expect(entry.idempotencyKey).toBe(entry.sourceRequest!.id);
+                    expect(entry.calculationSnapshot).toMatchObject({ policyRevision: 1, poolCode: "ANNUAL" });
+                    expect(persisted.find(({ id }) => id === entry.sourceRequest!.id)!.result).toEqual({
+                        leaveLedgerEntry: entry.id,
+                        employee: entry.employee.id,
+                    });
+                }
+            });
+        });
+
+        it("[case] - isolates invalid policies and pools while skipping future and unapproved requests", async () => {
+            // Arrange
+            const requests = await createBatch(7);
+            const foreignPolicy = await suite.fixtures().createLeavePolicy();
+            const archivedPolicy = await suite.fixtures().createLeavePolicy({
+                organization: requests[0].organization,
+                status: RecordStatus.ARCHIVED,
+            });
+            await suite.transaction(async (transaction) => {
+                const loaded = await transaction.find(HRRequest, { id: { $in: requests.map(({ id }) => id) } });
+                const byId = new Map(loaded.map((request) => [request.id, request]));
+                for (const [index, leavePolicy] of [randomUUID(), foreignPolicy.id, archivedPolicy.id].entries()) {
+                    const request = byId.get(requests[index + 1].id)!;
+                    request.payload = { ...request.payload, leavePolicy };
+                }
+                const invalidPool = byId.get(requests[4].id)!;
+                invalidPool.payload = { ...invalidPool.payload, unit: LeaveUnit.MINUTE };
+                byId.get(requests[5].id)!.effectiveAt = new Date("2999-01-01T00:00:00.000Z");
+                byId.get(requests[6].id)!.status = HRRequestStatus.SUBMITTED;
+            });
+
+            // Act
+            await suite.transaction((transaction) =>
+                suite.repository().service.adjustLeave({
+                    identifiers: requests.map(({ id }) => id),
+                    transaction,
+                }),
+            );
+
+            // Assert
+            await suite.transaction(async (transaction) => {
+                const loaded = await transaction.find(HRRequest, { id: { $in: requests.map(({ id }) => id) } });
+                const byId = new Map(loaded.map((request) => [request.id, request]));
+                expect(byId.get(requests[0].id)!.executionStatus).toBe(HRExecutionStatus.APPLIED);
+                for (const request of requests.slice(1, 5)) {
+                    expect(byId.get(request.id)!.executionStatus).toBe(HRExecutionStatus.FAILED);
+                    expect(byId.get(request.id)!.failure).toBeTruthy();
+                }
+                for (const request of requests.slice(5)) {
+                    expect(byId.get(request.id)!.executionStatus).toBe(HRExecutionStatus.NOT_STARTED);
+                }
+                expect(await transaction.count(LeaveLedgerEntry, { organization: requests[0].organization.id })).toBe(1);
+            });
+        });
+
+        it("[case] - serializes concurrent execution of the same approved request", async () => {
+            // Arrange
+            const [request] = await createBatch(1);
+
+            // Act
+            await Promise.all(
+                Array.from({ length: 2 }, () =>
+                    suite.transaction((transaction) =>
+                        suite.repository().service.adjustLeave({ identifiers: [request.id], transaction }),
+                    ),
+                ),
+            );
+
+            // Assert
+            await suite.transaction(async (transaction) => {
+                expect(await transaction.count(LeaveLedgerEntry, { sourceRequest: { id: request.id } })).toBe(1);
+                expect((await transaction.findOneOrFail(HRRequest, { id: request.id })).executionStatus).toBe(
+                    HRExecutionStatus.APPLIED,
+                );
+            });
+        });
+
+        it("[case] - rolls back both ledger entries and request execution when the transaction fails", async () => {
+            // Arrange
+            const [request] = await createBatch(1);
+
+            // Act
+            const result = suite.transaction(async (transaction) => {
+                await suite.repository().service.adjustLeave({ identifiers: [request.id], transaction });
+                await transaction.flush();
+                throw new Error("rollback adjustment batch");
+            });
+
+            // Assert
+            await expect(result).rejects.toThrow("rollback adjustment batch");
+            await suite.transaction(async (transaction) => {
+                expect(await transaction.count(LeaveLedgerEntry, { sourceRequest: { id: request.id } })).toBe(0);
+                expect((await transaction.findOneOrFail(HRRequest, { id: request.id })).executionStatus).toBe(
+                    HRExecutionStatus.NOT_STARTED,
+                );
+            });
+        });
+
+        it("[case] - bounds business SQL count for 1, 2, 10 and 100 adjustments", async () => {
+            async function measure(count: number): Promise<{ reads: number; writes: number }> {
+                const requests = await createBatch(count);
+                return await suite.transaction(async (transaction) => {
+                    const execute = jest.spyOn(transaction.getConnection(), "execute");
+                    try {
+                        await suite.repository().service.adjustLeave({
+                            identifiers: requests.map(({ id }) => id),
+                            transaction,
+                        });
+                        await transaction.flush();
+                        const queries = execute.mock.calls.map(([sql]) => String(sql).toLowerCase());
+                        return {
+                            reads: queries.filter((sql) => sql.startsWith("select")).length,
+                            writes: queries.filter((sql) => /^(insert|update|delete)/.test(sql)).length,
+                        };
+                    } finally {
+                        execute.mockRestore();
+                    }
+                });
+            }
+
+            // Act
+            const counts = [await measure(1), await measure(2), await measure(10), await measure(100)];
+
+            // Assert
+            expect(counts[0]).toEqual({ reads: 4, writes: 2 });
+            expect(counts[1]).toEqual({ reads: 5, writes: 2 });
+            expect(counts.slice(1)).toEqual(Array.from({ length: 3 }, () => counts[1]));
+            expect(counts[1].writes).toBe(2);
+        });
     });
 
     describe("[Behavior] - hire and rehire execution", () => {

@@ -15,12 +15,14 @@ import {
     PositionAssignmentStatus,
     HRExecutionStatus,
     HRRequestStatus,
-    HRRequestType,
+    LeaveLedgerKind,
     EmployeeStatus,
+    HRRequestType,
+    RecordStatus,
 } from "~context/enums";
 
 import { EMPLOYEE_SERVICE } from "./tokens";
-import { PositionAssignment } from "../entities";
+import { PositionAssignment, LeaveLedgerEntry } from "../entities";
 
 @Injectable({ scope: Scope.DEFAULT })
 export class HRRequestExecutionService implements Services.HRRequestExecution.Contract {
@@ -259,6 +261,94 @@ export class HRRequestExecutionService implements Services.HRRequestExecution.Co
                 });
             }
         }
+    }
+
+    public async adjustLeave(
+        props: Services.HRRequestExecution.AdjustLeave.Props,
+    ): Services.HRRequestExecution.AdjustLeave.Result {
+        const { transaction, identifiers } = props;
+        const requests = (await this.hrRequestRepository.find({
+            options: {
+                populate: ["organization"],
+                lockMode: LockMode.PESSIMISTIC_WRITE,
+                orderBy: { effectiveAt: "ASC", createdAt: "ASC", id: "ASC" },
+                strategy: "select-in",
+                refresh: true,
+            },
+            where: {
+                executionStatus: { $in: [HRExecutionStatus.NOT_STARTED, HRExecutionStatus.SCHEDULED] },
+                $or: [{ effectiveAt: { $lte: new Date() } }, { effectiveAt: null }],
+                type: HRRequestType.LEAVE_ADJUSTMENT,
+                status: HRRequestStatus.APPROVED,
+                id: { $in: identifiers },
+            },
+            transaction,
+        })) as Entities.HRRequest<HRRequestType.LEAVE_ADJUSTMENT>[];
+
+        if (requests.length) {
+            const [employees, policies] = await Promise.all([
+                this.employeeRepository.find({
+                    options: { lockMode: LockMode.PESSIMISTIC_WRITE, orderBy: { id: "ASC" }, refresh: true },
+                    where: { id: { $in: [...new Set(requests.map(({ employee }) => employee.id))] } },
+                    transaction,
+                }),
+                this.leavePolicyRepository.find({
+                    options: { lockMode: LockMode.PESSIMISTIC_READ, orderBy: { id: "ASC" }, refresh: true },
+                    where: { id: { $in: [...new Set(requests.map(({ payload }) => payload.leavePolicy))] } },
+                    transaction,
+                }),
+            ]);
+
+            const employeesById = new Map(employees.map((entity) => [entity.id, entity]));
+            const policiesById = new Map(policies.map((entity) => [entity.id, entity]));
+
+            for (const request of requests) {
+                const employee = employeesById.get(request.employee.id)!;
+                const leavePolicy = policiesById.get(request.payload.leavePolicy);
+
+                try {
+                    request.beginApplication();
+                    employee.assertReady();
+
+                    if (![EmployeeStatus.ACTIVE, EmployeeStatus.TERMINATED].includes(employee.status)) {
+                        throw Exception.invariantViolation({
+                            messageKey: `${this.dictionaryPath}.INVALID_EMPLOYEE_STATUS`,
+                        });
+                    } else if (!leavePolicy) {
+                        throw Exception.invariantViolation({ messageKey: `${this.dictionaryPath}.TERMS_NOT_FOUND` });
+                    } else if (leavePolicy.status === RecordStatus.ARCHIVED) {
+                        throw Exception.invariantViolation({ messageKey: `${this.dictionaryPath}.ARCHIVED_LEAVE_POLICY` });
+                    } else {
+                        const entry = new LeaveLedgerEntry({
+                            calculationSnapshot: { ...request.payload, policyRevision: leavePolicy.revision },
+                            balanceDelta: request.payload.balanceDelta,
+                            effectiveOn: request.payload.effectiveOn,
+                            organization: request.organization,
+                            poolCode: request.payload.poolCode,
+                            kind: LeaveLedgerKind.ADJUSTMENT,
+                            reason: request.payload.reason,
+                            unit: request.payload.unit,
+                            idempotencyKey: request.id,
+                            sourceRequest: request,
+                            reservedDelta: "0",
+                            leavePolicy,
+                            employee,
+                        });
+                        entry.canCreate();
+                        transaction.persist(entry);
+                        request.markApplied({ result: { leaveLedgerEntry: entry.id, employee: employee.id } });
+                    }
+                } catch (error) {
+                    if (!(error instanceof Exception) || Boolean(Exception.isRetryable(error))) {
+                        throw error;
+                    } else {
+                        request.markFailed({ reason: error.message });
+                    }
+                }
+            }
+        }
+
+        return requests;
     }
 
     public async changeTerms(

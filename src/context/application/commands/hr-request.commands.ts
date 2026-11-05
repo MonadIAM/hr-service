@@ -44,6 +44,7 @@ export class HRRequestCommands implements Commands.HRRequest.Contract {
                 status: HRRequestStatus.APPROVED,
                 type: {
                     $in: [
+                        HRRequestType.LEAVE_ADJUSTMENT,
                         HRRequestType.CHANGE_TERMS,
                         HRRequestType.TERMINATE,
                         HRRequestType.TRANSFER,
@@ -55,6 +56,7 @@ export class HRRequestCommands implements Commands.HRRequest.Contract {
         });
 
         if (requests.length) {
+            const leaveAdjustmentIdentifiers = new Set<string>();
             const changeTermsIdentifiers = new Set<string>();
             const terminationIdentifiers = new Set<string>();
             const transferIdentifiers = new Set<string>();
@@ -62,6 +64,9 @@ export class HRRequestCommands implements Commands.HRRequest.Contract {
 
             for (const { type, id } of requests) {
                 switch (type) {
+                    case HRRequestType.LEAVE_ADJUSTMENT:
+                        leaveAdjustmentIdentifiers.add(id);
+                        break;
                     case HRRequestType.CHANGE_TERMS:
                         changeTermsIdentifiers.add(id);
                         break;
@@ -109,6 +114,10 @@ export class HRRequestCommands implements Commands.HRRequest.Contract {
                 execute: async (transaction) => {
                     await this.hrRequestExecutionService.changeTerms({
                         identifiers: Array.from(changeTermsIdentifiers),
+                        transaction,
+                    });
+                    await this.hrRequestExecutionService.adjustLeave({
+                        identifiers: Array.from(leaveAdjustmentIdentifiers),
                         transaction,
                     });
                     await this.hrRequestExecutionService.transfer({
