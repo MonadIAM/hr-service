@@ -1,7 +1,7 @@
 import { describe, it, expect } from "@jest/globals";
 import { isUUID } from "class-validator";
 
-import { HRRequestStatus, HRExecutionStatus, HRRequestType } from "~context/enums";
+import { HRRequestStatus, HRExecutionStatus, HRRequestType, PayPeriod } from "~context/enums";
 
 import { HRRequest } from "./hr-request.entity";
 
@@ -53,6 +53,59 @@ describe("[Entity] - HRRequest", () => {
         expect(entity.approvedRevision).toBeUndefined();
         expect(entity.payload).toEqual({ reason: "Updated" });
         expect(entity.revision).toBe(2);
+    });
+
+    describe("[Method] - calculateOvertime", () => {
+        it.each([
+            { salaryPeriod: PayPeriod.HOUR, salaryAmount: "25", fte: "1", expected: "125.00" },
+            { salaryPeriod: PayPeriod.MONTH, salaryAmount: "2600", fte: "1", expected: "75.00" },
+            { salaryPeriod: PayPeriod.YEAR, salaryAmount: "31200", fte: "1", expected: "75.00" },
+            { salaryPeriod: PayPeriod.MONTH, salaryAmount: "1300", fte: "0.5", expected: "75.00" },
+            { salaryPeriod: PayPeriod.HOUR, salaryAmount: "0", fte: "1", expected: "0.00" },
+        ])("[case] - estimates overtime for $salaryPeriod at FTE $fte", ({ salaryPeriod, salaryAmount, fte, expected }) => {
+            // Arrange
+            const request = createHRRequest({
+                payload: { date: "2026-07-01", startTime: "18:00", endTime: "20:30" },
+                employee: stubEmployee({ scheduleTimezone: "Europe/London" }),
+                type: HRRequestType.OVERTIME,
+            });
+            const assignment = {
+                salaryCurrency: "GBP",
+                salaryPeriod,
+                salaryAmount,
+                fte,
+                id: "assignment",
+            } as Entities.PositionAssignment;
+
+            // Act
+            const result = request.calculateOvertime({ assignment });
+
+            // Assert
+            expect(result).toMatchObject({
+                estimatedAmount: expected,
+                currency: "GBP",
+                minutes: 150,
+                hours: "2.500000",
+                calculationSnapshot: { overtimeMultiplier: 2, standardWeeklyHours: 40, salaryPeriod, salaryAmount, fte },
+            });
+            expect(request.result).toBeUndefined();
+        });
+
+        it("[case] - preserves declared hours without inventing a salary", () => {
+            // Arrange
+            const request = createHRRequest({
+                payload: { date: "2026-10-25", startTime: "00:30", endTime: "02:30" },
+                employee: stubEmployee({ scheduleTimezone: "Europe/London" }),
+                type: HRRequestType.OVERTIME,
+            });
+            const assignment = { id: "assignment", fte: "1" } as Entities.PositionAssignment;
+
+            // Act
+            const result = request.calculateOvertime({ assignment });
+
+            // Assert
+            expect(result).toMatchObject({ estimatedAmount: null, hourlyRate: null, minutes: 120, hours: "2.000000" });
+        });
     });
 
     describe("[Method] - constructor", () => {
@@ -360,6 +413,23 @@ describe("[Entity] - HRRequest", () => {
         },
     );
     describe("[Behavior] - application", () => {
+        it("[case] - reschedules an approved request that has not started", () => {
+            // Arrange
+            const entity = createHRRequest({
+                executionStatus: HRExecutionStatus.SCHEDULED,
+                status: HRRequestStatus.APPROVED,
+                effectiveAt: new Date(0),
+                approvedRevision: 1,
+            });
+            const effectiveAt = new Date("2030-07-01T20:00:00Z");
+
+            // Act
+            entity.scheduleApplication({ effectiveAt });
+
+            // Assert
+            expect(entity.executionStatus).toBe(HRExecutionStatus.SCHEDULED);
+            expect(entity.effectiveAt).toBe(effectiveAt);
+        });
         it("[case] - schedules, runs, fail, retry and apply an approved revision", () => {
             // Arrange
             const entity = createHRRequest({ status: HRRequestStatus.APPROVED, approvedRevision: 1 });

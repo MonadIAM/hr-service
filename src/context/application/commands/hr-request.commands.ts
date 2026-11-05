@@ -50,6 +50,7 @@ export class HRRequestCommands implements Commands.HRRequest.Contract {
                         HRRequestType.CHANGE_TERMS,
                         HRRequestType.TERMINATE,
                         HRRequestType.TRANSFER,
+                        HRRequestType.OVERTIME,
                         HRRequestType.ABSENCE,
                         HRRequestType.REHIRE,
                         HRRequestType.HIRE,
@@ -63,6 +64,7 @@ export class HRRequestCommands implements Commands.HRRequest.Contract {
             const changeTermsIdentifiers = new Set<string>();
             const terminationIdentifiers = new Set<string>();
             const transferIdentifiers = new Set<string>();
+            const overtimeIdentifiers = new Set<string>();
             const absenceIdentifiers = new Set<string>();
             const hireIdentifiers = new Set<string>();
 
@@ -79,6 +81,9 @@ export class HRRequestCommands implements Commands.HRRequest.Contract {
                         break;
                     case HRRequestType.TRANSFER:
                         transferIdentifiers.add(id);
+                        break;
+                    case HRRequestType.OVERTIME:
+                        overtimeIdentifiers.add(id);
                         break;
                     case HRRequestType.ABSENCE:
                         absenceIdentifiers.add(id);
@@ -125,6 +130,10 @@ export class HRRequestCommands implements Commands.HRRequest.Contract {
                     });
                     await this.hrRequestExecutionService.adjustLeave({
                         identifiers: Array.from(leaveAdjustmentIdentifiers),
+                        transaction,
+                    });
+                    await this.hrRequestExecutionService.recordOvertime({
+                        identifiers: Array.from(overtimeIdentifiers),
                         transaction,
                     });
                     await this.hrRequestExecutionService.beginAbsence({

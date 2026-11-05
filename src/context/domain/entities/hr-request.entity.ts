@@ -1,11 +1,19 @@
 import { Collection } from "@mikro-orm/core";
 import { randomUUID } from "node:crypto";
+import { DateTime } from "luxon";
 
-import { HRExecutionStatus, HRRequestStatus, HRRequestType } from "~context/enums";
+import { HRExecutionStatus, HRRequestStatus, HRRequestType, PayPeriod } from "~context/enums";
 import { Exception } from "~common/exceptions";
 
 export class HRRequest<T extends HRRequestType = HRRequestType> implements Entities.HRRequest.Contract<T> {
     private static readonly dictionaryPath = "entities.hr-request";
+    private static readonly standardWeeklyHours = 40;
+    private static readonly overtimeMultiplier = 2;
+    private static readonly minutesPerHour = 60;
+    private static readonly monthsPerYear = 12;
+    private static readonly estimateScale = 6;
+    private static readonly weeksPerYear = 52;
+    private static readonly amountScale = 2;
 
     public id: string;
     public version: number = 1;
@@ -75,6 +83,60 @@ export class HRRequest<T extends HRRequestType = HRRequestType> implements Entit
         this.targetPosition = props.targetPosition;
         this.relatedRequest = props.relatedRequest;
         this.employee = props.employee;
+    }
+
+    public calculateOvertime({
+        assignment,
+    }: Entities.HRRequest.CalculateOvertime.Props): Entities.HRRequest.CalculateOvertime.Result {
+        const { startTime, endTime, date } = this.payload as Entities.HRRequest.Payload.Overtime;
+        const start = DateTime.fromISO(`${date}T${startTime}`, { zone: "UTC" });
+        const end = DateTime.fromISO(`${date}T${endTime}`, { zone: "UTC" });
+        const minutes = end.diff(start, "minutes").minutes;
+        const hours = minutes / HRRequest.minutesPerHour;
+        let hourlyRate: number | undefined;
+
+        if (assignment.salaryAmount && assignment.salaryCurrency && assignment.salaryPeriod) {
+            const salary = Number(assignment.salaryAmount);
+            const annualHours = HRRequest.standardWeeklyHours * HRRequest.weeksPerYear * Number(assignment.fte);
+            switch (assignment.salaryPeriod) {
+                case PayPeriod.MONTH:
+                    hourlyRate = (salary * HRRequest.monthsPerYear) / annualHours;
+                    break;
+                case PayPeriod.YEAR:
+                    hourlyRate = salary / annualHours;
+                    break;
+                case PayPeriod.HOUR:
+                    hourlyRate = salary;
+                    break;
+            }
+        }
+
+        return {
+            calculationSnapshot: {
+                standardWeeklyHours: HRRequest.standardWeeklyHours,
+                overtimeMultiplier: HRRequest.overtimeMultiplier,
+                salaryCurrency: assignment.salaryCurrency,
+                monthsPerYear: HRRequest.monthsPerYear,
+                salaryPeriod: assignment.salaryPeriod,
+                salaryAmount: assignment.salaryAmount,
+                weeksPerYear: HRRequest.weeksPerYear,
+                fte: assignment.fte,
+            },
+            estimatedAmount:
+                hourlyRate === undefined
+                    ? null
+                    : (hourlyRate * hours * HRRequest.overtimeMultiplier).toFixed(HRRequest.amountScale),
+            hourlyRate: hourlyRate?.toFixed(HRRequest.estimateScale) ?? null,
+            assignment: assignment.id,
+            startTime,
+            employee: this.employee.id,
+            timezone: this.employee.scheduleTimezone!,
+            currency: assignment.salaryCurrency ?? null,
+            endTime,
+            minutes,
+            hours: hours.toFixed(HRRequest.estimateScale),
+            date,
+        };
     }
 
     public update({ patch }: Entities.HRRequest.ChangeDataProps): void {
@@ -188,7 +250,7 @@ export class HRRequest<T extends HRRequestType = HRRequestType> implements Entit
             throw Exception.invariantViolation({ messageKey: `${HRRequest.dictionaryPath}.INVALID_STATUS` });
         } else if (this.approvedRevision !== this.revision) {
             throw Exception.invariantViolation({ messageKey: `${HRRequest.dictionaryPath}.STALE_REVISION` });
-        } else if (this.executionStatus === HRExecutionStatus.NOT_STARTED) {
+        } else if ([HRExecutionStatus.NOT_STARTED, HRExecutionStatus.SCHEDULED].includes(this.executionStatus)) {
             this.effectiveAt = effectiveAt;
             this.executionStatus = HRExecutionStatus.SCHEDULED;
             this.updatedAt = new Date();

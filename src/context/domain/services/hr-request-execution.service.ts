@@ -1,5 +1,6 @@
 import { Injectable, Inject, Scope } from "@nestjs/common";
 import { LockMode } from "@mikro-orm/core";
+import { DateTime } from "luxon";
 
 import { Exception } from "~common/exceptions";
 import {
@@ -272,6 +273,125 @@ export class HRRequestExecutionService implements Services.HRRequestExecution.Co
                 });
             }
         }
+    }
+
+    public async recordOvertime(
+        props: Services.HRRequestExecution.RecordOvertime.Props,
+    ): Services.HRRequestExecution.RecordOvertime.Result {
+        const { transaction, identifiers } = props;
+        const at = new Date();
+        const requests = (await this.hrRequestRepository.find({
+            options: {
+                populate: ["organization"],
+                lockMode: LockMode.PESSIMISTIC_WRITE,
+                orderBy: { effectiveAt: "ASC", createdAt: "ASC", id: "ASC" },
+                strategy: "select-in",
+                refresh: true,
+            },
+            where: {
+                executionStatus: { $in: [HRExecutionStatus.NOT_STARTED, HRExecutionStatus.SCHEDULED] },
+                $or: [{ effectiveAt: { $lte: at } }, { effectiveAt: null }],
+                status: HRRequestStatus.APPROVED,
+                type: HRRequestType.OVERTIME,
+                id: { $in: identifiers },
+            },
+            transaction,
+        })) as Entities.HRRequest<HRRequestType.OVERTIME>[];
+
+        if (requests.length) {
+            const employeeIds = [...new Set(requests.map(({ employee }) => employee.id))];
+            const dates = [...new Set(requests.map(({ payload }) => payload.date))].sort();
+            const employees = await this.employeeRepository.find({
+                options: { lockMode: LockMode.PESSIMISTIC_WRITE, orderBy: { id: "ASC" }, refresh: true },
+                where: { id: { $in: employeeIds } },
+                transaction,
+            });
+            const [assignments, recorded] = await Promise.all([
+                this.positionAssignmentRepository.find({
+                    options: { lockMode: LockMode.PESSIMISTIC_READ, orderBy: { id: "ASC" }, refresh: true },
+                    where: {
+                        status: { $in: [PositionAssignmentStatus.ACTIVE, PositionAssignmentStatus.CLOSED] },
+                        $or: [{ validTo: { $gt: dates[0] } }, { validTo: null }],
+                        validFrom: { $lte: dates[dates.length - 1] },
+                        employee: { id: { $in: employeeIds } },
+                    },
+                    transaction,
+                }),
+                this.hrRequestRepository.find({
+                    where: {
+                        executionStatus: HRExecutionStatus.APPLIED,
+                        employee: { id: { $in: employeeIds } },
+                        status: HRRequestStatus.APPROVED,
+                        payload: { date: { $in: dates } },
+                        type: HRRequestType.OVERTIME,
+                    },
+                    transaction,
+                }),
+            ]);
+            const employeesById = new Map(employees.map((employee) => [employee.id, employee]));
+            const assignmentsByEmployee = new Map<string, Entities.PositionAssignment[]>();
+            const recordedDays = new Set(
+                recorded.map(
+                    (request) => `${request.employee.id}/${(request.payload as Entities.HRRequest.Payload.Overtime).date}`,
+                ),
+            );
+            for (const assignment of assignments) {
+                const values = assignmentsByEmployee.get(assignment.employee.id) ?? [];
+                values.push(assignment);
+                assignmentsByEmployee.set(assignment.employee.id, values);
+            }
+
+            for (const request of requests) {
+                const employee = employeesById.get(request.employee.id)!;
+                const { endTime, date } = request.payload;
+                const end = DateTime.fromISO(`${date}T${endTime}`, { zone: employee.scheduleTimezone });
+                const effectiveAt = DateTime.max(...end.getPossibleOffsets())!.toJSDate();
+                const key = `${employee.id}/${date}`;
+
+                try {
+                    request.canApply();
+                    if (effectiveAt > at) {
+                        request.scheduleApplication({ effectiveAt });
+                    } else {
+                        request.beginApplication();
+                        employee.assertReady();
+                        const assignments = (assignmentsByEmployee.get(employee.id) ?? []).filter(
+                            (assignment) =>
+                                assignment.validFrom <= date && (!assignment.validTo || date < assignment.validTo),
+                        );
+
+                        if (![EmployeeStatus.ACTIVE, EmployeeStatus.TERMINATED].includes(employee.status)) {
+                            throw Exception.invariantViolation({
+                                messageKey: `${this.dictionaryPath}.INVALID_EMPLOYEE_STATUS`,
+                            });
+                        } else if (employee.termsValidFrom && date < employee.termsValidFrom) {
+                            throw Exception.invariantViolation({
+                                messageKey: `${this.dictionaryPath}.OVERTIME_TERMS_MISMATCH`,
+                            });
+                        } else if (assignments.length !== 1) {
+                            throw Exception.invariantViolation({
+                                messageKey: `${this.dictionaryPath}.PLACEMENT_NOT_FOUND`,
+                            });
+                        } else if (recordedDays.has(key)) {
+                            throw Exception.invariantViolation({
+                                messageKey: `${this.dictionaryPath}.OVERTIME_ALREADY_RECORDED`,
+                            });
+                        } else {
+                            request.markApplied({ result: request.calculateOvertime({ assignment: assignments[0] }) });
+                            recordedDays.add(key);
+                        }
+                    }
+                } catch (error) {
+                    if (!(error instanceof Exception) || Boolean(Exception.isRetryable(error))) {
+                        throw error;
+                    } else {
+                        request.markFailed({ reason: error.message });
+                    }
+                }
+            }
+        }
+
+        return requests;
     }
 
     public async beginAbsence(

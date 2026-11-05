@@ -1,6 +1,7 @@
 import { validateSync, ValidationError } from "class-validator";
 import { describe, expect, it } from "@jest/globals";
 
+import { IsTimeRange } from "./is-time-range.validator";
 import { NotEqualTo } from "./not-equal-to.validator";
 import { IsMsString } from "./is-ms-string.validator";
 import { IsOrdinal } from "./is-ordinal.validator";
@@ -16,6 +17,27 @@ function errors(decorator: PropertyDecorator, value: unknown, other?: unknown): 
 }
 
 describe("[Validator] - Algorithms", () => {
+    describe("[Function] - IsTimeRange", () => {
+        it.each([
+            ["18:00", "20:30", true],
+            ["00:00", "23:59", true],
+            ["18:00", "18:00", false],
+            ["23:00", "01:00", false],
+            ["18:00", "24:00", false],
+            ["18:60", "20:00", false],
+            ["8:00", "20:00", false],
+            ["18:00:00", "20:00", false],
+            [null, "20:00", false],
+            ["18:00", undefined, false],
+        ])("[case] - checks a single-day time range %s to %s (accepted: %s)", (start, end, accepted) => {
+            // Arrange / Act
+            const result = errors(IsTimeRange("other"), end, start);
+
+            // Assert
+            expect(result.length === 0).toBe(accepted);
+        });
+    });
+
     describe("[Function] - IsPeriod", () => {
         it.each([
             [{ unit: "DAY", startDate: "2026-02-28", endDate: "2026-03-01" }, true],

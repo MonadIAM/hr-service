@@ -36,6 +36,7 @@ const rules = [
     { name: "different property", decorator: Validator.NotEqualTo("other"), valid: "different", invalid: "same", message: "NOT_EQUAL_TO" },
     { name: "duration", decorator: Validator.IsMsString(), valid: "1s", invalid: "1oops", message: "IS_MS_STRING" },
     { name: "date only", decorator: Validator.IsDateOnly(), valid: "2026-02-28", invalid: "2026-02-30", message: "IS_DATE" },
+    { name: "time range", decorator: Validator.IsTimeRange("other"), valid: "20:00", invalid: "24:00", message: "IS_TIME_RANGE" },
     { name: "time zone", decorator: Validator.IsTimeZone(), valid: "Europe/London", invalid: "invalid/timezone", message: "IS_TIME_ZONE" },
     /* eslint-enable prettier/prettier */
 ];
@@ -44,11 +45,11 @@ describe("[Validator] - Default", () => {
     describe("[Behavior] - localized validators", () => {
         it.each(rules)(
             "[case] - validates, transforms and returns a localized error ($name)",
-            ({ decorator, valid, invalid, expected, message }) => {
+            ({ decorator, valid, invalid, expected, message, name }) => {
                 // Arrange
                 class Input {
                     declare public value: unknown;
-                    public other = "same";
+                    public other = name === "time range" ? "18:00" : "same";
                 }
                 decorator(Input.prototype, "value");
 

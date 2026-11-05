@@ -1,4 +1,5 @@
 {
+  "IS_TIME_RANGE": "The time interval must be within one day, use HH:mm and end after it starts.",
   "IS_PERIOD": "The period must have ordered boundaries matching its unit; timestamps must include an offset and use whole minutes.",
   "IS_TIME_ZONE": "The field {property} must be a valid time zone.",
   "REQUIRED": "The \"{label}\" field is required.",

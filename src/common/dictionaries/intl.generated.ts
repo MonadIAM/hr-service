@@ -231,6 +231,8 @@ export type I18nTranslations = {
             "INVALID_REVERSAL": string;
         };
         "hr-request-execution": {
+            "OVERTIME_ALREADY_RECORDED": string;
+            "OVERTIME_TERMS_MISMATCH": string;
             "ABSENCE_OVERLAP": string;
             "INSUFFICIENT_LEAVE_BALANCE": string;
             "ARCHIVED_LEAVE_POLICY": string;
@@ -246,6 +248,7 @@ export type I18nTranslations = {
         };
     };
     "validator": {
+        "IS_TIME_RANGE": string;
         "IS_PERIOD": string;
         "IS_TIME_ZONE": string;
         "REQUIRED": string;

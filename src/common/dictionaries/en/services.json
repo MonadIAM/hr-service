@@ -32,6 +32,8 @@
     "INVALID_REVERSAL": "A reversal must be created from an original entry that has not already been reversed."
   },
   "hr-request-execution": {
+    "OVERTIME_ALREADY_RECORDED": "Overtime has already been recorded for this employee on this date.",
+    "OVERTIME_TERMS_MISMATCH": "The overtime precedes the current employment terms.",
     "ABSENCE_OVERLAP": "The absence overlaps another absence of the employee.",
     "INSUFFICIENT_LEAVE_BALANCE": "The available leave balance is insufficient.",
     "ARCHIVED_LEAVE_POLICY": "The leave policy is archived.",

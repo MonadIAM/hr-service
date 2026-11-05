@@ -14,6 +14,7 @@ import {
     AbsenceStatus,
     RecordStatus,
     LeaveUnit,
+    PayPeriod,
 } from "~context/enums";
 import {
     PositionAssignment,
@@ -31,6 +32,272 @@ describe("[DomainService] - HRRequestExecution", () => {
     const suite = postgresSuite({
         repository: (context) => helpers.service(context),
         fixture: (entityManager) => new HRFixture(entityManager),
+    });
+
+    describe("[Method] - recordOvertime", () => {
+        async function createBatch(count: number): Promise<HRRequest<HRRequestType.OVERTIME>[]> {
+            const organization = await suite.fixtures().createOrganization();
+            return await suite.transaction(async (transaction) => {
+                const requests = Array.from({ length: count }, () => {
+                    const employee = new Employee({
+                        scheduleTimezone: "Europe/London",
+                        employmentStartedOn: "2020-01-01",
+                        status: EmployeeStatus.ACTIVE,
+                        termsValidFrom: "2020-01-01",
+                        employeeNumber: randomUUID(),
+                        firstName: "Overtime",
+                        lastName: "Employee",
+                        termsRevision: 1,
+                        organization,
+                    });
+                    const position = new Position({
+                        status: RecordStatus.ACTIVE,
+                        department: randomUUID(),
+                        plannedFte: "1",
+                        code: randomUUID(),
+                        title: "Engineer",
+                        team: randomUUID(),
+                        organization,
+                    });
+                    const assignment = new PositionAssignment({
+                        status: PositionAssignmentStatus.ACTIVE,
+                        department: position.department,
+                        positionTitle: position.title,
+                        salaryPeriod: PayPeriod.MONTH,
+                        salaryCurrency: "GBP",
+                        validFrom: "2020-01-01",
+                        placementSnapshot: {},
+                        salaryAmount: "2600",
+                        organization,
+                        employee,
+                        position,
+                        fte: "1",
+                    });
+                    const request = new HRRequest({
+                        payload: { date: "2020-07-01", startTime: "18:00", endTime: "20:30" },
+                        executionStatus: HRExecutionStatus.NOT_STARTED,
+                        status: HRRequestStatus.APPROVED,
+                        initiatorAccount: randomUUID(),
+                        idempotencyKey: randomUUID(),
+                        type: HRRequestType.OVERTIME,
+                        payloadSchemaVersion: 1,
+                        approvedRevision: 1,
+                        revision: 1,
+                        organization,
+                        employee,
+                    });
+                    transaction.persist([employee, position, assignment, request]);
+                    return request;
+                });
+                await transaction.flush();
+                return requests;
+            });
+        }
+
+        it("[case] - records the fact and estimate once without changing leave balances", async () => {
+            // Arrange
+            const [request] = await createBatch(1);
+
+            // Act
+            await suite.transaction((transaction) =>
+                suite.repository().service.recordOvertime({ identifiers: [request.id], transaction }),
+            );
+            const repeated = await suite.transaction((transaction) =>
+                suite.repository().service.recordOvertime({ identifiers: [request.id], transaction }),
+            );
+
+            // Assert
+            expect(repeated).toEqual([]);
+            await suite.transaction(async (transaction) => {
+                const entity = await transaction.findOneOrFail(HRRequest, { id: request.id });
+                expect(entity.executionStatus).toBe(HRExecutionStatus.APPLIED);
+                expect(entity.result).toMatchObject({
+                    estimatedAmount: "75.00",
+                    minutes: 150,
+                    hours: "2.500000",
+                    currency: "GBP",
+                });
+                expect(await transaction.count(LeaveLedgerEntry, { employee: { id: request.employee.id } })).toBe(0);
+                expect(await transaction.count(Absence, { employee: { id: request.employee.id } })).toBe(0);
+            });
+        });
+
+        it("[case] - isolates duplicate dates and missing assignments from valid requests", async () => {
+            // Arrange
+            const [first, missing, valid] = await createBatch(3);
+            const duplicate = await suite.fixtures().createHRRequest({
+                payload: first.payload,
+                employee: first.employee,
+                organization: first.organization,
+                status: HRRequestStatus.APPROVED,
+                type: HRRequestType.OVERTIME,
+                approvedRevision: 1,
+            });
+            await suite.transaction(async (transaction) => {
+                const assignment = await transaction.findOneOrFail(PositionAssignment, {
+                    employee: { id: missing.employee.id },
+                });
+                assignment.status = PositionAssignmentStatus.VOIDED;
+            });
+
+            // Act
+            await suite.transaction((transaction) =>
+                suite.repository().service.recordOvertime({
+                    identifiers: [first.id, duplicate.id, missing.id, valid.id],
+                    transaction,
+                }),
+            );
+
+            // Assert
+            await suite.transaction(async (transaction) => {
+                const entries = await transaction.find(HRRequest, { id: { $in: [first.id, duplicate.id] } });
+                expect(entries.filter(({ executionStatus }) => executionStatus === HRExecutionStatus.APPLIED)).toHaveLength(
+                    1,
+                );
+                expect(
+                    entries.find(({ executionStatus }) => executionStatus === HRExecutionStatus.FAILED)!.failure,
+                ).toContain("OVERTIME_ALREADY_RECORDED");
+                expect((await transaction.findOneOrFail(HRRequest, { id: missing.id })).failure).toContain(
+                    "PLACEMENT_NOT_FOUND",
+                );
+                expect((await transaction.findOneOrFail(HRRequest, { id: valid.id })).executionStatus).toBe(
+                    HRExecutionStatus.APPLIED,
+                );
+            });
+        });
+
+        it("[case] - serializes concurrent requests for one employee and date", async () => {
+            // Arrange
+            const [first] = await createBatch(1);
+            const second = await suite.fixtures().createHRRequest({
+                payload: first.payload,
+                employee: first.employee,
+                organization: first.organization,
+                status: HRRequestStatus.APPROVED,
+                type: HRRequestType.OVERTIME,
+                approvedRevision: 1,
+            });
+
+            // Act
+            await Promise.all(
+                [first, second].map((request) =>
+                    suite.transaction((transaction) =>
+                        suite.repository().service.recordOvertime({ identifiers: [request.id], transaction }),
+                    ),
+                ),
+            );
+
+            // Assert
+            await suite.transaction(async (transaction) => {
+                const entries = await transaction.find(HRRequest, { id: { $in: [first.id, second.id] } });
+                expect(entries.filter(({ executionStatus }) => executionStatus === HRExecutionStatus.APPLIED)).toHaveLength(
+                    1,
+                );
+                expect(
+                    entries.find(({ executionStatus }) => executionStatus === HRExecutionStatus.FAILED)!.failure,
+                ).toContain("OVERTIME_ALREADY_RECORDED");
+            });
+        });
+
+        it("[case] - waits for the local end time and skips unapproved and future-effective requests", async () => {
+            // Arrange
+            const [pending, scheduled, draft, future] = await createBatch(4);
+            await suite.transaction(async (transaction) => {
+                const requests = await transaction.find(HRRequest, { id: { $in: [pending.id, scheduled.id] } });
+                for (const request of requests) {
+                    request.payload = { date: "2030-07-01", startTime: "18:00", endTime: "20:00" };
+                }
+                const request = await transaction.findOneOrFail(HRRequest, { id: scheduled.id });
+                request.executionStatus = HRExecutionStatus.SCHEDULED;
+                request.effectiveAt = new Date(0);
+                (await transaction.findOneOrFail(HRRequest, { id: draft.id })).status = HRRequestStatus.DRAFT;
+                (await transaction.findOneOrFail(HRRequest, { id: future.id })).effectiveAt = new Date(
+                    "2030-07-01T00:00:00Z",
+                );
+            });
+
+            // Act
+            await suite.transaction((transaction) =>
+                suite.repository().service.recordOvertime({
+                    identifiers: [pending.id, scheduled.id, draft.id, future.id],
+                    transaction,
+                }),
+            );
+
+            // Assert
+            await suite.transaction(async (transaction) => {
+                const requests = await transaction.find(HRRequest, { id: { $in: [pending.id, scheduled.id] } });
+                for (const request of requests) {
+                    expect(request.executionStatus).toBe(HRExecutionStatus.SCHEDULED);
+                    expect(request.effectiveAt!.toISOString()).toBe("2030-07-01T19:00:00.000Z");
+                    expect(request.result).toBeNull();
+                }
+                const skipped = await transaction.find(HRRequest, { id: { $in: [draft.id, future.id] } });
+                expect(skipped.map(({ executionStatus }) => executionStatus)).toEqual([
+                    HRExecutionStatus.NOT_STARTED,
+                    HRExecutionStatus.NOT_STARTED,
+                ]);
+            });
+        });
+
+        it("[case] - rolls back the recorded fact and estimate with the transaction", async () => {
+            // Arrange
+            const [request] = await createBatch(1);
+
+            // Act
+            await expect(
+                suite.transaction(async (transaction) => {
+                    await suite.repository().service.recordOvertime({ identifiers: [request.id], transaction });
+                    await transaction.flush();
+                    throw new Error("rollback overtime");
+                }),
+            ).rejects.toThrow("rollback overtime");
+
+            // Assert
+            await suite.transaction(async (transaction) => {
+                const entity = await transaction.findOneOrFail(HRRequest, { id: request.id });
+                expect(entity.executionStatus).toBe(HRExecutionStatus.NOT_STARTED);
+                expect(entity.result).toBeNull();
+            });
+        });
+
+        it("[case] - keeps SQL bounded for 1, 2, 10 and 100 requests", async () => {
+            const counts: { reads: number; writes: number }[] = [];
+            async function measure(count: number): Promise<void> {
+                const requests = await createBatch(count);
+                await suite.transaction(async (transaction) => {
+                    const execute = jest.spyOn(transaction.getConnection(), "execute");
+                    try {
+                        await suite
+                            .repository()
+                            .service.recordOvertime({ identifiers: requests.map(({ id }) => id), transaction });
+                        await transaction.flush();
+                        const queries = execute.mock.calls.map(([sql]) => String(sql).toLowerCase());
+                        counts.push({
+                            reads: queries.filter((sql) => sql.startsWith("select")).length,
+                            writes: queries.filter((sql) => /^(insert|update|delete)/.test(sql)).length,
+                        });
+                        expect(
+                            await transaction.count(HRRequest, {
+                                executionStatus: HRExecutionStatus.APPLIED,
+                                id: { $in: requests.map(({ id }) => id) },
+                            }),
+                        ).toBe(count);
+                    } finally {
+                        execute.mockRestore();
+                    }
+                });
+            }
+            await measure(1);
+            await measure(2);
+            await measure(10);
+            await measure(100);
+            expect(counts[0].reads).toBeLessThanOrEqual(7);
+            expect(counts[0].writes).toBe(1);
+            expect(counts[1].reads).toBeLessThanOrEqual(7);
+            expect(counts[1].writes).toBe(1);
+            expect(counts.slice(1)).toEqual([counts[1], counts[1], counts[1]]);
+        });
     });
 
     describe("[Behavior] - absence execution", () => {

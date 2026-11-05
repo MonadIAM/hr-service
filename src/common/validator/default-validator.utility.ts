@@ -33,11 +33,12 @@ import {
 } from "class-validator";
 
 import { ValidateByType } from "./algorithms/validate-by-type.validator";
-import { IsPeriod } from "./algorithms/is-period.validator";
+import { IsTimeRange } from "./algorithms/is-time-range.validator";
 import { IsDateOnly } from "./algorithms/is-date-only.validator";
 import { NotEqualTo } from "./algorithms/not-equal-to.validator";
 import { IsMsString } from "./algorithms/is-ms-string.validator";
 import { IsOrdinal } from "./algorithms/is-ordinal.validator";
+import { IsPeriod } from "./algorithms/is-period.validator";
 
 export abstract class StandardValidationDecorators {
     private static readonly dictionaryPath = "validator";
@@ -178,6 +179,11 @@ export abstract class StandardValidationDecorators {
             Type(() => Date)(target, key);
             return IsDate(this.wrap("IS_DATE", { property: key }, options, label))(target, key);
         };
+    }
+
+    public static IsTimeRange(from: string, options?: ValidationOptions, label?: string): PropertyDecorator {
+        return (target, key) =>
+            IsTimeRange(from, this.wrap("IS_TIME_RANGE", { property: key }, options, label))(target, key);
     }
 
     public static IsPeriod(
