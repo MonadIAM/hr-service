@@ -1,5 +1,6 @@
 import { WorkCalendarRepository } from "~context/infrastructure/repositories/work-calendar.repository";
 import { OrganizationRepository } from "~context/infrastructure/repositories/organization.repository";
+import { HRRequestRepository } from "~context/infrastructure/repositories/hr-request.repository";
 import { WorkCalendarService } from "~context/domain/services/work-calendar.service";
 
 export class WorkCalendarIntegrationHelpers implements Integration.Domain.WorkCalendar.Contract {
@@ -7,10 +8,11 @@ export class WorkCalendarIntegrationHelpers implements Integration.Domain.WorkCa
         const repositories = {
             organization: new OrganizationRepository(context.readManager),
             workCalendar: new WorkCalendarRepository(context.readManager),
+            hrRequest: new HRRequestRepository(context.readManager),
         };
 
         return {
-            service: new WorkCalendarService(repositories.organization, repositories.workCalendar),
+            service: new WorkCalendarService(repositories.organization, repositories.workCalendar, repositories.hrRequest),
             repositories,
         };
     }

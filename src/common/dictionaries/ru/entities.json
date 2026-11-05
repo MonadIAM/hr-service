@@ -36,6 +36,7 @@
         "NO_CHANGES_DETECTED": "Изменения не обнаружены."
     },
     "employee": {
+    "OPERATION_PENDING": "Для сотрудника выполняется заявление о приёме на работу.",
         "CANNOT_UPDATE_ARCHIVED": "Архивную запись нельзя изменить.",
         "NO_CHANGES_DETECTED": "Изменения не обнаружены.",
         "EMPTY_UPDATE_PATCH": "Не переданы поля для изменения.",

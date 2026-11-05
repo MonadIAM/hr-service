@@ -11,6 +11,7 @@ export class Employee implements Entities.Employee.Contract {
     public version: number = 1;
     public createdAt: Date;
     public updatedAt?: Date;
+    public reservation?: string;
 
     public employmentStartedOn?: string;
     public scheduleAnchorDate?: string;
@@ -72,7 +73,30 @@ export class Employee implements Entities.Employee.Contract {
         this.leavePolicy = props.leavePolicy;
     }
 
+    public reserve(request: string): void {
+        this.assertReady();
+        this.reservation = request;
+        this.updatedAt = new Date();
+    }
+
+    public release(request: string): void {
+        if (this.reservation === request) {
+            this.reservation = undefined;
+            this.updatedAt = new Date();
+        } else {
+            throw Exception.invariantViolation({ messageKey: `${Employee.dictionaryPath}.OPERATION_PENDING` });
+        }
+    }
+
+    public assertReady(): void {
+        if (this.reservation) {
+            throw Exception.invariantViolation({ messageKey: `${Employee.dictionaryPath}.OPERATION_PENDING` });
+        }
+    }
+
     public update({ patch }: Entities.Employee.ChangeDataProps): void {
+        this.assertReady();
+
         if (this.status === EmployeeStatus.ARCHIVED) {
             throw Exception.invariantViolation({ messageKey: `${Employee.dictionaryPath}.CANNOT_UPDATE_ARCHIVED` });
         } else {
@@ -96,6 +120,8 @@ export class Employee implements Entities.Employee.Contract {
     }
 
     public linkAccount({ account }: Entities.Employee.LinkAccount.Props): void {
+        this.assertReady();
+
         if (this.status === EmployeeStatus.ARCHIVED) {
             throw Exception.invariantViolation({ messageKey: `${Employee.dictionaryPath}.CANNOT_UPDATE_ARCHIVED` });
         } else if (this.account) {
@@ -107,6 +133,8 @@ export class Employee implements Entities.Employee.Contract {
     }
 
     public unlinkAccount(): void {
+        this.assertReady();
+
         if (this.status === EmployeeStatus.ARCHIVED) {
             throw Exception.invariantViolation({ messageKey: `${Employee.dictionaryPath}.CANNOT_UPDATE_ARCHIVED` });
         } else if (this.account) {
@@ -118,6 +146,8 @@ export class Employee implements Entities.Employee.Contract {
     }
 
     public setHRBP({ employee }: Entities.Employee.SetHRBP.Props): void {
+        this.assertReady();
+
         if (this.status === EmployeeStatus.ARCHIVED) {
             throw Exception.invariantViolation({ messageKey: `${Employee.dictionaryPath}.CANNOT_UPDATE_ARCHIVED` });
         } else if (employee?.id === this.hrBpEmployee?.id) {
@@ -130,7 +160,9 @@ export class Employee implements Entities.Employee.Contract {
         }
     }
 
-    public hire(props: Entities.Employee.Hire.Props): void {
+    public canHire(props: Entities.Employee.Hire.Props): void {
+        this.assertReady();
+
         if (![EmployeeStatus.DRAFT, EmployeeStatus.TERMINATED].includes(this.status)) {
             throw Exception.invariantViolation({ messageKey: `${Employee.dictionaryPath}.INVALID_STATUS` });
         } else if (this.employmentEndedOn && props.employmentStartedOn <= this.employmentEndedOn) {
@@ -139,29 +171,35 @@ export class Employee implements Entities.Employee.Contract {
             throw Exception.invariantViolation({ messageKey: `${Employee.dictionaryPath}.ORGANIZATION_MISMATCH` });
         } else if (this.hasArchivedTerms(props)) {
             throw Exception.invariantViolation({ messageKey: `${Employee.dictionaryPath}.ARCHIVED_TERMS` });
-        } else {
-            if (this.status === EmployeeStatus.TERMINATED) {
-                ++this.termsRevision;
-            }
-            this.status = EmployeeStatus.ACTIVE;
-            this.employmentStartedOn = props.employmentStartedOn;
-            this.employmentEndedOn = undefined;
-            this.termsValidFrom = props.termsValidFrom;
-
-            this.contractType = props.contractType;
-            this.contractEndsOn = props.contractEndsOn;
-
-            this.scheduleAnchorDate = props.scheduleAnchorDate;
-            this.scheduleTimezone = props.scheduleTimezone;
-
-            this.workCalendar = props.workCalendar;
-            this.workSchedule = props.workSchedule;
-            this.leavePolicy = props.leavePolicy;
-            this.updatedAt = new Date();
         }
     }
 
+    public hire(props: Entities.Employee.Hire.Props): void {
+        this.canHire(props);
+        if (this.status === EmployeeStatus.TERMINATED) {
+            ++this.termsRevision;
+        }
+
+        this.status = EmployeeStatus.ACTIVE;
+        this.employmentStartedOn = props.employmentStartedOn;
+        this.employmentEndedOn = undefined;
+        this.termsValidFrom = props.termsValidFrom;
+
+        this.contractType = props.contractType;
+        this.contractEndsOn = props.contractEndsOn;
+
+        this.scheduleAnchorDate = props.scheduleAnchorDate;
+        this.scheduleTimezone = props.scheduleTimezone;
+
+        this.workCalendar = props.workCalendar;
+        this.workSchedule = props.workSchedule;
+        this.leavePolicy = props.leavePolicy;
+        this.updatedAt = new Date();
+    }
+
     public changeTerms(props: Entities.Employee.ChangeTerms.Props): void {
+        this.assertReady();
+
         if (this.status !== EmployeeStatus.ACTIVE) {
             throw Exception.invariantViolation({ messageKey: `${Employee.dictionaryPath}.INVALID_STATUS` });
         } else if (props.termsValidFrom < this.termsValidFrom!) {
@@ -188,6 +226,8 @@ export class Employee implements Entities.Employee.Contract {
     }
 
     public canTerminate({ employmentEndedOn }: Entities.Employee.Terminate.Props): void {
+        this.assertReady();
+
         if (this.status !== EmployeeStatus.ACTIVE) {
             throw Exception.invariantViolation({ messageKey: `${Employee.dictionaryPath}.INVALID_STATUS` });
         } else if (employmentEndedOn < this.employmentStartedOn! || employmentEndedOn < this.termsValidFrom!) {
@@ -205,6 +245,8 @@ export class Employee implements Entities.Employee.Contract {
     }
 
     public archive(): void {
+        this.assertReady();
+
         if ([EmployeeStatus.DRAFT, EmployeeStatus.TERMINATED].includes(this.status)) {
             this.status = EmployeeStatus.ARCHIVED;
             this.updatedAt = new Date();
@@ -214,6 +256,8 @@ export class Employee implements Entities.Employee.Contract {
     }
 
     public restore(): void {
+        this.assertReady();
+
         if (this.status === EmployeeStatus.ARCHIVED) {
             this.status = this.employmentEndedOn ? EmployeeStatus.TERMINATED : EmployeeStatus.DRAFT;
             this.updatedAt = new Date();

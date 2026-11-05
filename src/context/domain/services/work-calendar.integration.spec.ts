@@ -5,7 +5,7 @@ import { WorkCalendarIntegrationHelpers } from "~testing/integration/domain-serv
 import { postgresSuite } from "~testing/integration/containers/postgres.suite";
 import { HRFixture } from "~testing/integration/repositories/hr.fixture";
 import { WorkCalendar } from "~context/domain/entities";
-import { RecordStatus } from "~context/enums";
+import { HRExecutionStatus, HRRequestStatus, HRRequestType, RecordStatus } from "~context/enums";
 
 const helpers = new WorkCalendarIntegrationHelpers();
 
@@ -13,6 +13,36 @@ describe("[DomainService] - WorkCalendar", () => {
     const suite = postgresSuite({
         repository: (context) => helpers.service(context),
         fixture: (entityManager) => new HRFixture(entityManager),
+    });
+
+    describe("[Behavior] - pending hire references", () => {
+        it("[case] - protects a referenced record until the hire finishes", async () => {
+            // Arrange
+            const entity = await suite.fixtures().createWorkCalendar();
+            await suite.fixtures().createHRRequest({
+                executionStatus: HRExecutionStatus.RUNNING,
+                status: HRRequestStatus.APPROVED,
+                type: HRRequestType.HIRE,
+                organization: entity.organization,
+                payload: { workCalendar: entity.id },
+                approvedRevision: 1,
+            });
+
+            // Act
+            const result = suite.transaction((transaction) =>
+                suite.repository().service.archive({
+                    organization: entity.organization.id,
+                    realm: entity.organization.realm,
+                    id: entity.id,
+                    transaction,
+                }),
+            );
+
+            // Assert
+            await expect(result).rejects.toThrow("services.work-calendar.HIRE_PENDING");
+            const unchanged = await suite.transaction((transaction) => transaction.findOneOrFail(WorkCalendar, entity.id));
+            expect(unchanged.status).toBe(RecordStatus.ACTIVE);
+        });
     });
 
     describe("[Behavior] - persistence and organization isolation", () => {

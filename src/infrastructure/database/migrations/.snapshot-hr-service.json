@@ -750,6 +750,23 @@
           "enumItems": [],
           "mappedType": "uuid"
         },
+        "reservation": {
+          "name": "reservation",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
         "schedule_anchor_date": {
           "name": "schedule_anchor_date",
           "type": "date",
@@ -1028,16 +1045,14 @@
           ],
           "referencedTableName": "hr.employee"
         },
-        "employee_leave_policy_id_organization_id_foreign": {
+        "employee_leave_policy_id_foreign": {
           "columnNames": [
-            "leave_policy_id",
-            "organization_id"
+            "leave_policy_id"
           ],
-          "constraintName": "employee_leave_policy_id_organization_id_foreign",
+          "constraintName": "employee_leave_policy_id_foreign",
           "localTableName": "hr.employee",
           "referencedColumnNames": [
-            "id",
-            "organization_id"
+            "id"
           ],
           "referencedTableName": "hr.leave_policy"
         },
@@ -1053,29 +1068,25 @@
           "referencedTableName": "hr.organization",
           "deleteRule": "cascade"
         },
-        "employee_work_calendar_id_organization_id_foreign": {
+        "employee_work_calendar_id_foreign": {
           "columnNames": [
-            "work_calendar_id",
-            "organization_id"
+            "work_calendar_id"
           ],
-          "constraintName": "employee_work_calendar_id_organization_id_foreign",
+          "constraintName": "employee_work_calendar_id_foreign",
           "localTableName": "hr.employee",
           "referencedColumnNames": [
-            "id",
-            "organization_id"
+            "id"
           ],
           "referencedTableName": "hr.work_calendar"
         },
-        "employee_work_schedule_id_organization_id_foreign": {
+        "employee_work_schedule_id_foreign": {
           "columnNames": [
-            "work_schedule_id",
-            "organization_id"
+            "work_schedule_id"
           ],
-          "constraintName": "employee_work_schedule_id_organization_id_foreign",
+          "constraintName": "employee_work_schedule_id_foreign",
           "localTableName": "hr.employee",
           "referencedColumnNames": [
-            "id",
-            "organization_id"
+            "id"
           ],
           "referencedTableName": "hr.work_schedule"
         }
@@ -3793,6 +3804,23 @@
           "enumItems": [],
           "mappedType": "text"
         },
+        "reservation": {
+          "name": "reservation",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
         "status": {
           "name": "status",
           "type": "hr.record_status",
@@ -4249,6 +4277,7 @@
           "comment": null,
           "collation": null,
           "enumItems": [
+            "RESERVED",
             "ACTIVE",
             "CLOSED",
             "VOIDED"
@@ -4350,7 +4379,7 @@
           "keyName": "position_assignment_active_employee_unique",
           "primary": false,
           "unique": false,
-          "expression": "CREATE UNIQUE INDEX \"position_assignment_active_employee_unique\" ON \"hr\".\"position_assignment\" (employee_id) WHERE status = 'ACTIVE'"
+          "expression": "CREATE UNIQUE INDEX \"position_assignment_active_employee_unique\" ON \"hr\".\"position_assignment\" (employee_id) WHERE status IN ('ACTIVE', 'RESERVED')"
         },
         {
           "columnNames": [],
@@ -4359,7 +4388,7 @@
           "keyName": "position_assignment_active_position_unique",
           "primary": false,
           "unique": false,
-          "expression": "CREATE UNIQUE INDEX \"position_assignment_active_position_unique\" ON \"hr\".\"position_assignment\" (position_id) WHERE status = 'ACTIVE'"
+          "expression": "CREATE UNIQUE INDEX \"position_assignment_active_position_unique\" ON \"hr\".\"position_assignment\" (position_id) WHERE status IN ('ACTIVE', 'RESERVED')"
         },
         {
           "columnNames": [
@@ -4410,18 +4439,14 @@
       "checks": [],
       "triggers": [],
       "foreignKeys": {
-        "position_assignment_closed_by_request_id_employe_5d1df_foreign": {
+        "position_assignment_closed_by_request_id_foreign": {
           "columnNames": [
-            "closed_by_request_id",
-            "employee_id",
-            "organization_id"
+            "closed_by_request_id"
           ],
-          "constraintName": "position_assignment_closed_by_request_id_employe_5d1df_foreign",
+          "constraintName": "position_assignment_closed_by_request_id_foreign",
           "localTableName": "hr.position_assignment",
           "referencedColumnNames": [
-            "id",
-            "employee_id",
-            "organization_id"
+            "id"
           ],
           "referencedTableName": "hr.hr_request"
         },
@@ -6098,6 +6123,7 @@
       "name": "assignment_status",
       "schema": "hr",
       "items": [
+        "RESERVED",
         "ACTIVE",
         "CLOSED",
         "VOIDED"

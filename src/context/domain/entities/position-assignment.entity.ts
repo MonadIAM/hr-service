@@ -55,6 +55,25 @@ export class PositionAssignment implements Entities.PositionAssignment.Contract 
         this.position = props.position;
     }
 
+    public activate(): void {
+        if (this.status === PositionAssignmentStatus.RESERVED) {
+            this.status = PositionAssignmentStatus.ACTIVE;
+            this.canCreate();
+            this.updatedAt = new Date();
+        } else {
+            throw Exception.invariantViolation({ messageKey: `${PositionAssignment.dictionaryPath}.INVALID_STATUS` });
+        }
+    }
+
+    public release(): void {
+        if (this.status === PositionAssignmentStatus.RESERVED) {
+            this.status = PositionAssignmentStatus.VOIDED;
+            this.updatedAt = new Date();
+        } else {
+            throw Exception.invariantViolation({ messageKey: `${PositionAssignment.dictionaryPath}.INVALID_STATUS` });
+        }
+    }
+
     public close({ validTo, request }: Entities.PositionAssignment.Close.Props): void {
         if (this.status !== PositionAssignmentStatus.ACTIVE) {
             throw Exception.invariantViolation({ messageKey: `${PositionAssignment.dictionaryPath}.INVALID_STATUS` });
@@ -74,7 +93,7 @@ export class PositionAssignment implements Entities.PositionAssignment.Contract 
     }
 
     public void(): void {
-        if (this.status === PositionAssignmentStatus.VOIDED) {
+        if ([PositionAssignmentStatus.RESERVED, PositionAssignmentStatus.VOIDED].includes(this.status)) {
             throw Exception.invariantViolation({ messageKey: `${PositionAssignment.dictionaryPath}.INVALID_STATUS` });
         } else {
             this.status = PositionAssignmentStatus.VOIDED;
@@ -94,6 +113,16 @@ export class PositionAssignment implements Entities.PositionAssignment.Contract 
             });
         } else if (this.hasRequestMismatch()) {
             throw Exception.invariantViolation({ messageKey: `${PositionAssignment.dictionaryPath}.REQUEST_MISMATCH` });
+        } else if (this.status === PositionAssignmentStatus.RESERVED) {
+            if (
+                !this.sourceRequest ||
+                this.position.status !== RecordStatus.ACTIVE ||
+                ![EmployeeStatus.DRAFT, EmployeeStatus.TERMINATED].includes(this.employee.status)
+            ) {
+                throw Exception.invariantViolation({
+                    messageKey: `${PositionAssignment.dictionaryPath}.INACTIVE_REFERENCE`,
+                });
+            }
         } else if (this.status === PositionAssignmentStatus.ACTIVE) {
             if (this.employee.status !== EmployeeStatus.ACTIVE || this.position.status !== RecordStatus.ACTIVE) {
                 throw Exception.invariantViolation({

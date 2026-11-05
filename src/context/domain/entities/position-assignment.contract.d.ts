@@ -32,6 +32,8 @@ declare global {
 
                 close(props: Close.Props): void;
                 canCreate(): void;
+                activate(): void;
+                release(): void;
                 void(): void;
             }
 

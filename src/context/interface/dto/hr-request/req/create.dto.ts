@@ -7,6 +7,7 @@ import { Validator } from "~common/validator";
 import { ChangeTermsPayloadDTO } from "../utils/change-terms-payload.dto";
 import { TerminatePayloadDTO } from "../utils/terminate-payload.dto";
 import { TransferPayloadDTO } from "../utils/transfer-payload.dto";
+import { HirePayloadDTO } from "../utils/hire-payload.dto";
 
 @ApiSchema({ name: "HRRequestCreateBody" })
 export class CreateBodyDTO<T extends HRRequestType = HRRequestType> {
@@ -44,6 +45,8 @@ export class CreateBodyDTO<T extends HRRequestType = HRRequestType> {
         [HRRequestType.CHANGE_TERMS]: ChangeTermsPayloadDTO,
         [HRRequestType.TERMINATE]: TerminatePayloadDTO,
         [HRRequestType.TRANSFER]: TransferPayloadDTO,
+        [HRRequestType.REHIRE]: HirePayloadDTO,
+        [HRRequestType.HIRE]: HirePayloadDTO,
     })
     @ApiProperty({ required: true, type: Object })
     declare public payload: Entities.HRRequest.Payload.ByType[T];

@@ -10,6 +10,7 @@ declare global {
                 version: number;
                 createdAt: Date;
                 updatedAt?: Date;
+                reservation?: string;
 
                 previousStatus?: RecordStatus;
                 budgetPeriod?: PayPeriod;
@@ -33,6 +34,8 @@ declare global {
 
                 completePlacement(rejected: boolean): void;
                 update(props: ChangeDataProps): void;
+                reserve(request: string): void;
+                release(request: string): void;
                 assertReady(): void;
                 canPurge(): void;
                 archive(): void;

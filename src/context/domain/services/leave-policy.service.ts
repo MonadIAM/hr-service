@@ -1,9 +1,13 @@
 import { Injectable, Inject, Scope } from "@nestjs/common";
 import { LockMode } from "@mikro-orm/core";
 
-import { LEAVE_POLICY_REPOSITORY, ORGANIZATION_REPOSITORY } from "~context/infrastructure/repositories";
+import { HRExecutionStatus, HRRequestType, RecordStatus } from "~context/enums";
 import { Exception } from "~common/exceptions";
-import { RecordStatus } from "~context/enums";
+import {
+    LEAVE_POLICY_REPOSITORY,
+    ORGANIZATION_REPOSITORY,
+    HR_REQUEST_REPOSITORY,
+} from "~context/infrastructure/repositories";
 
 import { LeavePolicy } from "../entities";
 
@@ -16,6 +20,8 @@ export class LeavePolicyService implements Services.LeavePolicy.Contract {
         private readonly organizationRepository: Repositories.Organization.Contract,
         @Inject(LEAVE_POLICY_REPOSITORY)
         private readonly leavePolicyRepository: Repositories.LeavePolicy.Contract,
+        @Inject(HR_REQUEST_REPOSITORY)
+        private readonly hrRequestRepository: Repositories.HRRequest.Contract,
     ) {}
 
     public async create(props: Services.LeavePolicy.Create.Props): Services.LeavePolicy.Create.Result {
@@ -77,6 +83,20 @@ export class LeavePolicyService implements Services.LeavePolicy.Contract {
             transaction,
         });
 
+        const pending = await this.hrRequestRepository.findUnique({
+            where: {
+                type: { $in: [HRRequestType.HIRE, HRRequestType.REHIRE] },
+                executionStatus: HRExecutionStatus.RUNNING,
+                payload: { leavePolicy: id },
+                organization,
+            },
+            transaction,
+        });
+
+        if (pending) {
+            throw Exception.invariantViolation({ messageKey: `${this.dictionaryPath}.HIRE_PENDING` });
+        }
+
         policyEntity.archive();
 
         return policyEntity;
@@ -102,6 +122,20 @@ export class LeavePolicyService implements Services.LeavePolicy.Contract {
             where: { organization: { realm: props.realm, id: organization }, id },
             transaction,
         });
+
+        const pending = await this.hrRequestRepository.findUnique({
+            where: {
+                type: { $in: [HRRequestType.HIRE, HRRequestType.REHIRE] },
+                executionStatus: HRExecutionStatus.RUNNING,
+                payload: { leavePolicy: id },
+                organization,
+            },
+            transaction,
+        });
+
+        if (pending) {
+            throw Exception.invariantViolation({ messageKey: `${this.dictionaryPath}.HIRE_PENDING` });
+        }
 
         policyEntity.canPurge();
 
