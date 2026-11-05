@@ -97,6 +97,14 @@ export enum LeaveUnit {
     /* eslint-enable prettier/prettier */
 }
 
+export enum LeaveDayCounting {
+    /* eslint-disable prettier/prettier */
+    CALENDAR_EXCLUDING_PUBLIC_HOLIDAYS = "CALENDAR_EXCLUDING_PUBLIC_HOLIDAYS",
+    SCHEDULED_MINUTES                  = "SCHEDULED_MINUTES",
+    CALENDAR_DAYS                      = "CALENDAR_DAYS",
+    /* eslint-enable prettier/prettier */
+}
+
 export enum AbsenceStatus {
     /* eslint-disable prettier/prettier */
     IN_PROGRESS = "IN_PROGRESS",

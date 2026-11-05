@@ -56,6 +56,8 @@ declare namespace Services.HRRequestExecution {
     interface ProcessorContract {
         scheduleApplication: ScheduleApplication.Signature;
         beginApplication: BeginApplication.Signature;
+        advanceAbsences: AdvanceAbsences.Signature;
+        beginAbsence: BeginAbsence.Signature;
         adjustLeave: AdjustLeave.Signature;
         markApplied: MarkApplied.Signature;
         changeTerms: ChangeTerms.Signature;
@@ -64,6 +66,29 @@ declare namespace Services.HRRequestExecution {
         beginHire: BeginHire.Signature;
         transfer: Transfer.Signature;
         cancel: Cancel.Signature;
+    }
+
+    namespace BeginAbsence {
+        type Props = {
+            transaction: ORM.EntityManager;
+            identifiers: string[];
+        };
+
+        type Result = Promise<Entities.HRRequest[]>;
+
+        type Signature = (props: Props) => Result;
+    }
+
+    namespace AdvanceAbsences {
+        type Props = {
+            transaction: ORM.EntityManager;
+            identifiers: string[];
+            at: Date;
+        };
+
+        type Result = Promise<Entities.Absence[]>;
+
+        type Signature = (props: Props) => Result;
     }
 
     namespace AdjustLeave {

@@ -1,3 +1,5 @@
+import { DateTime } from "luxon";
+
 import { AbsenceStatus, LeaveUnit } from "~context/enums";
 
 declare global {
@@ -32,7 +34,9 @@ declare global {
                 leaveLedgerEntries: ORM.Collection<Entities.LeaveLedgerEntry>;
 
                 advanceStatus(props: AdvanceStatus.Props): void;
+                calculate(props: Calculate.Props): void;
                 cancel(props: Cancel.Props): void;
+                period(): Period.Result;
                 canCreate(): void;
             }
 
@@ -55,6 +59,49 @@ declare global {
                 sourceRequest: Entities.HRRequest;
                 employee: Entities.Employee;
             };
+
+            namespace Period {
+                type Result = [Date, Date];
+            }
+
+            namespace Calculate {
+                type Props = {
+                    exceptions: Entities.WorkCalendarException[];
+                };
+            }
+
+            namespace CanCalculate {
+                type Props = {
+                    rule: Entities.LeavePolicy.Rule;
+                    startDate: string;
+                    lastDate: string;
+                };
+            }
+
+            namespace CalculateDays {
+                type Props = {
+                    exceptions: Entities.WorkCalendarException[];
+                    rule: Entities.LeavePolicy.Rule;
+                };
+            }
+
+            namespace CalculateMinutes {
+                type Props = {
+                    exceptions: Entities.WorkCalendarException[];
+                    startDate: string;
+                    lastDate: string;
+                };
+            }
+
+            namespace WorkIntervals {
+                type Props = {
+                    exception?: Entities.WorkCalendarException;
+                    anchor?: DateTime;
+                    day: DateTime;
+                };
+
+                type Result = Entities.WorkSchedule.Pattern.Interval[];
+            }
 
             namespace AdvanceStatus {
                 type Props = {

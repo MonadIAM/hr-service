@@ -1,7 +1,6 @@
 import { describe, expect, it, jest } from "@jest/globals";
 import { randomUUID } from "node:crypto";
 
-import { PositionAssignment, LeaveLedgerEntry, HRRequest, Employment, Employee, Position } from "~context/domain/entities";
 import { HRRequestExecutionIntegrationHelpers } from "~testing/integration/domain-service/hr-request-execution.helpers";
 import { postgresSuite } from "~testing/integration/containers/postgres.suite";
 import { HRFixture } from "~testing/integration/repositories/hr.fixture";
@@ -11,9 +10,20 @@ import {
     HRRequestStatus,
     EmployeeStatus,
     HRRequestType,
+    LeaveLedgerKind,
+    AbsenceStatus,
     RecordStatus,
     LeaveUnit,
 } from "~context/enums";
+import {
+    PositionAssignment,
+    LeaveLedgerEntry,
+    Employment,
+    HRRequest,
+    Employee,
+    Position,
+    Absence,
+} from "~context/domain/entities";
 
 const helpers = new HRRequestExecutionIntegrationHelpers();
 
@@ -21,6 +31,424 @@ describe("[DomainService] - HRRequestExecution", () => {
     const suite = postgresSuite({
         repository: (context) => helpers.service(context),
         fixture: (entityManager) => new HRFixture(entityManager),
+    });
+
+    describe("[Behavior] - absence execution", () => {
+        async function createBatch(count: number, sharedEmployee = false): Promise<HRRequest<HRRequestType.ABSENCE>[]> {
+            const organization = await suite.fixtures().createOrganization();
+            const workCalendar = await suite.fixtures().createWorkCalendar({ organization, verifiedThrough: "2031-12-31" });
+            const workSchedule = await suite.fixtures().createWorkSchedule({ organization });
+            const leavePolicy = await suite.fixtures().createLeavePolicy({ organization });
+            return await suite.transaction(async (transaction) => {
+                let shared: Employee | undefined;
+                const requests = Array.from({ length: count }, () => {
+                    const employee =
+                        shared ??
+                        new Employee({
+                            scheduleTimezone: "Europe/London",
+                            employmentStartedOn: "2026-01-01",
+                            scheduleAnchorDate: "2026-01-01",
+                            status: EmployeeStatus.ACTIVE,
+                            termsValidFrom: "2026-01-01",
+                            employeeNumber: randomUUID(),
+                            firstName: "Absence",
+                            lastName: "Employee",
+                            termsRevision: 1,
+                            workCalendar,
+                            workSchedule,
+                            organization,
+                            leavePolicy,
+                        });
+                    const request = new HRRequest({
+                        executionStatus: HRExecutionStatus.NOT_STARTED,
+                        payloadSchemaVersion: 1,
+                        initiatorAccount: randomUUID(),
+                        idempotencyKey: randomUUID(),
+                        status: HRRequestStatus.APPROVED,
+                        type: HRRequestType.ABSENCE,
+                        approvedRevision: 1,
+                        revision: 1,
+                        organization,
+                        employee,
+                        payload: {
+                            startDate: "2030-06-01",
+                            endDate: "2030-06-04",
+                            poolCode: "ANNUAL",
+                            unit: LeaveUnit.DAY,
+                        },
+                    });
+                    transaction.persist(request);
+                    if (!shared) {
+                        transaction.persist([
+                            employee,
+                            new LeaveLedgerEntry({
+                                calculationSnapshot: {},
+                                idempotencyKey: randomUUID(),
+                                kind: LeaveLedgerKind.ADJUSTMENT,
+                                reason: "Opening balance",
+                                effectiveOn: "2026-01-01",
+                                unit: LeaveUnit.DAY,
+                                balanceDelta: "10",
+                                reservedDelta: "0",
+                                poolCode: "ANNUAL",
+                                organization,
+                                leavePolicy,
+                                employee,
+                            }),
+                        ]);
+                    }
+                    if (sharedEmployee) {
+                        shared = employee;
+                    }
+                    return request;
+                });
+                await transaction.flush();
+                return requests;
+            });
+        }
+
+        it("[case] - reserves once, consumes at the local start and completes without double charging", async () => {
+            // Arrange
+            const [request] = await createBatch(1);
+            const identifiers = [request.id];
+
+            // Act
+            await suite.transaction((transaction) => suite.repository().service.beginAbsence({ identifiers, transaction }));
+            await suite.transaction((transaction) => suite.repository().service.beginAbsence({ identifiers, transaction }));
+            const absence = await suite.transaction((transaction) =>
+                transaction.findOneOrFail(Absence, { sourceRequest: { id: request.id } }),
+            );
+            const advance = async (at: string): Promise<void> => {
+                await suite.transaction((transaction) =>
+                    suite.repository().service.advanceAbsences({
+                        identifiers: [absence.id],
+                        transaction,
+                        at: new Date(at),
+                    }),
+                );
+            };
+            await advance("2030-05-31T22:59:00Z");
+            await suite.transaction(async (transaction) => {
+                const entries = await transaction.find(LeaveLedgerEntry, { sourceRequest: { id: request.id } });
+                expect(entries).toHaveLength(1);
+                expect(entries[0]).toMatchObject({
+                    kind: LeaveLedgerKind.RESERVE,
+                    reservedDelta: "3.000000",
+                    balanceDelta: "0.000000",
+                });
+            });
+            await advance("2030-05-31T23:00:00Z");
+            await advance("2030-05-31T23:00:00Z");
+            await advance("2030-06-03T23:00:00Z");
+
+            // Assert
+            await suite.transaction(async (transaction) => {
+                const persisted = await transaction.findOneOrFail(Absence, { id: absence.id });
+                const entries = await transaction.find(LeaveLedgerEntry, { sourceRequest: { id: request.id } });
+                expect(persisted.status).toBe(AbsenceStatus.COMPLETED);
+                expect(persisted.quantity).toBe("3.000000");
+                expect(entries).toHaveLength(3);
+                expect(entries.reduce((sum, entry) => sum + Number(entry.reservedDelta), 0)).toBe(0);
+                expect(entries.reduce((sum, entry) => sum + Number(entry.balanceDelta), 0)).toBe(-3);
+                expect((await transaction.findOneOrFail(HRRequest, { id: request.id })).executionStatus).toBe(
+                    HRExecutionStatus.APPLIED,
+                );
+            });
+        });
+
+        it("[case] - isolates overlaps and insufficient balance within a batch", async () => {
+            // Arrange
+            const requests = await createBatch(3, true);
+            await suite.transaction(async (transaction) => {
+                const second = await transaction.findOneOrFail(HRRequest, { id: requests[1].id });
+                const third = await transaction.findOneOrFail(HRRequest, { id: requests[2].id });
+                second.createdAt = new Date(requests[0].createdAt.getTime() + 1000);
+                third.payload = { startDate: "2030-07-01", endDate: "2030-08-01", poolCode: "ANNUAL", unit: LeaveUnit.DAY };
+            });
+
+            // Act
+            await suite.transaction((transaction) =>
+                suite.repository().service.beginAbsence({ identifiers: requests.map(({ id }) => id), transaction }),
+            );
+
+            // Assert
+            await suite.transaction(async (transaction) => {
+                const persisted = await transaction.find(HRRequest, { id: { $in: requests.map(({ id }) => id) } });
+                expect(persisted.find(({ id }) => id === requests[0].id)!.executionStatus).toBe(HRExecutionStatus.APPLIED);
+                expect(persisted.find(({ id }) => id === requests[1].id)!.failure).toContain("ABSENCE_OVERLAP");
+                expect(persisted.find(({ id }) => id === requests[2].id)!.failure).toContain("INSUFFICIENT_LEAVE_BALANCE");
+                expect(
+                    await transaction.count(Absence, { sourceRequest: { id: { $in: requests.map(({ id }) => id) } } }),
+                ).toBe(1);
+            });
+        });
+
+        it("[case] - serializes concurrent reservations of the same balance", async () => {
+            // Arrange
+            const requests = await createBatch(2, true);
+            await suite.transaction(async (transaction) => {
+                const first = await transaction.findOneOrFail(HRRequest, { id: requests[0].id });
+                const second = await transaction.findOneOrFail(HRRequest, { id: requests[1].id });
+                first.payload = { startDate: "2030-06-01", endDate: "2030-06-08", poolCode: "ANNUAL", unit: LeaveUnit.DAY };
+                second.payload = {
+                    startDate: "2030-07-01",
+                    endDate: "2030-07-08",
+                    poolCode: "ANNUAL",
+                    unit: LeaveUnit.DAY,
+                };
+            });
+
+            // Act
+            await Promise.all(
+                requests.map(({ id }) =>
+                    suite.transaction((transaction) =>
+                        suite.repository().service.beginAbsence({ identifiers: [id], transaction }),
+                    ),
+                ),
+            );
+
+            // Assert
+            await suite.transaction(async (transaction) => {
+                const persisted = await transaction.find(HRRequest, { id: { $in: requests.map(({ id }) => id) } });
+                expect(
+                    persisted.filter(({ executionStatus }) => executionStatus === HRExecutionStatus.APPLIED),
+                ).toHaveLength(1);
+                expect(
+                    persisted.filter(({ executionStatus }) => executionStatus === HRExecutionStatus.FAILED),
+                ).toHaveLength(1);
+            });
+        });
+
+        it("[case] - rolls back absence, reservation and execution state together", async () => {
+            // Arrange
+            const [request] = await createBatch(1);
+
+            // Act
+            await expect(
+                suite.transaction(async (transaction) => {
+                    await suite.repository().service.beginAbsence({ identifiers: [request.id], transaction });
+                    await transaction.flush();
+                    throw new Error("rollback absence");
+                }),
+            ).rejects.toThrow("rollback absence");
+
+            // Assert
+            await suite.transaction(async (transaction) => {
+                expect(await transaction.count(Absence, { sourceRequest: { id: request.id } })).toBe(0);
+                expect(await transaction.count(LeaveLedgerEntry, { sourceRequest: { id: request.id } })).toBe(0);
+                expect((await transaction.findOneOrFail(HRRequest, { id: request.id })).executionStatus).toBe(
+                    HRExecutionStatus.NOT_STARTED,
+                );
+            });
+        });
+
+        it("[case] - keeps business SQL bounded for 1, 2, 10 and 100 absences", async () => {
+            const counts: { reads: number; writes: number }[] = [];
+            const advancementCounts: { reads: number; writes: number }[] = [];
+            async function measure(count: number): Promise<void> {
+                const requests = await createBatch(count);
+                await suite.transaction(async (transaction) => {
+                    const execute = jest.spyOn(transaction.getConnection(), "execute");
+                    try {
+                        await suite
+                            .repository()
+                            .service.beginAbsence({ identifiers: requests.map(({ id }) => id), transaction });
+                        await transaction.flush();
+                        const queries = execute.mock.calls.map(([sql]) => String(sql).toLowerCase());
+                        counts.push({
+                            reads: queries.filter((sql) => sql.startsWith("select")).length,
+                            writes: queries.filter((sql) => /^(insert|update|delete)/.test(sql)).length,
+                        });
+                        expect(
+                            await transaction.count(Absence, {
+                                sourceRequest: { id: { $in: requests.map(({ id }) => id) } },
+                            }),
+                        ).toBe(count);
+                    } finally {
+                        execute.mockRestore();
+                    }
+                });
+                await suite.transaction(async (transaction) => {
+                    const absences = await transaction.find(Absence, {
+                        sourceRequest: { id: { $in: requests.map(({ id }) => id) } },
+                    });
+                    transaction.clear();
+                    const execute = jest.spyOn(transaction.getConnection(), "execute");
+                    try {
+                        await suite.repository().service.advanceAbsences({
+                            identifiers: absences.map(({ id }) => id),
+                            transaction,
+                            at: new Date("2030-07-01T00:00:00Z"),
+                        });
+                        await transaction.flush();
+                        const queries = execute.mock.calls.map(([sql]) => String(sql).toLowerCase());
+                        advancementCounts.push({
+                            reads: queries.filter((sql) => sql.startsWith("select")).length,
+                            writes: queries.filter((sql) => /^(insert|update|delete)/.test(sql)).length,
+                        });
+                    } finally {
+                        execute.mockRestore();
+                    }
+                });
+            }
+            await measure(1);
+            await measure(2);
+            await measure(10);
+            await measure(100);
+
+            expect(advancementCounts[0]).toEqual({ reads: 4, writes: 2 });
+            expect(advancementCounts.slice(1)).toEqual(Array.from({ length: 3 }, () => ({ reads: 5, writes: 2 })));
+            expect(counts[0]).toEqual({ reads: 9, writes: 3 });
+            expect(counts[1]).toEqual({ reads: 10, writes: 3 });
+            expect(counts.slice(1)).toEqual(Array.from({ length: 3 }, () => counts[1]));
+            expect(counts.every(({ writes }) => writes === 3)).toBe(true);
+        });
+
+        it("[case] - calculates scheduled minutes from the employee schedule", async () => {
+            // Arrange
+            const [request] = await createBatch(1);
+            await suite.transaction(async (transaction) => {
+                const employee = await transaction.findOneOrFail(
+                    Employee,
+                    { id: request.employee.id },
+                    { populate: ["leavePolicy"] },
+                );
+                employee.leavePolicy!.rules.push({
+                    poolCode: "COMP",
+                    unit: "MINUTE",
+                    accrualBasis: "NONE",
+                    dayCounting: "SCHEDULED_MINUTES",
+                    availability: "APPROVAL_ONLY",
+                    expiration: null,
+                });
+                const pending = await transaction.findOneOrFail(HRRequest, { id: request.id });
+                pending.payload = {
+                    startsAt: "2030-06-01T08:00:00Z",
+                    endsAt: "2030-06-01T16:00:00Z",
+                    poolCode: "COMP",
+                    unit: LeaveUnit.MINUTE,
+                };
+            });
+
+            // Act
+            await suite.transaction((transaction) =>
+                suite.repository().service.beginAbsence({ identifiers: [request.id], transaction }),
+            );
+
+            // Assert
+            await suite.transaction(async (transaction) => {
+                const absence = await transaction.findOneOrFail(Absence, { sourceRequest: { id: request.id } });
+                expect(absence.quantity).toBe("480.000000");
+                expect(absence.unit).toBe(LeaveUnit.MINUTE);
+                expect(absence.calculationSnapshot).toMatchObject({
+                    dayCounting: "SCHEDULED_MINUTES",
+                    scheduleRevision: 1,
+                });
+            });
+        });
+
+        it("[case] - skips future and unapproved requests and records invalid employee and pool failures", async () => {
+            // Arrange
+            const requests = await createBatch(4);
+            await suite.transaction(async (transaction) => {
+                const pending = await transaction.find(HRRequest, { id: { $in: requests.map(({ id }) => id) } });
+                pending.find(({ id }) => id === requests[0].id)!.effectiveAt = new Date("2031-01-01T00:00:00Z");
+                pending.find(({ id }) => id === requests[1].id)!.status = HRRequestStatus.SUBMITTED;
+                pending.find(({ id }) => id === requests[2].id)!.payload.poolCode = "UNKNOWN";
+                const employee = await transaction.findOneOrFail(Employee, { id: requests[3].employee.id });
+                employee.status = EmployeeStatus.TERMINATED;
+            });
+
+            // Act
+            await suite.transaction((transaction) =>
+                suite.repository().service.beginAbsence({ identifiers: requests.map(({ id }) => id), transaction }),
+            );
+
+            // Assert
+            await suite.transaction(async (transaction) => {
+                const pending = await transaction.find(HRRequest, { id: { $in: requests.map(({ id }) => id) } });
+                expect(
+                    pending.filter(({ executionStatus }) => executionStatus === HRExecutionStatus.NOT_STARTED),
+                ).toHaveLength(2);
+                expect(pending.filter(({ executionStatus }) => executionStatus === HRExecutionStatus.FAILED)).toHaveLength(
+                    2,
+                );
+                expect(
+                    await transaction.count(Absence, { sourceRequest: { id: { $in: requests.map(({ id }) => id) } } }),
+                ).toBe(0);
+            });
+        });
+
+        it("[case] - rolls back a failed advancement and serializes concurrent consumption", async () => {
+            // Arrange
+            const [request] = await createBatch(1);
+            await suite.transaction((transaction) =>
+                suite.repository().service.beginAbsence({ identifiers: [request.id], transaction }),
+            );
+            const absence = await suite.transaction((transaction) =>
+                transaction.findOneOrFail(Absence, { sourceRequest: { id: request.id } }),
+            );
+            const at = new Date("2030-06-01T00:00:00Z");
+
+            // Act
+            await expect(
+                suite.transaction(async (transaction) => {
+                    await suite.repository().service.advanceAbsences({ identifiers: [absence.id], transaction, at });
+                    await transaction.flush();
+                    throw new Error("rollback consumption");
+                }),
+            ).rejects.toThrow("rollback consumption");
+            await suite.transaction(async (transaction) => {
+                expect(await transaction.count(LeaveLedgerEntry, { sourceRequest: { id: request.id } })).toBe(1);
+                expect((await transaction.findOneOrFail(Absence, { id: absence.id })).status).toBe(AbsenceStatus.SCHEDULED);
+            });
+            await Promise.all(
+                [1, 2].map(() =>
+                    suite.transaction((transaction) =>
+                        suite.repository().service.advanceAbsences({ identifiers: [absence.id], transaction, at }),
+                    ),
+                ),
+            );
+
+            // Assert
+            await suite.transaction(async (transaction) => {
+                expect(await transaction.count(LeaveLedgerEntry, { sourceRequest: { id: request.id } })).toBe(3);
+                expect((await transaction.findOneOrFail(Absence, { id: absence.id })).status).toBe(
+                    AbsenceStatus.IN_PROGRESS,
+                );
+            });
+        });
+
+        it("[case] - selects due absences by each timezone and advances overdue absences in one pass", async () => {
+            // Arrange
+            const [request] = await createBatch(1);
+            await suite.transaction((transaction) =>
+                suite.repository().service.beginAbsence({ identifiers: [request.id], transaction }),
+            );
+
+            // Act
+            const before = await suite
+                .repository()
+                .repositories.absence.findDue({ at: new Date("2030-05-31T22:59:00Z"), limit: 100 });
+            const due = await suite
+                .repository()
+                .repositories.absence.findDue({ at: new Date("2030-05-31T23:00:00Z"), limit: 100 });
+            const absence = due.find(({ sourceRequest }) => sourceRequest.id === request.id)!;
+            await suite.transaction((transaction) =>
+                suite.repository().service.advanceAbsences({
+                    identifiers: [absence.id],
+                    at: new Date("2030-07-01T00:00:00Z"),
+                    transaction,
+                }),
+            );
+
+            // Assert
+            expect(before.some(({ sourceRequest }) => sourceRequest.id === request.id)).toBe(false);
+            await suite.transaction(async (transaction) => {
+                expect((await transaction.findOneOrFail(Absence, { id: absence.id })).status).toBe(AbsenceStatus.COMPLETED);
+                expect(await transaction.count(LeaveLedgerEntry, { sourceRequest: { id: request.id } })).toBe(3);
+            });
+        });
     });
 
     describe("[Method] - adjustLeave", () => {

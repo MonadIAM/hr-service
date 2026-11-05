@@ -86,6 +86,9 @@
         "INVALID_STATUS": "This operation is not allowed in the current state."
     },
     "absence": {
+        "TERMS_PERIOD_MISMATCH": "The absence precedes the current employment terms.",
+        "UNVERIFIED_CALENDAR": "The work calendar is not verified through the end of the absence.",
+        "EMPTY_PERIOD": "The absence contains no chargeable days or working minutes.",
         "INVALID_STATUS": "This operation is not allowed in the current state.",
         "NO_CHANGES_DETECTED": "No changes were detected.",
         "REQUEST_MISMATCH": "The related request does not match the employee or operation.",

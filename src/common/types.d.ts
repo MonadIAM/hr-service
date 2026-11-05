@@ -2,6 +2,15 @@ import type { PermissionCode, PrivilegeScope } from "@monadiam/shared";
 import type { FastifyRequest, RouteGenericInterface } from "fastify";
 
 declare global {
+    type Periods = Record<
+        string,
+        {
+            dateOnly: boolean;
+            from: string;
+            to: string;
+        }
+    >;
+
     type Pagination = {
         currentPage: number;
         elementsPerPage: number;

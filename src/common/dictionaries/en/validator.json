@@ -1,4 +1,5 @@
 {
+  "IS_PERIOD": "The period must have ordered boundaries matching its unit; timestamps must include an offset and use whole minutes.",
   "IS_TIME_ZONE": "The field {property} must be a valid time zone.",
   "REQUIRED": "The \"{label}\" field is required.",
   "IS_OBJECT": "The \"{label}\" field must be an object.",
