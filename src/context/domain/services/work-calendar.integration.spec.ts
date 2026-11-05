@@ -24,7 +24,16 @@ describe("[DomainService] - WorkCalendar", () => {
                 status: HRRequestStatus.APPROVED,
                 type: HRRequestType.HIRE,
                 organization: entity.organization,
-                payload: { workCalendar: entity.id },
+                payload: {
+                    employmentStartedOn: "2026-01-01",
+                    scheduleTimezone: "Europe/London",
+                    termsValidFrom: "2026-01-01",
+                    workCalendar: entity.id,
+                    workSchedule: randomUUID(),
+                    leavePolicy: randomUUID(),
+                    position: randomUUID(),
+                    fte: "1",
+                },
                 approvedRevision: 1,
             });
 

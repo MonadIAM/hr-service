@@ -64,7 +64,7 @@ declare global {
             namespace Payload {
                 type ByType = {
                     [HRRequestType.LEAVE_ADJUSTMENT]: LeaveAdjustment;
-                    [HRRequestType.CANCEL_REQUEST]: UnknownObject;
+                    [HRRequestType.CANCEL_REQUEST]: CancelRequest;
                     [HRRequestType.CHANGE_TERMS]: ChangeTerms;
                     [HRRequestType.TERMINATE]: Terminate;
                     [HRRequestType.TRANSFER]: Transfer;
@@ -72,6 +72,10 @@ declare global {
                     [HRRequestType.ABSENCE]: Absence;
                     [HRRequestType.REHIRE]: Hire;
                     [HRRequestType.HIRE]: Hire;
+                };
+
+                type CancelRequest = {
+                    reason: string;
                 };
 
                 type Overtime = {

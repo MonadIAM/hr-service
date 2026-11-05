@@ -175,7 +175,7 @@ export class HRFixture {
             status: HRRequestStatus.DRAFT,
             executionStatus: HRExecutionStatus.NOT_STARTED,
             payloadSchemaVersion: 1,
-            payload: { poolCode: "ANNUAL", days: 5 },
+            payload: { startDate: "2026-07-01", endDate: "2026-07-06", poolCode: "ANNUAL", unit: LeaveUnit.DAY },
             initiatorAccount: randomUUID(),
             idempotencyKey: randomUUID(),
             revision: 1,

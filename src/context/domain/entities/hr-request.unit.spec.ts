@@ -26,7 +26,16 @@ function createHRRequest(overrides?: Partial<Entities.HRRequest.ConstructorProps
         executionStatus: HRExecutionStatus.NOT_STARTED,
         revision: 1,
         payloadSchemaVersion: 1,
-        payload: {},
+        payload: {
+            employmentStartedOn: "2026-01-01",
+            scheduleTimezone: "Europe/London",
+            termsValidFrom: "2026-01-01",
+            workCalendar: "calendar",
+            workSchedule: "schedule",
+            leavePolicy: "policy",
+            position: "position",
+            fte: "1",
+        },
         ...overrides,
     });
 }
@@ -133,7 +142,7 @@ describe("[Entity] - HRRequest", () => {
                 approvedRevision: 4,
                 appliedRevision: 4,
                 payloadSchemaVersion: 2,
-                payload: { position: "lead" },
+                payload: { validFrom: "2026-01-01", position: "lead" },
                 result: { applied: true },
                 failure: "previous failure",
                 workflowCode: "transfer",
@@ -205,7 +214,7 @@ describe("[Entity] - HRRequest", () => {
         it("[case] - updates multiple fields and increment revision once", () => {
             // Arrange
             const entity = createHRRequest();
-            const payload = { contractType: "permanent" };
+            const payload = { termsValidFrom: "2026-01-01", contractType: "permanent" };
 
             // Act
             entity.update({ patch: { payload, payloadSchemaVersion: 2, effectiveAt: undefined } });
@@ -497,7 +506,38 @@ describe("[Entity] - HRRequest", () => {
     });
 
     describe("[Method] - cancel", () => {
-        it.each([HRExecutionStatus.NOT_STARTED, HRExecutionStatus.SCHEDULED, HRExecutionStatus.APPLIED])(
+        it.each([HRExecutionStatus.RUNNING, HRExecutionStatus.APPLIED, HRExecutionStatus.FAILED])(
+            "[case] - preserves execution state %s without reverting its effects",
+            (executionStatus) => {
+                // Arrange
+                const result = { externalOperation: "already executed" };
+                const entity = createHRRequest({
+                    status: HRRequestStatus.APPROVED,
+                    approvedRevision: 1,
+                    executionStatus,
+                    result,
+                });
+
+                // Act / Assert
+                expect(() => entity.cancel()).toThrow("INVALID_EXECUTION_STATUS");
+                expect(entity.status).toBe(HRRequestStatus.APPROVED);
+                expect(entity.executionStatus).toBe(executionStatus);
+                expect(entity.result).toBe(result);
+            },
+        );
+
+        it("[case] - rejects cancellation of another cancellation request", () => {
+            // Arrange
+            const entity = createHRRequest({
+                relatedRequest: stubRequest({ type: HRRequestType.CANCEL_REQUEST }),
+                type: HRRequestType.CANCEL_REQUEST,
+                payload: { reason: "Cancel request" },
+            });
+
+            // Act / Assert
+            expect(() => entity.canCreate()).toThrow("REQUEST_MISMATCH");
+        });
+        it.each([HRExecutionStatus.NOT_STARTED, HRExecutionStatus.SCHEDULED])(
             "[case] - cancels execution state %s",
             (executionStatus) => {
                 // Arrange
