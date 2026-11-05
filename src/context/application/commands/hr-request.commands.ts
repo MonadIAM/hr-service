@@ -1,7 +1,7 @@
 import { Injectable, Inject, Scope } from "@nestjs/common";
 
+import { HR_REQUEST_REPOSITORY, ABSENCE_REPOSITORY } from "~context/infrastructure/repositories";
 import { HR_REQUEST_EXECUTION_SERVICE, HR_REQUEST_SERVICE } from "~context/domain/services";
-import { HR_REQUEST_REPOSITORY } from "~context/infrastructure/repositories";
 import { SYSTEM_ACCOUNT_ID, CONSUMER_META } from "~context/constants";
 import { TRANSACTIONAL_SERVICE } from "~common/transaction-manager";
 import {
@@ -31,6 +31,8 @@ export class HRRequestCommands implements Commands.HRRequest.Contract {
         private readonly hrRequestService: Services.HRRequest.CommandContract,
         @Inject(HR_REQUEST_REPOSITORY)
         private readonly hrRequestRepository: Repositories.HRRequest.Contract,
+        @Inject(ABSENCE_REPOSITORY)
+        private readonly absenceRepository: Repositories.Absence.Contract,
     ) {
         this.mapper = new HRRequestMapper();
     }
@@ -48,6 +50,7 @@ export class HRRequestCommands implements Commands.HRRequest.Contract {
                         HRRequestType.CHANGE_TERMS,
                         HRRequestType.TERMINATE,
                         HRRequestType.TRANSFER,
+                        HRRequestType.ABSENCE,
                         HRRequestType.REHIRE,
                         HRRequestType.HIRE,
                     ],
@@ -60,6 +63,7 @@ export class HRRequestCommands implements Commands.HRRequest.Contract {
             const changeTermsIdentifiers = new Set<string>();
             const terminationIdentifiers = new Set<string>();
             const transferIdentifiers = new Set<string>();
+            const absenceIdentifiers = new Set<string>();
             const hireIdentifiers = new Set<string>();
 
             for (const { type, id } of requests) {
@@ -75,6 +79,9 @@ export class HRRequestCommands implements Commands.HRRequest.Contract {
                         break;
                     case HRRequestType.TRANSFER:
                         transferIdentifiers.add(id);
+                        break;
+                    case HRRequestType.ABSENCE:
+                        absenceIdentifiers.add(id);
                         break;
                     case HRRequestType.REHIRE:
                     case HRRequestType.HIRE:
@@ -120,6 +127,10 @@ export class HRRequestCommands implements Commands.HRRequest.Contract {
                         identifiers: Array.from(leaveAdjustmentIdentifiers),
                         transaction,
                     });
+                    await this.hrRequestExecutionService.beginAbsence({
+                        identifiers: Array.from(absenceIdentifiers),
+                        transaction,
+                    });
                     await this.hrRequestExecutionService.transfer({
                         identifiers: Array.from(transferIdentifiers),
                         transaction,
@@ -141,6 +152,33 @@ export class HRRequestCommands implements Commands.HRRequest.Contract {
         } else {
             return 0;
         }
+    }
+
+    public async advanceAbsences(
+        props: Commands.HRRequest.AdvanceAbsences.Props,
+    ): Commands.HRRequest.AdvanceAbsences.Result {
+        const at = new Date();
+        const absences = await this.absenceRepository.findDue({ limit: props.batchSize, at });
+        if (absences.length) {
+            await this.transactionalService.run({
+                resource: "Absence",
+                audit: {
+                    actor: SYSTEM_ACCOUNT_ID,
+                    entityType: EntityType.ABSENCE,
+                    actionType: ActionType.UPDATE,
+                    input: { identifiers: absences.map(({ id }) => id) },
+                    context: { userAgent: "scheduler", ip: "127.0.0.1" },
+                },
+                changeLog: true,
+                execute: (transaction) =>
+                    this.hrRequestExecutionService.advanceAbsences({
+                        identifiers: absences.map(({ id }) => id),
+                        transaction,
+                        at,
+                    }),
+            });
+        }
+        return absences.length;
     }
 
     public async completeHire(props: Commands.HRRequest.CompleteHire.Props): Commands.HRRequest.CompleteHire.Result {

@@ -11,7 +11,10 @@ declare global {
                 service: Services.HRRequestExecution.Contract;
                 transaction: Unit.Domain.Core.Transaction;
                 repositories: {
+                    workCalendarException: Pick<Unit.Domain.HR.RepositoryMock<Entities.WorkCalendarException>, "find">;
+                    leaveLedgerEntry: Pick<Unit.Domain.HR.RepositoryMock<Entities.LeaveLedgerEntry>, "find">;
                     positionAssignment: Unit.Domain.HR.RepositoryMock<Entities.PositionAssignment>;
+                    absence: Pick<Unit.Domain.HR.RepositoryMock<Entities.Absence>, "find">;
                     workCalendar: Unit.Domain.HR.RepositoryMock<Entities.WorkCalendar>;
                     workSchedule: Unit.Domain.HR.RepositoryMock<Entities.WorkSchedule>;
                     leavePolicy: Unit.Domain.HR.RepositoryMock<Entities.LeavePolicy>;

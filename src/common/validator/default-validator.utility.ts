@@ -33,6 +33,7 @@ import {
 } from "class-validator";
 
 import { ValidateByType } from "./algorithms/validate-by-type.validator";
+import { IsPeriod } from "./algorithms/is-period.validator";
 import { IsDateOnly } from "./algorithms/is-date-only.validator";
 import { NotEqualTo } from "./algorithms/not-equal-to.validator";
 import { IsMsString } from "./algorithms/is-ms-string.validator";
@@ -177,6 +178,14 @@ export abstract class StandardValidationDecorators {
             Type(() => Date)(target, key);
             return IsDate(this.wrap("IS_DATE", { property: key }, options, label))(target, key);
         };
+    }
+
+    public static IsPeriod(
+        periods: Parameters<typeof IsPeriod>[0],
+        options?: ValidationOptions,
+        label?: string,
+    ): PropertyDecorator {
+        return (target, key) => IsPeriod(periods, this.wrap("IS_PERIOD", { property: key }, options, label))(target, key);
     }
 
     public static IsDateOnly(options?: ValidationOptions, label?: string): PropertyDecorator {

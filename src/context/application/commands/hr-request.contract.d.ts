@@ -5,7 +5,18 @@ declare global {
         interface Contract extends ProcessorContract, ConsumerContract, ControllerContract {}
 
         interface ProcessorContract {
+            advanceAbsences: AdvanceAbsences.Signature;
             execute: Execute.Signature;
+        }
+
+        namespace AdvanceAbsences {
+            type Props = {
+                batchSize: number;
+            };
+
+            type Result = Promise<number>;
+
+            type Signature = (props: Props) => Result;
         }
 
         namespace Execute {

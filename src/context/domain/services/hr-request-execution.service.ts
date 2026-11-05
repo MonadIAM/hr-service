@@ -3,13 +3,16 @@ import { LockMode } from "@mikro-orm/core";
 
 import { Exception } from "~common/exceptions";
 import {
+    WORK_CALENDAR_EXCEPTION_REPOSITORY,
     POSITION_ASSIGNMENT_REPOSITORY,
+    LEAVE_LEDGER_ENTRY_REPOSITORY,
     WORK_CALENDAR_REPOSITORY,
     WORK_SCHEDULE_REPOSITORY,
     LEAVE_POLICY_REPOSITORY,
     HR_REQUEST_REPOSITORY,
     EMPLOYEE_REPOSITORY,
     POSITION_REPOSITORY,
+    ABSENCE_REPOSITORY,
 } from "~context/infrastructure/repositories";
 import {
     PositionAssignmentStatus,
@@ -18,11 +21,13 @@ import {
     LeaveLedgerKind,
     EmployeeStatus,
     HRRequestType,
+    AbsenceStatus,
     RecordStatus,
+    LeaveUnit,
 } from "~context/enums";
 
+import { PositionAssignment, LeaveLedgerEntry, Absence } from "../entities";
 import { EMPLOYEE_SERVICE } from "./tokens";
-import { PositionAssignment, LeaveLedgerEntry } from "../entities";
 
 @Injectable({ scope: Scope.DEFAULT })
 export class HRRequestExecutionService implements Services.HRRequestExecution.Contract {
@@ -31,8 +36,12 @@ export class HRRequestExecutionService implements Services.HRRequestExecution.Co
     public constructor(
         @Inject(EMPLOYEE_SERVICE)
         private readonly employeeService: Services.Employee.ProcessorContract,
+        @Inject(WORK_CALENDAR_EXCEPTION_REPOSITORY)
+        private readonly workCalendarExceptionRepository: Repositories.WorkCalendarException.Contract,
         @Inject(POSITION_ASSIGNMENT_REPOSITORY)
         private readonly positionAssignmentRepository: Repositories.PositionAssignment.Contract,
+        @Inject(LEAVE_LEDGER_ENTRY_REPOSITORY)
+        private readonly leaveLedgerEntryRepository: Repositories.LeaveLedgerEntry.Contract,
         @Inject(WORK_CALENDAR_REPOSITORY)
         private readonly workCalendarRepository: Repositories.WorkCalendar.Contract,
         @Inject(WORK_SCHEDULE_REPOSITORY)
@@ -45,6 +54,8 @@ export class HRRequestExecutionService implements Services.HRRequestExecution.Co
         private readonly employeeRepository: Repositories.Employee.Contract,
         @Inject(POSITION_REPOSITORY)
         private readonly positionRepository: Repositories.Position.Contract,
+        @Inject(ABSENCE_REPOSITORY)
+        private readonly absenceRepository: Repositories.Absence.Contract,
     ) {}
 
     public async beginHire(
@@ -261,6 +272,239 @@ export class HRRequestExecutionService implements Services.HRRequestExecution.Co
                 });
             }
         }
+    }
+
+    public async beginAbsence(
+        props: Services.HRRequestExecution.BeginAbsence.Props,
+    ): Services.HRRequestExecution.BeginAbsence.Result {
+        const { transaction, identifiers } = props;
+        const at = new Date();
+        const requests = (await this.hrRequestRepository.find({
+            options: {
+                populate: ["organization"],
+                lockMode: LockMode.PESSIMISTIC_WRITE,
+                orderBy: { effectiveAt: "ASC", createdAt: "ASC", id: "ASC" },
+                strategy: "select-in",
+                refresh: true,
+            },
+            where: {
+                executionStatus: { $in: [HRExecutionStatus.NOT_STARTED, HRExecutionStatus.SCHEDULED] },
+                $or: [{ effectiveAt: { $lte: at } }, { effectiveAt: null }],
+                status: HRRequestStatus.APPROVED,
+                type: HRRequestType.ABSENCE,
+                id: { $in: identifiers },
+            },
+            transaction,
+        })) as Entities.HRRequest<HRRequestType.ABSENCE>[];
+
+        if (requests.length) {
+            const employeeIds = [...new Set(requests.map(({ employee }) => employee.id))];
+            const employees = await this.employeeRepository.find({
+                options: {
+                    populate: ["workCalendar", "workSchedule", "leavePolicy"],
+                    lockMode: LockMode.PESSIMISTIC_WRITE,
+                    orderBy: { id: "ASC" },
+                    strategy: "select-in",
+                    refresh: true,
+                },
+                where: { id: { $in: employeeIds } },
+                transaction,
+            });
+
+            const boundaries = requests.flatMap(({ payload }) =>
+                payload.unit === LeaveUnit.DAY
+                    ? [Date.parse(payload.startDate), Date.parse(payload.endDate)]
+                    : [Date.parse(payload.startsAt), Date.parse(payload.endsAt)],
+            );
+            const from = new Date(Math.min(...boundaries) - 86400000);
+            const to = new Date(Math.max(...boundaries) + 86400000);
+
+            const [exceptions, absences, balances] = await Promise.all([
+                this.workCalendarExceptionRepository.find({
+                    where: {
+                        calendar: {
+                            id: {
+                                $in: [
+                                    ...new Set(
+                                        employees.flatMap(({ workCalendar }) => (workCalendar ? [workCalendar.id] : [])),
+                                    ),
+                                ],
+                            },
+                        },
+                        date: { $gte: from.toISOString().slice(0, 10), $lte: to.toISOString().slice(0, 10) },
+                    },
+                    transaction,
+                }),
+                this.absenceRepository.find({
+                    where: {
+                        $or: [
+                            {
+                                startDate: { $lt: to.toISOString().slice(0, 10) },
+                                endDate: { $gt: from.toISOString().slice(0, 10) },
+                            },
+                            { startsAt: { $lt: to }, endsAt: { $gt: from } },
+                        ],
+                        employee: { id: { $in: employeeIds } },
+                        status: { $ne: AbsenceStatus.CANCELLED },
+                    },
+                    transaction,
+                }),
+                this.leaveLedgerEntryRepository.getBalances({ employees: employeeIds, transaction, at }),
+            ]);
+
+            const employeesById = new Map(employees.map((employee) => [employee.id, employee]));
+            const periodsByEmployee = new Map<string, [Date, Date][]>();
+
+            for (const absence of absences) {
+                const periods = periodsByEmployee.get(absence.employee.id) ?? [];
+                periods.push(absence.period());
+                periodsByEmployee.set(absence.employee.id, periods);
+            }
+
+            const available = new Map(
+                balances.map((balance) => [
+                    `${balance.employee}/${balance.poolCode}/${balance.unit}`,
+                    this.leaveAmount(balance.available),
+                ]),
+            );
+
+            for (const request of requests) {
+                const employee = employeesById.get(request.employee.id)!;
+                const { leavePolicy, workSchedule, workCalendar } = employee;
+                try {
+                    request.beginApplication();
+                    employee.assertReady();
+                    if (employee.status !== EmployeeStatus.ACTIVE) {
+                        throw Exception.invariantViolation({
+                            messageKey: `${this.dictionaryPath}.INVALID_EMPLOYEE_STATUS`,
+                        });
+                    } else if (!leavePolicy || !workSchedule || !workCalendar) {
+                        throw Exception.invariantViolation({ messageKey: `${this.dictionaryPath}.TERMS_NOT_FOUND` });
+                    } else if (leavePolicy.status === RecordStatus.ARCHIVED) {
+                        throw Exception.invariantViolation({ messageKey: `${this.dictionaryPath}.ARCHIVED_LEAVE_POLICY` });
+                    } else {
+                        const absence = new Absence({
+                            calculationSnapshot: {},
+                            sourceRequest: request,
+                            sourceItemKey: "main",
+                            organization: request.organization,
+                            leavePolicy,
+                            timezone: employee.scheduleTimezone!,
+                            poolCode: request.payload.poolCode,
+                            quantity: "0",
+                            employee,
+                            status: AbsenceStatus.SCHEDULED,
+                            unit: request.payload.unit,
+                            ...(request.payload.unit === LeaveUnit.DAY
+                                ? { startDate: request.payload.startDate, endDate: request.payload.endDate }
+                                : {
+                                      startsAt: new Date(request.payload.startsAt),
+                                      endsAt: new Date(request.payload.endsAt),
+                                  }),
+                        });
+                        absence.canCreate();
+                        absence.calculate({
+                            exceptions: exceptions.filter(({ calendar }) => calendar.id === workCalendar.id),
+                        });
+                        const [start, end] = absence.period();
+                        const periods = periodsByEmployee.get(employee.id) ?? [];
+                        const overlaps = periods.some(([otherStart, otherEnd]) => start < otherEnd && end > otherStart);
+                        const rule = leavePolicy.rules.find(
+                            ({ poolCode, unit }) => poolCode === absence.poolCode && unit === absence.unit,
+                        )!;
+                        const key = `${employee.id}/${absence.poolCode}/${absence.unit}`;
+                        const quantity = this.leaveAmount(absence.quantity);
+                        const balance = available.get(key) ?? 0n;
+                        if (overlaps) {
+                            throw Exception.invariantViolation({ messageKey: `${this.dictionaryPath}.ABSENCE_OVERLAP` });
+                        } else if (rule.availability === "BALANCE" && balance < quantity) {
+                            throw Exception.invariantViolation({
+                                messageKey: `${this.dictionaryPath}.INSUFFICIENT_LEAVE_BALANCE`,
+                            });
+                        } else {
+                            const entry = new LeaveLedgerEntry({
+                                calculationSnapshot: absence.calculationSnapshot,
+                                idempotencyKey: `reserve/${request.id}`,
+                                reservedDelta: absence.quantity,
+                                sourceRequest: request,
+                                organization: request.organization,
+                                balanceDelta: "0",
+                                effectiveOn: new Intl.DateTimeFormat("sv-SE", { timeZone: absence.timezone }).format(at),
+                                leavePolicy,
+                                poolCode: absence.poolCode,
+                                employee,
+                                absence,
+                                reason: "Approved absence",
+                                kind: LeaveLedgerKind.RESERVE,
+                                unit: absence.unit,
+                            });
+                            entry.canCreate();
+                            transaction.persist([absence, entry]);
+                            available.set(key, balance - quantity);
+                            periods.push([start, end]);
+                            periodsByEmployee.set(employee.id, periods);
+                            request.markApplied({ result: { absence: absence.id, employee: employee.id } });
+                        }
+                    }
+                } catch (error) {
+                    if (!(error instanceof Exception) || Boolean(Exception.isRetryable(error))) {
+                        throw error;
+                    } else {
+                        request.markFailed({ reason: error.message });
+                    }
+                }
+            }
+        }
+        return requests;
+    }
+
+    public async advanceAbsences(
+        props: Services.HRRequestExecution.AdvanceAbsences.Props,
+    ): Services.HRRequestExecution.AdvanceAbsences.Result {
+        const { transaction, identifiers, at } = props;
+        const absences = await this.absenceRepository.find({
+            options: {
+                populate: ["leavePolicy", "sourceRequest", "employee"],
+                lockMode: LockMode.PESSIMISTIC_WRITE,
+                orderBy: { id: "ASC" },
+                strategy: "select-in",
+                refresh: true,
+            },
+            where: {
+                status: { $in: [AbsenceStatus.SCHEDULED, AbsenceStatus.IN_PROGRESS] },
+                id: { $in: identifiers },
+            },
+            transaction,
+        });
+        for (const absence of absences) {
+            const [start, end] = absence.period();
+            if (absence.status === AbsenceStatus.SCHEDULED && at >= start) {
+                for (const kind of [LeaveLedgerKind.RELEASE, LeaveLedgerKind.CONSUME]) {
+                    const entry = new LeaveLedgerEntry({
+                        calculationSnapshot: absence.calculationSnapshot,
+                        idempotencyKey: `${kind.toLowerCase()}/${absence.sourceRequest.id}`,
+                        reservedDelta: kind === LeaveLedgerKind.RELEASE ? `-${absence.quantity}` : "0",
+                        sourceRequest: absence.sourceRequest,
+                        balanceDelta: kind === LeaveLedgerKind.CONSUME ? `-${absence.quantity}` : "0",
+                        organization: absence.organization,
+                        effectiveOn: new Intl.DateTimeFormat("sv-SE", { timeZone: absence.timezone }).format(start),
+                        leavePolicy: absence.leavePolicy,
+                        employee: absence.employee,
+                        poolCode: absence.poolCode,
+                        absence,
+                        reason: "Started absence",
+                        unit: absence.unit,
+                        kind,
+                    });
+                    entry.canCreate();
+                    transaction.persist(entry);
+                }
+                absence.advanceStatus({ at });
+            } else if (absence.status === AbsenceStatus.IN_PROGRESS && at >= end) {
+                absence.advanceStatus({ at });
+            }
+        }
+        return absences;
     }
 
     public async adjustLeave(
@@ -823,5 +1067,9 @@ export class HRRequestExecutionService implements Services.HRRequestExecution.Co
         requestEntity.markFailed(input);
 
         return requestEntity;
+    }
+    private leaveAmount(value: string): bigint {
+        const [whole, fraction = ""] = value.replace("-", "").split(".");
+        return (value.startsWith("-") ? -1n : 1n) * BigInt(whole + fraction.padEnd(6, "0"));
     }
 }

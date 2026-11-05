@@ -8,10 +8,16 @@ export class HRRequestExecutionUnitHelpers extends HRDomainUnitHelpers implement
     public service(): Unit.Domain.HRRequestExecution.Service.Result {
         const transaction = this.transaction();
         const repositories = {
+            workCalendarException: {
+                find: jest.fn<(props: unknown) => Promise<Entities.WorkCalendarException[]>>().mockResolvedValue([]),
+            },
             positionAssignment: {
                 findUniqueOrThrow: jest.fn<(props: unknown) => Promise<Entities.PositionAssignment>>(),
                 findUnique: jest.fn<(props: unknown) => Promise<Optional<Entities.PositionAssignment>>>(),
                 find: jest.fn<(props: unknown) => Promise<Entities.PositionAssignment[]>>().mockResolvedValue([]),
+            },
+            leaveLedgerEntry: {
+                find: jest.fn<(props: unknown) => Promise<Entities.LeaveLedgerEntry[]>>().mockResolvedValue([]),
             },
             workCalendar: {
                 findUniqueOrThrow: jest.fn<(props: unknown) => Promise<Entities.WorkCalendar>>(),
@@ -43,6 +49,9 @@ export class HRRequestExecutionUnitHelpers extends HRDomainUnitHelpers implement
                 findUnique: jest.fn<(props: unknown) => Promise<Optional<Entities.Position>>>(),
                 find: jest.fn<(props: unknown) => Promise<Entities.Position[]>>().mockResolvedValue([]),
             },
+            absence: {
+                find: jest.fn<(props: unknown) => Promise<Entities.Absence[]>>().mockResolvedValue([]),
+            },
         };
         const services = {
             employee: {
@@ -54,13 +63,16 @@ export class HRRequestExecutionUnitHelpers extends HRDomainUnitHelpers implement
         return {
             service: new HRRequestExecutionService(
                 this.contract<Services.Employee.ProcessorContract>(services.employee),
+                this.contract<Repositories.WorkCalendarException.Contract>(repositories.workCalendarException),
                 this.contract<Repositories.PositionAssignment.Contract>(repositories.positionAssignment),
+                this.contract<Repositories.LeaveLedgerEntry.Contract>(repositories.leaveLedgerEntry),
                 this.contract<Repositories.WorkCalendar.Contract>(repositories.workCalendar),
                 this.contract<Repositories.WorkSchedule.Contract>(repositories.workSchedule),
                 this.contract<Repositories.LeavePolicy.Contract>(repositories.leavePolicy),
                 this.contract<Repositories.HRRequest.Contract>(repositories.hrRequest),
                 this.contract<Repositories.Employee.Contract>(repositories.employee),
                 this.contract<Repositories.Position.Contract>(repositories.position),
+                this.contract<Repositories.Absence.Contract>(repositories.absence),
             ),
             repositories,
             transaction,

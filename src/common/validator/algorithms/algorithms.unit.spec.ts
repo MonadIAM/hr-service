@@ -4,6 +4,7 @@ import { describe, expect, it } from "@jest/globals";
 import { NotEqualTo } from "./not-equal-to.validator";
 import { IsMsString } from "./is-ms-string.validator";
 import { IsOrdinal } from "./is-ordinal.validator";
+import { IsPeriod } from "./is-period.validator";
 
 function errors(decorator: PropertyDecorator, value: unknown, other?: unknown): ValidationError[] {
     class Input {
@@ -15,6 +16,36 @@ function errors(decorator: PropertyDecorator, value: unknown, other?: unknown): 
 }
 
 describe("[Validator] - Algorithms", () => {
+    describe("[Function] - IsPeriod", () => {
+        it.each([
+            [{ unit: "DAY", startDate: "2026-02-28", endDate: "2026-03-01" }, true],
+            [{ unit: "DAY", startDate: "2026-02-30", endDate: "2026-03-01" }, false],
+            [{ unit: "DAY", startDate: "2026-03-01", endDate: "2026-03-01" }, false],
+            [{ unit: "DAY", startDate: "2026-03-02", endDate: "2026-03-01" }, false],
+            [{ unit: "DAY", startDate: "2026-03-01" }, false],
+            [{ unit: "DAY", startDate: "2026-03-01", endDate: "2026-03-02", startsAt: "2026-03-01T00:00:00Z" }, false],
+            [{ unit: "MINUTE", startsAt: "2026-03-01T10:00:00+02:00", endsAt: "2026-03-01T09:00:00Z" }, true],
+            [{ unit: "MINUTE", startsAt: "2026-03-01T10:00:00+02:00", endsAt: "2026-03-01T08:00:00Z" }, false],
+            [{ unit: "MINUTE", startsAt: "2026-03-01T10:00:01Z", endsAt: "2026-03-01T11:00:00Z" }, false],
+            [{ unit: "MINUTE", startsAt: "2026-03-01T10:00:00", endsAt: "2026-03-01T11:00:00" }, false],
+            [{ unit: "MINUTE", startsAt: null, endsAt: "2026-03-01T11:00:00Z" }, false],
+            [{ unit: "OTHER" }, false],
+        ])("[case] - checks period %j (accepted: %s)", (input, accepted) => {
+            // Arrange
+            class Input {}
+            IsPeriod({
+                DAY: { from: "startDate", to: "endDate", dateOnly: true },
+                MINUTE: { from: "startsAt", to: "endsAt", dateOnly: false },
+            })(Input.prototype, "unit");
+
+            // Act
+            const result = validateSync(Object.assign(new Input(), input));
+
+            // Assert
+            expect(result.length === 0).toBe(accepted);
+        });
+    });
+
     describe("[Function] - IsOrdinal", () => {
         it.each([
             { label: "0", value: 0 },

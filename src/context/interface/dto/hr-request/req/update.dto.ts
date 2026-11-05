@@ -8,6 +8,7 @@ import { LeaveAdjustmentPayloadDTO } from "../utils/leave-adjustment-payload.dto
 import { ChangeTermsPayloadDTO } from "../utils/change-terms-payload.dto";
 import { TerminatePayloadDTO } from "../utils/terminate-payload.dto";
 import { TransferPayloadDTO } from "../utils/transfer-payload.dto";
+import { AbsencePayloadDTO } from "../utils/absence-payload.dto";
 import { HirePayloadDTO } from "../utils/hire-payload.dto";
 
 @ApiSchema({ name: "HRRequestUpdatePatch" })
@@ -55,6 +56,7 @@ export class UpdateBodyDTO {
             [HRRequestType.CHANGE_TERMS]: ChangeTermsPayloadDTO,
             [HRRequestType.TERMINATE]: TerminatePayloadDTO,
             [HRRequestType.TRANSFER]: TransferPayloadDTO,
+            [HRRequestType.ABSENCE]: AbsencePayloadDTO,
             [HRRequestType.REHIRE]: HirePayloadDTO,
             [HRRequestType.HIRE]: HirePayloadDTO,
         },

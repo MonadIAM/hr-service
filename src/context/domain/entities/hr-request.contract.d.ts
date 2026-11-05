@@ -68,10 +68,14 @@ declare global {
                     [HRRequestType.TERMINATE]: Terminate;
                     [HRRequestType.TRANSFER]: Transfer;
                     [HRRequestType.OVERTIME]: UnknownObject;
-                    [HRRequestType.ABSENCE]: UnknownObject;
+                    [HRRequestType.ABSENCE]: Absence;
                     [HRRequestType.REHIRE]: Hire;
                     [HRRequestType.HIRE]: Hire;
                 };
+
+                type Absence =
+                    | { startDate: string; poolCode: string; endDate: string; unit: LeaveUnit.DAY }
+                    | { poolCode: string; startsAt: string; endsAt: string; unit: LeaveUnit.MINUTE };
 
                 type LeaveAdjustment = {
                     balanceDelta: string;

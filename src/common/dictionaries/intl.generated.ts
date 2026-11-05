@@ -160,6 +160,9 @@ export type I18nTranslations = {
             "INVALID_STATUS": string;
         };
         "absence": {
+            "TERMS_PERIOD_MISMATCH": string;
+            "UNVERIFIED_CALENDAR": string;
+            "EMPTY_PERIOD": string;
             "INVALID_STATUS": string;
             "NO_CHANGES_DETECTED": string;
             "REQUEST_MISMATCH": string;
@@ -228,6 +231,8 @@ export type I18nTranslations = {
             "INVALID_REVERSAL": string;
         };
         "hr-request-execution": {
+            "ABSENCE_OVERLAP": string;
+            "INSUFFICIENT_LEAVE_BALANCE": string;
             "ARCHIVED_LEAVE_POLICY": string;
             "INVALID_EMPLOYEE_STATUS": string;
             "TERMS_NOT_FOUND": string;
@@ -241,6 +246,7 @@ export type I18nTranslations = {
         };
     };
     "validator": {
+        "IS_PERIOD": string;
         "IS_TIME_ZONE": string;
         "REQUIRED": string;
         "IS_OBJECT": string;
