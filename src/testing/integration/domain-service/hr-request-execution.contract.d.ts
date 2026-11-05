@@ -18,6 +18,7 @@ declare global {
                     leavePolicy: globalThis.Repositories.LeavePolicy.Contract;
                     hrRequest: globalThis.Repositories.HRRequest.Contract;
                     employee: globalThis.Repositories.Employee.Contract;
+                    position: globalThis.Repositories.Position.Contract;
                 };
             };
 

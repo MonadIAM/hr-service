@@ -62,6 +62,7 @@ export type I18nTranslations = {
         };
     };
     "db": {
+        "CONCURRENT_MODIFICATION": string;
         "NOT_FOUND": string;
         "UNIQUE_VIOLATION": string;
         "FK_VIOLATION": string;
@@ -222,6 +223,9 @@ export type I18nTranslations = {
         };
         "hr-request-execution": {
             "TERMS_NOT_FOUND": string;
+            "PLACEMENT_NOT_FOUND": string;
+            "POSITION_MISMATCH": string;
+            "POSITION_OCCUPIED": string;
         };
         "hr-request": {
             "EMPTY_APPROVAL_ROUTE": string;

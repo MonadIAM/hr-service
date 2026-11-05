@@ -1,11 +1,18 @@
 import { describe, expect, it, jest } from "@jest/globals";
 import { randomUUID } from "node:crypto";
 
-import { RecordStatus, EmployeeStatus, HRRequestType, HRRequestStatus, HRExecutionStatus } from "~context/enums";
 import { HRRequestExecutionIntegrationHelpers } from "~testing/integration/domain-service/hr-request-execution.helpers";
+import { PositionAssignment, HRRequest, Employment, Employee, Position } from "~context/domain/entities";
 import { postgresSuite } from "~testing/integration/containers/postgres.suite";
 import { HRFixture } from "~testing/integration/repositories/hr.fixture";
-import { PositionAssignment, HRRequest, Employment, Employee } from "~context/domain/entities";
+import {
+    PositionAssignmentStatus,
+    HRExecutionStatus,
+    HRRequestStatus,
+    EmployeeStatus,
+    HRRequestType,
+    RecordStatus,
+} from "~context/enums";
 
 const helpers = new HRRequestExecutionIntegrationHelpers();
 
@@ -296,6 +303,349 @@ describe("[DomainService] - HRRequestExecution", () => {
             expect(
                 await suite.transaction((transaction) => transaction.count(Employment, { employee: { id: employee.id } })),
             ).toBe(0);
+        });
+    });
+
+    describe("[Method] - transfer", () => {
+        it("[case] - preserves assignment history with constant SQL count for 1, 2, 10 and 100 transfers", async () => {
+            // Arrange
+            const measure = async (size: number): Promise<{ reads: number; writes: number }> => {
+                const organization = await suite.fixtures().createOrganization();
+                const requests = await Promise.all(
+                    Array.from({ length: size }, async () => {
+                        const employee = await suite
+                            .fixtures()
+                            .createEmployee({ organization, status: EmployeeStatus.ACTIVE });
+                        await suite.fixtures().createPositionAssignment({ employee, fte: "0.5000" });
+                        const position = await suite.fixtures().createPosition({ organization, title: "New placement" });
+                        return await suite.fixtures().createHRRequest({
+                            payload: { position: position.id, validFrom: "2026-07-01" },
+                            status: HRRequestStatus.APPROVED,
+                            type: HRRequestType.TRANSFER,
+                            targetPosition: position,
+                            approvedRevision: 1,
+                            organization,
+                            employee,
+                        });
+                    }),
+                );
+                await suite.transaction(async (transaction) => {
+                    const positions = await transaction.find(Position, { organization: organization.id });
+                    positions.forEach((position) => position.completePlacement(false));
+                });
+                const identifiers = requests.map(({ id }) => id);
+
+                // Act
+                const queries = await suite.transaction(async (transaction) => {
+                    const execute = jest.spyOn(transaction.getConnection(), "execute");
+                    try {
+                        await suite.repository().service.transfer({ identifiers, transaction });
+                        await transaction.flush();
+                        return execute.mock.calls.map(([query]) => String(query));
+                    } finally {
+                        execute.mockRestore();
+                    }
+                });
+                const repeated = await suite.transaction((transaction) =>
+                    suite.repository().service.transfer({ identifiers, transaction }),
+                );
+                const assignments = await suite.transaction((transaction) =>
+                    transaction.find(PositionAssignment, { organization: organization.id }),
+                );
+                const applied = await suite.transaction((transaction) =>
+                    transaction.find(HRRequest, { id: { $in: identifiers } }),
+                );
+
+                // Assert
+                expect(repeated).toEqual([]);
+                expect(assignments).toHaveLength(size * 2);
+                for (const request of requests) {
+                    const current = assignments.find((assignment) => assignment.sourceRequest?.id === request.id)!;
+                    const previous = assignments.find((assignment) => assignment.closedByRequest?.id === request.id)!;
+                    expect(previous).toMatchObject({ status: PositionAssignmentStatus.CLOSED, validTo: "2026-07-01" });
+                    expect(current).toMatchObject({
+                        position: { id: request.targetPosition!.id },
+                        employee: { id: request.employee.id },
+                        status: PositionAssignmentStatus.ACTIVE,
+                        placementSnapshot: { title: "New placement" },
+                        positionTitle: "New placement",
+                        salaryCurrency: previous.salaryCurrency,
+                        salaryAmount: previous.salaryAmount,
+                        salaryPeriod: previous.salaryPeriod,
+                        validFrom: "2026-07-01",
+                        fte: previous.fte,
+                    });
+                    expect(applied.find(({ id }) => id === request.id)).toMatchObject({
+                        result: {
+                            assignment: current.id,
+                            employee: request.employee.id,
+                            position: request.targetPosition!.id,
+                        },
+                        executionStatus: HRExecutionStatus.APPLIED,
+                        appliedRevision: 1,
+                    });
+                }
+                return {
+                    reads: queries.filter((query) => /^select /i.test(query)).length,
+                    writes: queries.filter((query) => /^(insert|update|delete) /i.test(query)).length,
+                };
+            };
+            const counts = [await measure(1), await measure(2), await measure(10), await measure(100)];
+
+            // Assert
+            expect(counts[0].writes).toBe(3);
+            expect(counts[1].reads).toBeLessThanOrEqual(counts[0].reads + 2);
+            expect(counts[1].writes).toBe(counts[0].writes);
+            expect(counts[2]).toEqual(counts[1]);
+            expect(counts[3]).toEqual(counts[1]);
+        });
+
+        it("[case] - isolates invalid transfers without closing their existing assignments", async () => {
+            // Arrange
+            const organization = await suite.fixtures().createOrganization();
+            const kinds = [
+                "valid",
+                "unassigned",
+                "missing",
+                "foreign",
+                "archived",
+                "pending",
+                "inactive",
+                "period",
+                "occupied",
+                "mismatch",
+                "future",
+                "draft",
+            ];
+            const requests = await Promise.all(
+                kinds.map(async (kind) => {
+                    const employee = await suite.fixtures().createEmployee({
+                        status: kind === "inactive" ? EmployeeStatus.TERMINATED : EmployeeStatus.ACTIVE,
+                        organization,
+                    });
+                    if (kind !== "unassigned") {
+                        await suite.fixtures().createPositionAssignment({ employee });
+                    }
+                    const position = await suite.fixtures().createPosition({
+                        organization: kind === "foreign" ? undefined : organization,
+                        status: kind === "archived" ? RecordStatus.ARCHIVED : RecordStatus.ACTIVE,
+                    });
+                    if (kind !== "pending") {
+                        await suite.transaction(async (transaction) => {
+                            (await transaction.findOneOrFail(Position, { id: position.id })).completePlacement(false);
+                        });
+                    }
+                    if (kind === "occupied") {
+                        await suite.fixtures().createPositionAssignment({ organization, position });
+                    }
+                    const mismatch =
+                        kind === "mismatch" ? await suite.fixtures().createPosition({ organization }) : undefined;
+                    return await suite.fixtures().createHRRequest({
+                        payload: {
+                            position: kind === "missing" ? randomUUID() : position.id,
+                            validFrom: kind === "period" ? "2025-12-31" : "2026-07-01",
+                        },
+                        effectiveAt: kind === "future" ? new Date("2999-01-01T00:00:00Z") : undefined,
+                        status: kind === "draft" ? HRRequestStatus.DRAFT : HRRequestStatus.APPROVED,
+                        targetPosition: mismatch,
+                        type: HRRequestType.TRANSFER,
+                        approvedRevision: 1,
+                        organization,
+                        employee,
+                    });
+                }),
+            );
+
+            // Act
+            await suite.transaction((transaction) =>
+                suite.repository().service.transfer({
+                    identifiers: requests.map(({ id }) => id),
+                    transaction,
+                }),
+            );
+            const persisted = await suite.transaction((transaction) =>
+                transaction.find(HRRequest, { organization: organization.id }),
+            );
+            const assignments = await suite.transaction((transaction) =>
+                transaction.find(PositionAssignment, { organization: organization.id }),
+            );
+
+            // Assert
+            for (const [index, kind] of kinds.entries()) {
+                const request = requests[index];
+                expect(persisted.find(({ id }) => id === request.id)?.executionStatus).toBe(
+                    kind === "valid"
+                        ? HRExecutionStatus.APPLIED
+                        : ["future", "draft"].includes(kind)
+                          ? HRExecutionStatus.NOT_STARTED
+                          : HRExecutionStatus.FAILED,
+                );
+                const history = assignments.filter(({ employee }) => employee.id === request.employee.id);
+                expect(history).toHaveLength(kind === "valid" ? 2 : kind === "unassigned" ? 0 : 1);
+                if (kind !== "valid" && kind !== "unassigned") {
+                    expect(history[0].status).toBe(PositionAssignmentStatus.ACTIVE);
+                    expect(history[0].validTo).toBeFalsy();
+                }
+            }
+        });
+
+        it("[case] - applies sequential transfers of one employee within the same batch", async () => {
+            // Arrange
+            const employee = await suite.fixtures().createEmployee({ status: EmployeeStatus.ACTIVE });
+            const organization = employee.organization;
+            const previous = await suite.fixtures().createPositionAssignment({ employee });
+            const requests = await Promise.all(
+                ["02", "03"].map(async (month) => {
+                    const position = await suite.fixtures().createPosition({ organization });
+                    await suite.transaction(async (transaction) => {
+                        (await transaction.findOneOrFail(Position, { id: position.id })).completePlacement(false);
+                    });
+                    return await suite.fixtures().createHRRequest({
+                        payload: { position: position.id, validFrom: `2026-${month}-01` },
+                        effectiveAt: new Date(`2026-${month}-01T00:00:00Z`),
+                        status: HRRequestStatus.APPROVED,
+                        type: HRRequestType.TRANSFER,
+                        approvedRevision: 1,
+                        organization,
+                        employee,
+                    });
+                }),
+            );
+
+            // Act
+            await suite.transaction((transaction) =>
+                suite.repository().service.transfer({
+                    identifiers: requests.map(({ id }) => id),
+                    transaction,
+                }),
+            );
+            const assignments = await suite.transaction((transaction) =>
+                transaction.find(PositionAssignment, { employee: { id: employee.id } }, { orderBy: { validFrom: "ASC" } }),
+            );
+
+            // Assert
+            expect(assignments).toHaveLength(3);
+            expect(assignments[0]).toMatchObject({
+                id: previous.id,
+                validTo: "2026-02-01",
+                status: PositionAssignmentStatus.CLOSED,
+            });
+            expect(assignments[1]).toMatchObject({
+                validFrom: "2026-02-01",
+                validTo: "2026-03-01",
+                status: PositionAssignmentStatus.CLOSED,
+                sourceRequest: { id: requests[0].id },
+                closedByRequest: { id: requests[1].id },
+            });
+            expect(assignments[2]).toMatchObject({
+                validFrom: "2026-03-01",
+                status: PositionAssignmentStatus.ACTIVE,
+                sourceRequest: { id: requests[1].id },
+            });
+        });
+
+        it.each([true, false])(
+            "[case] - reserves a shared target position (concurrent transactions: %s)",
+            async (concurrent) => {
+                // Arrange
+                const organization = await suite.fixtures().createOrganization();
+                const position = await suite.fixtures().createPosition({ organization });
+                await suite.transaction(async (transaction) => {
+                    (await transaction.findOneOrFail(Position, { id: position.id })).completePlacement(false);
+                });
+                const requests = await Promise.all(
+                    Array.from({ length: 2 }, async () => {
+                        const employee = await suite
+                            .fixtures()
+                            .createEmployee({ organization, status: EmployeeStatus.ACTIVE });
+                        await suite.fixtures().createPositionAssignment({ employee });
+                        return await suite.fixtures().createHRRequest({
+                            payload: { position: position.id, validFrom: "2026-07-01" },
+                            status: HRRequestStatus.APPROVED,
+                            type: HRRequestType.TRANSFER,
+                            approvedRevision: 1,
+                            organization,
+                            employee,
+                        });
+                    }),
+                );
+
+                // Act
+                if (concurrent) {
+                    await Promise.all(
+                        requests.map(({ id }) =>
+                            suite.transaction((transaction) =>
+                                suite.repository().service.transfer({ identifiers: [id], transaction }),
+                            ),
+                        ),
+                    );
+                } else {
+                    await suite.transaction((transaction) =>
+                        suite.repository().service.transfer({ identifiers: requests.map(({ id }) => id), transaction }),
+                    );
+                }
+                const persisted = await suite.transaction((transaction) =>
+                    transaction.find(HRRequest, { organization: organization.id }),
+                );
+
+                // Assert
+                expect(
+                    persisted.filter(({ executionStatus }) => executionStatus === HRExecutionStatus.APPLIED),
+                ).toHaveLength(1);
+                expect(
+                    persisted.filter(({ executionStatus }) => executionStatus === HRExecutionStatus.FAILED),
+                ).toHaveLength(1);
+                expect(
+                    await suite.transaction((transaction) =>
+                        transaction.count(PositionAssignment, {
+                            position: { id: position.id },
+                            status: PositionAssignmentStatus.ACTIVE,
+                        }),
+                    ),
+                ).toBe(1);
+            },
+        );
+
+        it("[case] - rolls back flushed closures and execution states if the transaction fails", async () => {
+            // Arrange
+            const employee = await suite.fixtures().createEmployee({ status: EmployeeStatus.ACTIVE });
+            const organization = employee.organization;
+            const previous = await suite.fixtures().createPositionAssignment({ employee });
+            const position = await suite.fixtures().createPosition({ organization });
+            await suite.transaction(async (transaction) => {
+                (await transaction.findOneOrFail(Position, { id: position.id })).completePlacement(false);
+            });
+            const request = await suite.fixtures().createHRRequest({
+                payload: { position: position.id, validFrom: "2026-07-01" },
+                status: HRRequestStatus.APPROVED,
+                type: HRRequestType.TRANSFER,
+                approvedRevision: 1,
+                organization,
+                employee,
+            });
+
+            // Act
+            const result = suite.transaction(async (transaction) => {
+                await suite.repository().service.transfer({ identifiers: [request.id], transaction });
+                await transaction.flush();
+                throw new Error("rollback");
+            });
+
+            // Assert
+            await expect(result).rejects.toThrow("rollback");
+            expect(
+                await suite.transaction((transaction) =>
+                    transaction.findOneOrFail(PositionAssignment, { id: previous.id }),
+                ),
+            ).toMatchObject({ status: PositionAssignmentStatus.ACTIVE, validTo: null });
+            expect(
+                await suite.transaction((transaction) =>
+                    transaction.count(PositionAssignment, { employee: { id: employee.id } }),
+                ),
+            ).toBe(1);
+            expect(
+                await suite.transaction((transaction) => transaction.findOneOrFail(HRRequest, { id: request.id })),
+            ).toMatchObject({ executionStatus: HRExecutionStatus.NOT_STARTED });
         });
     });
 

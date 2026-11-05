@@ -66,7 +66,7 @@ declare global {
                     [HRRequestType.CANCEL_REQUEST]: UnknownObject;
                     [HRRequestType.CHANGE_TERMS]: ChangeTerms;
                     [HRRequestType.TERMINATE]: Terminate;
-                    [HRRequestType.TRANSFER]: UnknownObject;
+                    [HRRequestType.TRANSFER]: Transfer;
                     [HRRequestType.OVERTIME]: UnknownObject;
                     [HRRequestType.ABSENCE]: UnknownObject;
                     [HRRequestType.REHIRE]: UnknownObject;
@@ -82,6 +82,11 @@ declare global {
                     workCalendar?: string;
                     workSchedule?: string;
                     leavePolicy?: string;
+                };
+
+                type Transfer = {
+                    validFrom: string;
+                    position: string;
                 };
 
                 type Terminate = {

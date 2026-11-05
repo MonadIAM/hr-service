@@ -42,7 +42,7 @@ export class HRRequestCommands implements Commands.HRRequest.Contract {
                 executionStatus: { $in: [HRExecutionStatus.NOT_STARTED, HRExecutionStatus.SCHEDULED] },
                 $or: [{ effectiveAt: { $lte: new Date() } }, { effectiveAt: null }],
                 status: HRRequestStatus.APPROVED,
-                type: { $in: [HRRequestType.CHANGE_TERMS, HRRequestType.TERMINATE] },
+                type: { $in: [HRRequestType.CHANGE_TERMS, HRRequestType.TERMINATE, HRRequestType.TRANSFER] },
             },
         });
 
@@ -71,6 +71,10 @@ export class HRRequestCommands implements Commands.HRRequest.Contract {
                 execute: async (transaction) => {
                     await this.hrRequestExecutionService.changeTerms({
                         identifiers: requests.filter(({ type }) => type === HRRequestType.CHANGE_TERMS).map(({ id }) => id),
+                        transaction,
+                    });
+                    await this.hrRequestExecutionService.transfer({
+                        identifiers: requests.filter(({ type }) => type === HRRequestType.TRANSFER).map(({ id }) => id),
                         transaction,
                     });
                     const entities = await this.hrRequestExecutionService.beginLeave({

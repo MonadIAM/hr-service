@@ -4,6 +4,7 @@ import {
     NotNullConstraintViolationException,
     UniqueConstraintViolationException,
     LockWaitTimeoutException,
+    OptimisticLockError,
     ConnectionException,
     DeadlockException,
     DriverException,
@@ -21,6 +22,13 @@ const cases = [
         kind: ErrorKind.NOT_FOUND,
         code: ErrorCode.NOT_FOUND,
         key: "NOT_FOUND",
+    },
+    {
+        error: new OptimisticLockError("changed"),
+        status: 409,
+        kind: ErrorKind.CONFLICT,
+        code: ErrorCode.CONFLICT,
+        key: "CONCURRENT_MODIFICATION",
     },
     {
         error: new DeadlockException(new Error("deadlock")),

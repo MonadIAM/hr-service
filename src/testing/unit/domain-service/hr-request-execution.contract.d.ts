@@ -17,6 +17,7 @@ declare global {
                     leavePolicy: Unit.Domain.HR.RepositoryMock<Entities.LeavePolicy>;
                     hrRequest: Unit.Domain.HR.RepositoryMock<Entities.HRRequest>;
                     employee: Unit.Domain.HR.RepositoryMock<Entities.Employee>;
+                    position: Unit.Domain.HR.RepositoryMock<Entities.Position>;
                 };
                 services: {
                     employee: {

@@ -10,9 +10,11 @@ import {
     LEAVE_POLICY_REPOSITORY,
     HR_REQUEST_REPOSITORY,
     EMPLOYEE_REPOSITORY,
+    POSITION_REPOSITORY,
 } from "~context/infrastructure/repositories";
 
 import { EMPLOYEE_SERVICE } from "./tokens";
+import { PositionAssignment } from "../entities";
 
 @Injectable({ scope: Scope.DEFAULT })
 export class HRRequestExecutionService implements Services.HRRequestExecution.Contract {
@@ -33,6 +35,8 @@ export class HRRequestExecutionService implements Services.HRRequestExecution.Co
         private readonly hrRequestRepository: Repositories.HRRequest.Contract,
         @Inject(EMPLOYEE_REPOSITORY)
         private readonly employeeRepository: Repositories.Employee.Contract,
+        @Inject(POSITION_REPOSITORY)
+        private readonly positionRepository: Repositories.Position.Contract,
     ) {}
 
     public async changeTerms(
@@ -149,6 +153,118 @@ export class HRRequestExecutionService implements Services.HRRequestExecution.Co
                         request.markFailed({ reason: error.message });
                     }
                 }
+            }
+        }
+
+        return requests;
+    }
+
+    public async transfer(props: Services.HRRequestExecution.Transfer.Props): Services.HRRequestExecution.Transfer.Result {
+        const { transaction, identifiers } = props;
+        const requests = (await this.hrRequestRepository.find({
+            options: {
+                populate: ["organization"],
+                lockMode: LockMode.PESSIMISTIC_WRITE,
+                orderBy: { effectiveAt: "ASC", createdAt: "ASC", id: "ASC" },
+                strategy: "select-in",
+                refresh: true,
+            },
+            where: {
+                executionStatus: { $in: [HRExecutionStatus.NOT_STARTED, HRExecutionStatus.SCHEDULED] },
+                $or: [{ effectiveAt: { $lte: new Date() } }, { effectiveAt: null }],
+                status: HRRequestStatus.APPROVED,
+                type: HRRequestType.TRANSFER,
+                id: { $in: identifiers },
+            },
+            transaction,
+        })) as Entities.HRRequest<HRRequestType.TRANSFER>[];
+
+        if (requests.length) {
+            const employeeIds = [...new Set(requests.map(({ employee }) => employee.id))];
+            const positionIds = [...new Set(requests.map(({ payload }) => payload.position))];
+            const employees = await this.employeeRepository.find({
+                options: { lockMode: LockMode.PESSIMISTIC_WRITE, orderBy: { id: "ASC" }, refresh: true },
+                where: { id: { $in: employeeIds } },
+                transaction,
+            });
+            const positions = await this.positionRepository.find({
+                options: { lockMode: LockMode.PESSIMISTIC_WRITE, orderBy: { id: "ASC" }, refresh: true },
+                where: { id: { $in: positionIds } },
+                transaction,
+            });
+            const assignments = await this.positionAssignmentRepository.find({
+                options: { lockMode: LockMode.PESSIMISTIC_WRITE, orderBy: { id: "ASC" }, refresh: true },
+                where: {
+                    $or: [{ employee: { id: { $in: employeeIds } } }, { position: { id: { $in: positionIds } } }],
+                    status: PositionAssignmentStatus.ACTIVE,
+                },
+                transaction,
+            });
+            const assignmentsByEmployee = new Map(assignments.map((entity) => [entity.employee.id, entity]));
+            const assignmentsByPosition = new Map(assignments.map((entity) => [entity.position.id, entity]));
+            const employeesById = new Map(employees.map((entity) => [entity.id, entity]));
+            const positionsById = new Map(positions.map((entity) => [entity.id, entity]));
+            const created: Entities.PositionAssignment[] = [];
+
+            for (const request of requests) {
+                const employee = employeesById.get(request.employee.id)!;
+                const current = assignmentsByEmployee.get(employee.id);
+                const position = positionsById.get(request.payload.position);
+
+                try {
+                    request.beginApplication();
+                    if (!current || !position) {
+                        throw Exception.invariantViolation({ messageKey: `${this.dictionaryPath}.PLACEMENT_NOT_FOUND` });
+                    } else if (request.targetPosition && request.targetPosition.id !== position.id) {
+                        throw Exception.invariantViolation({ messageKey: `${this.dictionaryPath}.POSITION_MISMATCH` });
+                    } else if (assignmentsByPosition.has(position.id)) {
+                        throw Exception.invariantViolation({ messageKey: `${this.dictionaryPath}.POSITION_OCCUPIED` });
+                    } else {
+                        const assignment = new PositionAssignment({
+                            placementSnapshot: {
+                                department: position.department,
+                                title: position.title,
+                                grade: position.grade,
+                                code: position.code,
+                                team: position.team,
+                            },
+                            salaryCurrency: current.salaryCurrency,
+                            sourceRequest: request,
+                            positionTitle: position.title,
+                            organization: request.organization,
+                            salaryAmount: current.salaryAmount,
+                            salaryPeriod: current.salaryPeriod,
+                            department: position.department,
+                            validFrom: request.payload.validFrom,
+                            employee,
+                            position,
+                            status: PositionAssignmentStatus.ACTIVE,
+                            grade: position.grade,
+                            team: position.team,
+                            fte: current.fte,
+                        });
+                        assignment.canCreate();
+                        current.close({ validTo: request.payload.validFrom, request });
+                        request.markApplied({
+                            result: { assignment: assignment.id, employee: employee.id, position: position.id },
+                        });
+                        assignmentsByPosition.delete(current.position.id);
+                        assignmentsByPosition.set(position.id, assignment);
+                        assignmentsByEmployee.set(employee.id, assignment);
+                        created.push(assignment);
+                    }
+                } catch (error) {
+                    if (!(error instanceof Exception) || Boolean(Exception.isRetryable(error))) {
+                        throw error;
+                    } else {
+                        request.markFailed({ reason: error.message });
+                    }
+                }
+            }
+
+            if (created.length) {
+                await transaction.flush();
+                transaction.persist(created);
             }
         }
 

@@ -4,6 +4,7 @@ import { WorkScheduleRepository } from "~context/infrastructure/repositories/wor
 import { LeavePolicyRepository } from "~context/infrastructure/repositories/leave-policy.repository";
 import { HRRequestExecutionService } from "~context/domain/services/hr-request-execution.service";
 import { HRRequestRepository } from "~context/infrastructure/repositories/hr-request.repository";
+import { PositionRepository } from "~context/infrastructure/repositories/position.repository";
 import { EmployeeRepository } from "~context/infrastructure/repositories/employee.repository";
 
 import { EmployeeIntegrationHelpers } from "./employee.helpers";
@@ -19,6 +20,7 @@ export class HRRequestExecutionIntegrationHelpers implements Integration.Domain.
             leavePolicy: new LeavePolicyRepository(context.readManager),
             hrRequest: new HRRequestRepository(context.readManager),
             employee: new EmployeeRepository(context.readManager),
+            position: new PositionRepository(context.readManager),
         };
 
         return {
@@ -30,6 +32,7 @@ export class HRRequestExecutionIntegrationHelpers implements Integration.Domain.
                 repositories.leavePolicy,
                 repositories.hrRequest,
                 repositories.employee,
+                repositories.position,
             ),
             repositories,
         };
