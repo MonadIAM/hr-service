@@ -45,6 +45,7 @@ declare global {
                 cancelledAbsences: ORM.Collection<Entities.Absence>;
                 createdAbsences: ORM.Collection<Entities.Absence>;
 
+                calculateOvertime(props: CalculateOvertime.Props): CalculateOvertime.Result;
                 scheduleApplication(props: ScheduleApplication.Props): void;
                 markApplied(props: MarkApplied.Props): void;
                 markFailed(props: MarkFailed.Props): void;
@@ -67,10 +68,16 @@ declare global {
                     [HRRequestType.CHANGE_TERMS]: ChangeTerms;
                     [HRRequestType.TERMINATE]: Terminate;
                     [HRRequestType.TRANSFER]: Transfer;
-                    [HRRequestType.OVERTIME]: UnknownObject;
+                    [HRRequestType.OVERTIME]: Overtime;
                     [HRRequestType.ABSENCE]: Absence;
                     [HRRequestType.REHIRE]: Hire;
                     [HRRequestType.HIRE]: Hire;
+                };
+
+                type Overtime = {
+                    startTime: string;
+                    endTime: string;
+                    date: string;
                 };
 
                 type Absence =
@@ -164,6 +171,36 @@ declare global {
                 type Props = {
                     workflowCode: string;
                     workflowVersion: number;
+                };
+            }
+
+            namespace CalculateOvertime {
+                type Props = {
+                    assignment: Entities.PositionAssignment;
+                };
+
+                type Result = {
+                    calculationSnapshot: {
+                        standardWeeklyHours: number;
+                        overtimeMultiplier: number;
+                        salaryCurrency?: string;
+                        monthsPerYear: number;
+                        salaryPeriod?: PayPeriod;
+                        salaryAmount?: string;
+                        weeksPerYear: number;
+                        fte: string;
+                    };
+                    estimatedAmount: string | null;
+                    hourlyRate: string | null;
+                    assignment: string;
+                    startTime: string;
+                    employee: string;
+                    timezone: string;
+                    currency: string | null;
+                    endTime: string;
+                    minutes: number;
+                    hours: string;
+                    date: string;
                 };
             }
 
