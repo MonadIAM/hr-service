@@ -33,10 +33,22 @@ declare namespace Services.HRRequestExecution {
         changeTerms: ChangeTerms.Signature;
         beginLeave: BeginLeave.Signature;
         markFailed: MarkFailed.Signature;
+        transfer: Transfer.Signature;
         cancel: Cancel.Signature;
     }
 
     namespace ChangeTerms {
+        type Props = {
+            transaction: ORM.EntityManager;
+            identifiers: string[];
+        };
+
+        type Result = Promise<Entities.HRRequest[]>;
+
+        type Signature = (props: Props) => Result;
+    }
+
+    namespace Transfer {
         type Props = {
             transaction: ORM.EntityManager;
             identifiers: string[];

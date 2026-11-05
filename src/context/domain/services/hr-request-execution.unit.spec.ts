@@ -1,14 +1,83 @@
 import { afterEach, describe, expect, it, jest } from "@jest/globals";
 import { randomUUID } from "node:crypto";
 
-import { HRExecutionStatus, HRRequestStatus, HRRequestType, EmployeeStatus } from "~context/enums";
 import { HRRequestExecutionUnitHelpers } from "~testing/unit/domain-service/hr-request-execution.helpers";
+import {
+    PositionAssignmentStatus,
+    HRExecutionStatus,
+    HRRequestStatus,
+    EmployeeStatus,
+    HRRequestType,
+    RecordStatus,
+} from "~context/enums";
 
 const helpers = new HRRequestExecutionUnitHelpers();
 
 describe("[DomainService] - HRRequestExecution", () => {
     afterEach(() => {
         jest.restoreAllMocks();
+    });
+
+    describe("[Method] - transfer", () => {
+        it.each([true, false])(
+            "[case] - flushes closures before persisting replacements (target active: %s)",
+            async (active) => {
+                // Arrange
+                const { service, repositories, transaction } = helpers.service();
+                const employee = helpers.createEmployee({ status: EmployeeStatus.ACTIVE });
+                const organization = employee.organization;
+                const current = helpers.createPositionAssignment({ employee });
+                const position = helpers.createPosition({
+                    organization,
+                    status: active ? RecordStatus.ACTIVE : RecordStatus.ARCHIVED,
+                });
+                position.completePlacement(false);
+                const request = helpers.createHRRequest({
+                    payload: { position: position.id, validFrom: "2026-07-01" },
+                    status: HRRequestStatus.APPROVED,
+                    type: HRRequestType.TRANSFER,
+                    approvedRevision: 1,
+                    organization,
+                    employee,
+                });
+                repositories.hrRequest.find.mockResolvedValue([request]);
+                repositories.positionAssignment.find.mockResolvedValue([current]);
+                repositories.employee.find.mockResolvedValue([employee]);
+                repositories.position.find.mockResolvedValue([position]);
+
+                // Act
+                await service.transfer({ identifiers: [request.id], transaction: transaction.entityManager });
+
+                // Assert
+                expect(request.executionStatus).toBe(active ? HRExecutionStatus.APPLIED : HRExecutionStatus.FAILED);
+                expect(current.status).toBe(active ? PositionAssignmentStatus.CLOSED : PositionAssignmentStatus.ACTIVE);
+                expect(transaction.flush).toHaveBeenCalledTimes(active ? 1 : 0);
+                expect(transaction.persist).toHaveBeenCalledTimes(active ? 1 : 0);
+                if (active) {
+                    expect(transaction.flush.mock.invocationCallOrder[0]).toBeLessThan(
+                        transaction.persist.mock.invocationCallOrder[0],
+                    );
+                    expect(transaction.persist).toHaveBeenCalledWith([
+                        expect.objectContaining({ sourceRequest: request, employee, position }),
+                    ]);
+                }
+            },
+        );
+
+        it("[case] - skips related reads when there are no due requests", async () => {
+            // Arrange
+            const { service, repositories, transaction } = helpers.service();
+
+            // Act
+            const result = await service.transfer({ identifiers: [], transaction: transaction.entityManager });
+
+            // Assert
+            expect(result).toEqual([]);
+            expect(repositories.positionAssignment.find).not.toHaveBeenCalled();
+            expect(repositories.position.find).not.toHaveBeenCalled();
+            expect(repositories.employee.find).not.toHaveBeenCalled();
+            expect(transaction.flush).not.toHaveBeenCalled();
+        });
     });
 
     describe("[Behavior] - membership leave", () => {

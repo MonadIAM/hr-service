@@ -38,6 +38,11 @@ export class HRRequestExecutionUnitHelpers extends HRDomainUnitHelpers implement
                 findUnique: jest.fn<(props: unknown) => Promise<Optional<Entities.Employee>>>(),
                 find: jest.fn<(props: unknown) => Promise<Entities.Employee[]>>().mockResolvedValue([]),
             },
+            position: {
+                findUniqueOrThrow: jest.fn<(props: unknown) => Promise<Entities.Position>>(),
+                findUnique: jest.fn<(props: unknown) => Promise<Optional<Entities.Position>>>(),
+                find: jest.fn<(props: unknown) => Promise<Entities.Position[]>>().mockResolvedValue([]),
+            },
         };
         const services = {
             employee: {
@@ -55,6 +60,7 @@ export class HRRequestExecutionUnitHelpers extends HRDomainUnitHelpers implement
                 this.contract<Repositories.LeavePolicy.Contract>(repositories.leavePolicy),
                 this.contract<Repositories.HRRequest.Contract>(repositories.hrRequest),
                 this.contract<Repositories.Employee.Contract>(repositories.employee),
+                this.contract<Repositories.Position.Contract>(repositories.position),
             ),
             repositories,
             transaction,

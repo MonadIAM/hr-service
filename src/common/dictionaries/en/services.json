@@ -27,7 +27,10 @@
     "INVALID_REVERSAL": "A reversal must be created from an original entry that has not already been reversed."
   },
   "hr-request-execution": {
-    "TERMS_NOT_FOUND": "The employee work calendar, work schedule or leave policy was not found."
+    "TERMS_NOT_FOUND": "The employee work calendar, work schedule or leave policy was not found.",
+    "PLACEMENT_NOT_FOUND": "The active assignment or target position was not found.",
+    "POSITION_MISMATCH": "The target position does not match the request.",
+    "POSITION_OCCUPIED": "The target position already has an active assignment."
   },
   "hr-request": {
     "EMPTY_APPROVAL_ROUTE": "At least one approval step is required.",
