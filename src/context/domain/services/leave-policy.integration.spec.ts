@@ -24,7 +24,16 @@ describe("[DomainService] - LeavePolicy", () => {
                 status: HRRequestStatus.APPROVED,
                 type: HRRequestType.HIRE,
                 organization: entity.organization,
-                payload: { leavePolicy: entity.id },
+                payload: {
+                    employmentStartedOn: "2026-01-01",
+                    scheduleTimezone: "Europe/London",
+                    termsValidFrom: "2026-01-01",
+                    workCalendar: randomUUID(),
+                    workSchedule: randomUUID(),
+                    leavePolicy: entity.id,
+                    position: randomUUID(),
+                    fte: "1",
+                },
                 approvedRevision: 1,
             });
 

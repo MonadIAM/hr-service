@@ -57,6 +57,7 @@ declare namespace Services.HRRequestExecution {
         scheduleApplication: ScheduleApplication.Signature;
         beginApplication: BeginApplication.Signature;
         advanceAbsences: AdvanceAbsences.Signature;
+        cancelRequests: CancelRequests.Signature;
         recordOvertime: RecordOvertime.Signature;
         beginAbsence: BeginAbsence.Signature;
         adjustLeave: AdjustLeave.Signature;
@@ -67,6 +68,17 @@ declare namespace Services.HRRequestExecution {
         beginHire: BeginHire.Signature;
         transfer: Transfer.Signature;
         cancel: Cancel.Signature;
+    }
+
+    namespace CancelRequests {
+        type Props = {
+            transaction: ORM.EntityManager;
+            identifiers: string[];
+        };
+
+        type Result = Promise<Entities.HRRequest[]>;
+
+        type Signature = (props: Props) => Result;
     }
 
     namespace RecordOvertime {

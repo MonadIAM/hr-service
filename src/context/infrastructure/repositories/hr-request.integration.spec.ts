@@ -5,7 +5,7 @@ import { QueryOrder } from "@mikro-orm/postgresql";
 import { PublicLinkOperator, PublicStringOperator, PublicOrdinalOperator } from "~infrastructure/database/enums";
 import { postgresSuite } from "~testing/integration/containers/postgres.suite";
 import { HRFixture } from "~testing/integration/repositories/hr.fixture";
-import { HRRequestType, HRRequestStatus, HRExecutionStatus } from "~context/enums";
+import { HRRequestType, HRRequestStatus, HRExecutionStatus, LeaveUnit } from "~context/enums";
 
 import { HRRequestRepository } from "./hr-request.repository";
 
@@ -30,7 +30,7 @@ describe("[Repository] - HRRequest", () => {
                 type: HRRequestType.ABSENCE,
                 status: HRRequestStatus.DRAFT,
                 executionStatus: HRExecutionStatus.NOT_STARTED,
-                payload: { poolCode: "ANNUAL", days: 5 },
+                payload: { startDate: "2026-07-01", endDate: "2026-07-06", poolCode: "ANNUAL", unit: LeaveUnit.DAY },
                 payloadSchemaVersion: 1,
                 revision: 1,
                 initiatorAccount: entity.initiatorAccount,

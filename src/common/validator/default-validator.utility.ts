@@ -32,6 +32,7 @@ import {
     Max,
 } from "class-validator";
 
+import { IsOptionalUnless } from "./algorithms/is-optional-unless.validator";
 import { ValidateByType } from "./algorithms/validate-by-type.validator";
 import { IsTimeRange } from "./algorithms/is-time-range.validator";
 import { IsDateOnly } from "./algorithms/is-date-only.validator";
@@ -65,6 +66,10 @@ export abstract class StandardValidationDecorators {
             options?.nullable === false
                 ? ValidateIf((_, value: unknown) => value !== undefined, options)(target, key)
                 : IsOptional(options)(target, key);
+    }
+
+    public static IsOptionalUnless(property: string, values: unknown[], options?: ValidationOptions): PropertyDecorator {
+        return IsOptionalUnless(property, values, options);
     }
 
     public static IsRequired(options?: ValidationOptions, label?: string): PropertyDecorator {

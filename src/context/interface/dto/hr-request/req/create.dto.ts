@@ -5,6 +5,7 @@ import { HRRequestType } from "~context/enums";
 import { Validator } from "~common/validator";
 
 import { LeaveAdjustmentPayloadDTO } from "../utils/leave-adjustment-payload.dto";
+import { CancelRequestPayloadDTO } from "../utils/cancel-request-payload.dto";
 import { ChangeTermsPayloadDTO } from "../utils/change-terms-payload.dto";
 import { TerminatePayloadDTO } from "../utils/terminate-payload.dto";
 import { TransferPayloadDTO } from "../utils/transfer-payload.dto";
@@ -26,8 +27,8 @@ export class CreateBodyDTO<T extends HRRequestType = HRRequestType> {
     declare public initiatorEmployee?: string;
 
     @Expose()
-    @Validator.IsOptional()
-    @Validator.IsString()
+    @Validator.IsOptionalUnless("type", [HRRequestType.CANCEL_REQUEST])
+    @Validator.IsUUID()
     @ApiProperty({ required: false })
     declare public relatedRequest?: string;
 
@@ -46,6 +47,7 @@ export class CreateBodyDTO<T extends HRRequestType = HRRequestType> {
     @Validator.IsObject()
     @Validator.ValidateByType("type", {
         [HRRequestType.LEAVE_ADJUSTMENT]: LeaveAdjustmentPayloadDTO,
+        [HRRequestType.CANCEL_REQUEST]: CancelRequestPayloadDTO,
         [HRRequestType.CHANGE_TERMS]: ChangeTermsPayloadDTO,
         [HRRequestType.TERMINATE]: TerminatePayloadDTO,
         [HRRequestType.TRANSFER]: TransferPayloadDTO,

@@ -5,6 +5,7 @@ import { HRRequestType } from "~context/enums";
 import { Validator } from "~common/validator";
 
 import { LeaveAdjustmentPayloadDTO } from "../utils/leave-adjustment-payload.dto";
+import { CancelRequestPayloadDTO } from "../utils/cancel-request-payload.dto";
 import { ChangeTermsPayloadDTO } from "../utils/change-terms-payload.dto";
 import { TerminatePayloadDTO } from "../utils/terminate-payload.dto";
 import { TransferPayloadDTO } from "../utils/transfer-payload.dto";
@@ -42,7 +43,7 @@ export class UpdatePatchDTO {
     @Validator.IsOptional({ nullable: false })
     @Validator.IsObject()
     @ApiProperty({ required: false })
-    declare public payload?: UnknownObject;
+    declare public payload?: Entities.HRRequest.Payload.ByType[HRRequestType];
 }
 
 @ApiSchema({ name: "HRRequestUpdateBody" })
@@ -54,6 +55,7 @@ export class UpdateBodyDTO {
         "type",
         {
             [HRRequestType.LEAVE_ADJUSTMENT]: LeaveAdjustmentPayloadDTO,
+            [HRRequestType.CANCEL_REQUEST]: CancelRequestPayloadDTO,
             [HRRequestType.CHANGE_TERMS]: ChangeTermsPayloadDTO,
             [HRRequestType.TERMINATE]: TerminatePayloadDTO,
             [HRRequestType.TRANSFER]: TransferPayloadDTO,

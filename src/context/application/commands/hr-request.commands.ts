@@ -47,6 +47,7 @@ export class HRRequestCommands implements Commands.HRRequest.Contract {
                 type: {
                     $in: [
                         HRRequestType.LEAVE_ADJUSTMENT,
+                        HRRequestType.CANCEL_REQUEST,
                         HRRequestType.CHANGE_TERMS,
                         HRRequestType.TERMINATE,
                         HRRequestType.TRANSFER,
@@ -61,6 +62,7 @@ export class HRRequestCommands implements Commands.HRRequest.Contract {
 
         if (requests.length) {
             const leaveAdjustmentIdentifiers = new Set<string>();
+            const cancellationIdentifiers = new Set<string>();
             const changeTermsIdentifiers = new Set<string>();
             const terminationIdentifiers = new Set<string>();
             const transferIdentifiers = new Set<string>();
@@ -72,6 +74,9 @@ export class HRRequestCommands implements Commands.HRRequest.Contract {
                 switch (type) {
                     case HRRequestType.LEAVE_ADJUSTMENT:
                         leaveAdjustmentIdentifiers.add(id);
+                        break;
+                    case HRRequestType.CANCEL_REQUEST:
+                        cancellationIdentifiers.add(id);
                         break;
                     case HRRequestType.CHANGE_TERMS:
                         changeTermsIdentifiers.add(id);
@@ -124,6 +129,22 @@ export class HRRequestCommands implements Commands.HRRequest.Contract {
                 },
                 changeLog: true,
                 execute: async (transaction) => {
+                    const cancellations = await this.hrRequestExecutionService.cancelRequests({
+                        identifiers: Array.from(cancellationIdentifiers),
+                        transaction,
+                    });
+                    for (const request of cancellations) {
+                        if (request.executionStatus === HRExecutionStatus.APPLIED) {
+                            const id = request.relatedRequest!.id;
+                            leaveAdjustmentIdentifiers.delete(id);
+                            changeTermsIdentifiers.delete(id);
+                            terminationIdentifiers.delete(id);
+                            transferIdentifiers.delete(id);
+                            overtimeIdentifiers.delete(id);
+                            absenceIdentifiers.delete(id);
+                            hireIdentifiers.delete(id);
+                        }
+                    }
                     await this.hrRequestExecutionService.changeTerms({
                         identifiers: Array.from(changeTermsIdentifiers),
                         transaction,

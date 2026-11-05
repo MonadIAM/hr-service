@@ -34,6 +34,316 @@ describe("[DomainService] - HRRequestExecution", () => {
         fixture: (entityManager) => new HRFixture(entityManager),
     });
 
+    describe("[Method] - cancelRequests", () => {
+        async function createBatch(count: number): Promise<HRRequest<HRRequestType.CANCEL_REQUEST>[]> {
+            const organization = await suite.fixtures().createOrganization();
+            const employee = await suite.fixtures().createEmployee({
+                scheduleTimezone: "Europe/London",
+                status: EmployeeStatus.ACTIVE,
+                organization,
+            });
+            return await suite.transaction(async (transaction) => {
+                const requests = Array.from({ length: count }, () => {
+                    const target = new HRRequest({
+                        payload: { date: "2030-07-01", startTime: "18:00", endTime: "20:00" },
+                        executionStatus: HRExecutionStatus.NOT_STARTED,
+                        effectiveAt: new Date("2030-07-01T20:00:00Z"),
+                        status: HRRequestStatus.APPROVED,
+                        initiatorAccount: randomUUID(),
+                        idempotencyKey: randomUUID(),
+                        type: HRRequestType.OVERTIME,
+                        payloadSchemaVersion: 1,
+                        approvedRevision: 1,
+                        revision: 1,
+                        organization,
+                        employee,
+                    });
+                    const request = new HRRequest({
+                        executionStatus: HRExecutionStatus.NOT_STARTED,
+                        payload: { reason: "Plans changed" },
+                        status: HRRequestStatus.APPROVED,
+                        type: HRRequestType.CANCEL_REQUEST,
+                        initiatorAccount: randomUUID(),
+                        idempotencyKey: randomUUID(),
+                        payloadSchemaVersion: 1,
+                        approvedRevision: 1,
+                        relatedRequest: target,
+                        revision: 1,
+                        organization,
+                        employee,
+                    });
+                    transaction.persist([target, request]);
+                    return request;
+                });
+                await transaction.flush();
+                return requests;
+            });
+        }
+
+        it("[case] - cancels pending and scheduled originals once without creating side effects", async () => {
+            // Arrange
+            const requests = await createBatch(2);
+            await suite.transaction(async (transaction) => {
+                const target = await transaction.findOneOrFail(HRRequest, { id: requests[1].relatedRequest!.id });
+                target.executionStatus = HRExecutionStatus.SCHEDULED;
+            });
+
+            // Act
+            await suite.transaction((transaction) =>
+                suite.repository().service.cancelRequests({
+                    identifiers: requests.map(({ id }) => id),
+                    transaction,
+                }),
+            );
+            const repeated = await suite.transaction((transaction) =>
+                suite.repository().service.cancelRequests({
+                    identifiers: requests.map(({ id }) => id),
+                    transaction,
+                }),
+            );
+
+            // Assert
+            expect(repeated).toEqual([]);
+            await suite.transaction(async (transaction) => {
+                const targets = await transaction.find(HRRequest, {
+                    id: { $in: requests.map(({ relatedRequest }) => relatedRequest!.id) },
+                });
+                const cancellations = await transaction.find(HRRequest, { id: { $in: requests.map(({ id }) => id) } });
+                expect(targets.every(({ status }) => status === HRRequestStatus.CANCELLED)).toBe(true);
+                expect(targets.map(({ executionStatus }) => executionStatus).sort()).toEqual(
+                    [HRExecutionStatus.NOT_STARTED, HRExecutionStatus.SCHEDULED].sort(),
+                );
+                expect(cancellations.every(({ executionStatus }) => executionStatus === HRExecutionStatus.APPLIED)).toBe(
+                    true,
+                );
+                expect(cancellations.map(({ result }) => result!.cancelledRequest).sort()).toEqual(
+                    targets.map(({ id }) => id).sort(),
+                );
+                expect(await transaction.count(LeaveLedgerEntry, {})).toBe(0);
+                expect(await transaction.count(Absence, {})).toBe(0);
+            });
+        });
+
+        it("[case] - isolates running, applied and failed originals without changing their results", async () => {
+            // Arrange
+            const requests = await createBatch(4);
+            const states = [HRExecutionStatus.RUNNING, HRExecutionStatus.APPLIED, HRExecutionStatus.FAILED];
+            await suite.transaction(async (transaction) => {
+                const targets = await transaction.find(HRRequest, {
+                    id: { $in: requests.map(({ relatedRequest }) => relatedRequest!.id) },
+                });
+                for (const [index, request] of requests.entries()) {
+                    const target = targets.find(({ id }) => id === request.relatedRequest!.id)!;
+                    if (index < states.length) {
+                        target.executionStatus = states[index];
+                        target.result = { existingEffect: "preserved" };
+                        target.appliedRevision = states[index] === HRExecutionStatus.APPLIED ? 1 : undefined;
+                    }
+                }
+            });
+
+            // Act
+            await suite.transaction((transaction) =>
+                suite.repository().service.cancelRequests({
+                    identifiers: requests.map(({ id }) => id),
+                    transaction,
+                }),
+            );
+
+            // Assert
+            await suite.transaction(async (transaction) => {
+                const targets = await transaction.find(HRRequest, {
+                    id: { $in: requests.map(({ relatedRequest }) => relatedRequest!.id) },
+                });
+                const cancellations = await transaction.find(HRRequest, { id: { $in: requests.map(({ id }) => id) } });
+                for (const [index, state] of states.entries()) {
+                    const target = targets.find(({ id }) => id === requests[index].relatedRequest!.id)!;
+                    expect(target.executionStatus).toBe(state);
+                    expect(target.status).toBe(HRRequestStatus.APPROVED);
+                    expect(target.result).toEqual({ existingEffect: "preserved" });
+                    expect(cancellations.find(({ id }) => id === requests[index].id)!.failure).toContain(
+                        "INVALID_EXECUTION_STATUS",
+                    );
+                }
+                expect(cancellations.find(({ id }) => id === requests[3].id)!.executionStatus).toBe(
+                    HRExecutionStatus.APPLIED,
+                );
+            });
+        });
+
+        it("[case] - serializes concurrent cancellations of the same original", async () => {
+            // Arrange
+            const [first] = await createBatch(1);
+            const second = await suite.fixtures().createHRRequest({
+                payload: { reason: "Duplicate cancellation" },
+                relatedRequest: first.relatedRequest,
+                status: HRRequestStatus.APPROVED,
+                type: HRRequestType.CANCEL_REQUEST,
+                organization: first.organization,
+                employee: first.employee,
+                approvedRevision: 1,
+            });
+
+            // Act
+            await Promise.all(
+                [first, second].map((request) =>
+                    suite.transaction((transaction) =>
+                        suite.repository().service.cancelRequests({ identifiers: [request.id], transaction }),
+                    ),
+                ),
+            );
+
+            // Assert
+            await suite.transaction(async (transaction) => {
+                const cancellations = await transaction.find(HRRequest, { id: { $in: [first.id, second.id] } });
+                expect(
+                    cancellations.filter(({ executionStatus }) => executionStatus === HRExecutionStatus.APPLIED),
+                ).toHaveLength(1);
+                expect(
+                    cancellations.find(({ executionStatus }) => executionStatus === HRExecutionStatus.FAILED)!.failure,
+                ).toContain("INVALID_STATUS");
+                expect((await transaction.findOneOrFail(HRRequest, { id: first.relatedRequest!.id })).status).toBe(
+                    HRRequestStatus.CANCELLED,
+                );
+            });
+        });
+
+        it("[case] - races execution without cancelling an applied balance adjustment", async () => {
+            // Arrange
+            const [request] = await createBatch(1);
+            const policy = await suite.fixtures().createLeavePolicy({ organization: request.organization });
+            await suite.transaction(async (transaction) => {
+                const target = await transaction.findOneOrFail(HRRequest, { id: request.relatedRequest!.id });
+                target.type = HRRequestType.LEAVE_ADJUSTMENT;
+                target.effectiveAt = undefined;
+                target.payload = {
+                    effectiveOn: "2020-01-01",
+                    balanceDelta: "2",
+                    leavePolicy: policy.id,
+                    reason: "Adjustment",
+                    poolCode: "ANNUAL",
+                    unit: LeaveUnit.DAY,
+                };
+            });
+
+            // Act
+            await Promise.all([
+                suite.transaction((transaction) =>
+                    suite.repository().service.cancelRequests({ identifiers: [request.id], transaction }),
+                ),
+                suite.transaction((transaction) =>
+                    suite.repository().service.adjustLeave({ identifiers: [request.relatedRequest!.id], transaction }),
+                ),
+            ]);
+
+            // Assert
+            await suite.transaction(async (transaction) => {
+                const target = await transaction.findOneOrFail(HRRequest, { id: request.relatedRequest!.id });
+                const cancellation = await transaction.findOneOrFail(HRRequest, { id: request.id });
+                const count = await transaction.count(LeaveLedgerEntry, { sourceRequest: { id: target.id } });
+                if (target.status === HRRequestStatus.CANCELLED) {
+                    expect(target.executionStatus).toBe(HRExecutionStatus.NOT_STARTED);
+                    expect(cancellation.executionStatus).toBe(HRExecutionStatus.APPLIED);
+                    expect(count).toBe(0);
+                } else {
+                    expect(target.executionStatus).toBe(HRExecutionStatus.APPLIED);
+                    expect(cancellation.executionStatus).toBe(HRExecutionStatus.FAILED);
+                    expect(count).toBe(1);
+                }
+            });
+        });
+
+        it("[case] - skips future and unapproved cancellations", async () => {
+            // Arrange
+            const requests = await createBatch(2);
+            await suite.transaction(async (transaction) => {
+                const first = await transaction.findOneOrFail(HRRequest, { id: requests[0].id });
+                const second = await transaction.findOneOrFail(HRRequest, { id: requests[1].id });
+                first.effectiveAt = new Date("2030-07-01T00:00:00Z");
+                second.status = HRRequestStatus.DRAFT;
+            });
+
+            // Act
+            const result = await suite.transaction((transaction) =>
+                suite.repository().service.cancelRequests({
+                    identifiers: requests.map(({ id }) => id),
+                    transaction,
+                }),
+            );
+
+            // Assert
+            expect(result).toEqual([]);
+            await suite.transaction(async (transaction) => {
+                const targets = await transaction.find(HRRequest, {
+                    id: { $in: requests.map(({ relatedRequest }) => relatedRequest!.id) },
+                });
+                expect(targets.every(({ status }) => status === HRRequestStatus.APPROVED)).toBe(true);
+            });
+        });
+
+        it("[case] - rolls back both the cancellation and the original status", async () => {
+            // Arrange
+            const [request] = await createBatch(1);
+
+            // Act
+            await expect(
+                suite.transaction(async (transaction) => {
+                    await suite.repository().service.cancelRequests({ identifiers: [request.id], transaction });
+                    await transaction.flush();
+                    throw new Error("rollback cancellation");
+                }),
+            ).rejects.toThrow("rollback cancellation");
+
+            // Assert
+            await suite.transaction(async (transaction) => {
+                expect((await transaction.findOneOrFail(HRRequest, { id: request.relatedRequest!.id })).status).toBe(
+                    HRRequestStatus.APPROVED,
+                );
+                expect((await transaction.findOneOrFail(HRRequest, { id: request.id })).executionStatus).toBe(
+                    HRExecutionStatus.NOT_STARTED,
+                );
+            });
+        });
+
+        it("[case] - keeps SQL bounded for 1, 2, 10 and 100 cancellations", async () => {
+            const counts: { reads: number; writes: number }[] = [];
+            async function measure(count: number): Promise<void> {
+                const requests = await createBatch(count);
+                await suite.transaction(async (transaction) => {
+                    const execute = jest.spyOn(transaction.getConnection(), "execute");
+                    try {
+                        await suite
+                            .repository()
+                            .service.cancelRequests({ identifiers: requests.map(({ id }) => id), transaction });
+                        await transaction.flush();
+                        const queries = execute.mock.calls.map(([sql]) => String(sql).toLowerCase());
+                        counts.push({
+                            reads: queries.filter((sql) => sql.startsWith("select")).length,
+                            writes: queries.filter((sql) => /^(insert|update|delete)/.test(sql)).length,
+                        });
+                        expect(
+                            await transaction.count(HRRequest, {
+                                status: HRRequestStatus.CANCELLED,
+                                id: { $in: requests.map(({ relatedRequest }) => relatedRequest!.id) },
+                            }),
+                        ).toBe(count);
+                    } finally {
+                        execute.mockRestore();
+                    }
+                });
+            }
+            await measure(1);
+            await measure(2);
+            await measure(10);
+            await measure(100);
+            expect(counts[0].reads).toBeLessThanOrEqual(4);
+            expect(counts[0].writes).toBeLessThanOrEqual(2);
+            expect(counts[1].reads).toBeLessThanOrEqual(4);
+            expect(counts[1].writes).toBeLessThanOrEqual(2);
+            expect(counts.slice(1)).toEqual([counts[1], counts[1], counts[1]]);
+        });
+    });
+
     describe("[Method] - recordOvertime", () => {
         async function createBatch(count: number): Promise<HRRequest<HRRequestType.OVERTIME>[]> {
             const organization = await suite.fixtures().createOrganization();
@@ -1301,7 +1611,10 @@ describe("[DomainService] - HRRequestExecution", () => {
                         organization,
                         leavePolicy,
                     });
-                    const payload: UnknownObject = { termsValidFrom: "2026-02-01", contractType: "fixed-term" };
+                    const payload: Entities.HRRequest.Payload.ChangeTerms = {
+                        termsValidFrom: "2026-02-01",
+                        contractType: "fixed-term",
+                    };
                     if (kind === "missing") {
                         payload.workCalendar = randomUUID();
                     }

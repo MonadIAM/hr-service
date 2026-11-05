@@ -275,6 +275,54 @@ export class HRRequestExecutionService implements Services.HRRequestExecution.Co
         }
     }
 
+    public async cancelRequests(
+        props: Services.HRRequestExecution.CancelRequests.Props,
+    ): Services.HRRequestExecution.CancelRequests.Result {
+        const { transaction, identifiers } = props;
+        const requests = await this.hrRequestRepository.find({
+            options: {
+                lockMode: LockMode.PESSIMISTIC_WRITE,
+                orderBy: { effectiveAt: "ASC", createdAt: "ASC", id: "ASC" },
+                refresh: true,
+            },
+            where: {
+                executionStatus: { $in: [HRExecutionStatus.NOT_STARTED, HRExecutionStatus.SCHEDULED] },
+                $or: [{ effectiveAt: { $lte: new Date() } }, { effectiveAt: null }],
+                type: HRRequestType.CANCEL_REQUEST,
+                status: HRRequestStatus.APPROVED,
+                id: { $in: identifiers },
+            },
+            transaction,
+        });
+
+        if (requests.length) {
+            const targetIds = [...new Set(requests.map(({ relatedRequest }) => relatedRequest!.id))];
+            const targets = await this.hrRequestRepository.find({
+                options: { lockMode: LockMode.PESSIMISTIC_WRITE, orderBy: { id: "ASC" }, refresh: true },
+                where: { id: { $in: targetIds } },
+                transaction,
+            });
+            const targetsById = new Map(targets.map((target) => [target.id, target]));
+
+            for (const request of requests) {
+                const target = targetsById.get(request.relatedRequest!.id)!;
+                try {
+                    request.beginApplication();
+                    target.cancel();
+                    request.markApplied({ result: { cancelledRequest: target.id, employee: target.employee.id } });
+                } catch (error) {
+                    if (!(error instanceof Exception) || Boolean(Exception.isRetryable(error))) {
+                        throw error;
+                    } else {
+                        request.markFailed({ reason: error.message });
+                    }
+                }
+            }
+        }
+
+        return requests;
+    }
+
     public async recordOvertime(
         props: Services.HRRequestExecution.RecordOvertime.Props,
     ): Services.HRRequestExecution.RecordOvertime.Result {

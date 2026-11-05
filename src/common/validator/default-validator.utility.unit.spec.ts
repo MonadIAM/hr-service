@@ -70,6 +70,34 @@ describe("[Validator] - Default", () => {
         );
     });
 
+    describe("[Function] - IsOptionalUnless", () => {
+        it.each([
+            { type: "CANCEL_REQUEST", relatedRequest: uuid, valid: true },
+            { type: "CANCEL_REQUEST", relatedRequest: undefined, valid: false },
+            { type: "CANCEL_REQUEST", relatedRequest: null, valid: false },
+            { type: "CANCEL_REQUEST", relatedRequest: "invalid", valid: false },
+            { type: "ABSENCE", relatedRequest: undefined, valid: true },
+            { type: "ABSENCE", relatedRequest: null, valid: true },
+            { type: "ABSENCE", relatedRequest: uuid, valid: true },
+            { type: "ABSENCE", relatedRequest: "invalid", valid: false },
+        ])("[case] - checks a conditional reference for $type (accepted: $valid)", ({ type, relatedRequest, valid }) => {
+            // Arrange
+            class Input {
+                public type = "";
+
+                @Validator.IsOptionalUnless("type", ["CANCEL_REQUEST"])
+                @Validator.IsUUID()
+                declare public relatedRequest?: string;
+            }
+
+            // Act
+            const errors = validateSync(plainToInstance(Input, { relatedRequest, type }));
+
+            // Assert
+            expect(errors.length === 0).toBe(valid);
+        });
+    });
+
     describe("[Function] - IsDateOnly", () => {
         it.each(["2026-02-30", "2026-01-01T00:00:00Z", "invalid", 42, null, undefined])(
             "[case] - rejects an invalid calendar date %s",

@@ -233,11 +233,7 @@ export class HRRequest<T extends HRRequestType = HRRequestType> implements Entit
             throw Exception.invariantViolation({ messageKey: `${HRRequest.dictionaryPath}.INVALID_STATUS` });
         } else if (this.approvedRevision !== this.revision) {
             throw Exception.invariantViolation({ messageKey: `${HRRequest.dictionaryPath}.STALE_REVISION` });
-        } else if (
-            [HRExecutionStatus.NOT_STARTED, HRExecutionStatus.SCHEDULED, HRExecutionStatus.APPLIED].includes(
-                this.executionStatus,
-            )
-        ) {
+        } else if ([HRExecutionStatus.NOT_STARTED, HRExecutionStatus.SCHEDULED].includes(this.executionStatus)) {
             this.status = HRRequestStatus.CANCELLED;
             this.updatedAt = new Date();
         } else {
@@ -334,6 +330,7 @@ export class HRRequest<T extends HRRequestType = HRRequestType> implements Entit
         return (
             !!request &&
             (request.id === this.id ||
+                (this.type === HRRequestType.CANCEL_REQUEST && request.type === HRRequestType.CANCEL_REQUEST) ||
                 request.organization.id !== this.organization.id ||
                 request.employee.id !== this.employee.id)
         );
