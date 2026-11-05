@@ -11,6 +11,7 @@ export class Position implements Entities.Position.Contract {
     public version: number = 1;
     public createdAt: Date;
     public updatedAt?: Date;
+    public reservation?: string;
 
     public previousStatus?: RecordStatus;
     public budgetPeriod?: PayPeriod;
@@ -52,6 +53,21 @@ export class Position implements Entities.Position.Contract {
         this.team = props.team;
 
         this.organization = props.organization;
+    }
+
+    public reserve(request: string): void {
+        this.assertReady();
+        this.reservation = request;
+        this.updatedAt = new Date();
+    }
+
+    public release(request: string): void {
+        if (this.reservation === request) {
+            this.reservation = undefined;
+            this.updatedAt = new Date();
+        } else {
+            throw Exception.invariantViolation({ messageKey: `${Position.dictionaryPath}.OPERATION_PENDING` });
+        }
     }
 
     public update({ patch }: Entities.Position.ChangeDataProps): void {
@@ -112,7 +128,7 @@ export class Position implements Entities.Position.Contract {
     }
 
     public assertReady(): void {
-        if (this.process) {
+        if (this.process || this.reservation) {
             throw Exception.invariantViolation({ messageKey: `${Position.dictionaryPath}.OPERATION_PENDING` });
         }
     }

@@ -11,6 +11,29 @@ describe("[DomainService] - LeavePolicy", () => {
         jest.restoreAllMocks();
     });
 
+    describe("[Behavior] - pending hire", () => {
+        it.each(["archive", "purge"] as const)("[case] - rejects %s while a hire uses the record", async (method) => {
+            // Arrange
+            const { service, repositories, transaction } = helpers.service();
+            const entity = helpers.createLeavePolicy();
+            repositories.leavePolicy.findUniqueOrThrow.mockResolvedValue(entity);
+            repositories.hrRequest.findUnique.mockResolvedValue(helpers.createHRRequest());
+
+            // Act
+            const result = service[method]({
+                organization: entity.organization.id,
+                realm: entity.organization.realm,
+                transaction: transaction.entityManager,
+                id: entity.id,
+            });
+
+            // Assert
+            await expect(result).rejects.toThrow("services.leave-policy.HIRE_PENDING");
+            expect(entity.status).toBe(RecordStatus.ACTIVE);
+            expect(transaction.remove).not.toHaveBeenCalled();
+        });
+    });
+
     describe("[Method] - create", () => {
         it("[case] - persists an active record in the resolved organization", async () => {
             // Arrange

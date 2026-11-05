@@ -1,9 +1,13 @@
 import { Injectable, Inject, Scope } from "@nestjs/common";
 import { LockMode } from "@mikro-orm/core";
 
-import { WORK_SCHEDULE_REPOSITORY, ORGANIZATION_REPOSITORY } from "~context/infrastructure/repositories";
+import { HRExecutionStatus, HRRequestType, RecordStatus } from "~context/enums";
 import { Exception } from "~common/exceptions";
-import { RecordStatus } from "~context/enums";
+import {
+    WORK_SCHEDULE_REPOSITORY,
+    ORGANIZATION_REPOSITORY,
+    HR_REQUEST_REPOSITORY,
+} from "~context/infrastructure/repositories";
 
 import { WorkSchedule } from "../entities";
 
@@ -16,6 +20,8 @@ export class WorkScheduleService implements Services.WorkSchedule.Contract {
         private readonly organizationRepository: Repositories.Organization.Contract,
         @Inject(WORK_SCHEDULE_REPOSITORY)
         private readonly workScheduleRepository: Repositories.WorkSchedule.Contract,
+        @Inject(HR_REQUEST_REPOSITORY)
+        private readonly hrRequestRepository: Repositories.HRRequest.Contract,
     ) {}
 
     public async create(props: Services.WorkSchedule.Create.Props): Services.WorkSchedule.Create.Result {
@@ -77,6 +83,20 @@ export class WorkScheduleService implements Services.WorkSchedule.Contract {
             transaction,
         });
 
+        const pending = await this.hrRequestRepository.findUnique({
+            where: {
+                type: { $in: [HRRequestType.HIRE, HRRequestType.REHIRE] },
+                executionStatus: HRExecutionStatus.RUNNING,
+                payload: { workSchedule: id },
+                organization,
+            },
+            transaction,
+        });
+
+        if (pending) {
+            throw Exception.invariantViolation({ messageKey: `${this.dictionaryPath}.HIRE_PENDING` });
+        }
+
         scheduleEntity.archive();
 
         return scheduleEntity;
@@ -102,6 +122,20 @@ export class WorkScheduleService implements Services.WorkSchedule.Contract {
             where: { organization: { realm: props.realm, id: organization }, id },
             transaction,
         });
+
+        const pending = await this.hrRequestRepository.findUnique({
+            where: {
+                type: { $in: [HRRequestType.HIRE, HRRequestType.REHIRE] },
+                executionStatus: HRExecutionStatus.RUNNING,
+                payload: { workSchedule: id },
+                organization,
+            },
+            transaction,
+        });
+
+        if (pending) {
+            throw Exception.invariantViolation({ messageKey: `${this.dictionaryPath}.HIRE_PENDING` });
+        }
 
         scheduleEntity.canPurge();
 

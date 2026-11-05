@@ -19,8 +19,24 @@ declare global {
         }
 
         interface ConsumerContract {
+            completeHire: CompleteHire.Signature;
             confirmLeave: ConfirmLeave.Signature;
             rejectLeave: RejectLeave.Signature;
+        }
+
+        namespace CompleteHire {
+            type Props = {
+                input:
+                    | Topics.Realm.MembershipEnsureConfirmedMessage["payload"]["input"]
+                    | Topics.Realm.MembershipEnsureRejectedMessage["payload"]["input"];
+                incoming: TransactionManager.Service.IncomingMessage;
+                actor: string;
+                realm: string;
+            };
+
+            type Result = Promise<void>;
+
+            type Signature = (props: Props) => Result;
         }
 
         namespace ConfirmLeave {

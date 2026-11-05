@@ -2,8 +2,35 @@ declare namespace Services.HRRequestExecution {
     interface Contract extends ProcessorContract, ConsumerContract {}
 
     interface ConsumerContract {
+        completeHire: CompleteHire.Signature;
         confirmLeave: ConfirmLeave.Signature;
         rejectLeave: RejectLeave.Signature;
+    }
+
+    namespace BeginHire {
+        type Props = {
+            transaction: ORM.EntityManager;
+            identifiers: string[];
+        };
+
+        type Result = Promise<Entities.HRRequest[]>;
+
+        type Signature = (props: Props) => Result;
+    }
+
+    namespace CompleteHire {
+        type Props = {
+            input:
+                | Topics.Realm.MembershipEnsureConfirmedMessage["payload"]["input"]
+                | Topics.Realm.MembershipEnsureRejectedMessage["payload"]["input"];
+            transaction: ORM.EntityManager;
+            actor: string;
+            realm: string;
+        };
+
+        type Result = Promise<void>;
+
+        type Signature = (props: Props) => Result;
     }
 
     namespace ConfirmLeave {
@@ -32,6 +59,7 @@ declare namespace Services.HRRequestExecution {
         markApplied: MarkApplied.Signature;
         changeTerms: ChangeTerms.Signature;
         beginLeave: BeginLeave.Signature;
+        beginHire: BeginHire.Signature;
         markFailed: MarkFailed.Signature;
         transfer: Transfer.Signature;
         cancel: Cancel.Signature;

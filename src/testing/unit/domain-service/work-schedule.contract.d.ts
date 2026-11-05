@@ -10,6 +10,7 @@ declare namespace Unit.Domain.WorkSchedule {
             repositories: {
                 organization: Unit.Domain.HR.RepositoryMock<Entities.Organization>;
                 workSchedule: Unit.Domain.HR.RepositoryMock<Entities.WorkSchedule>;
+                hrRequest: Unit.Domain.HR.RepositoryMock<Entities.HRRequest>;
             };
             services: {};
         };

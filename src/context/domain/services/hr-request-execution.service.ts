@@ -1,7 +1,6 @@
 import { Injectable, Inject, Scope } from "@nestjs/common";
 import { LockMode } from "@mikro-orm/core";
 
-import { PositionAssignmentStatus, HRExecutionStatus, HRRequestStatus, HRRequestType } from "~context/enums";
 import { Exception } from "~common/exceptions";
 import {
     POSITION_ASSIGNMENT_REPOSITORY,
@@ -12,6 +11,13 @@ import {
     EMPLOYEE_REPOSITORY,
     POSITION_REPOSITORY,
 } from "~context/infrastructure/repositories";
+import {
+    PositionAssignmentStatus,
+    HRExecutionStatus,
+    HRRequestStatus,
+    HRRequestType,
+    EmployeeStatus,
+} from "~context/enums";
 
 import { EMPLOYEE_SERVICE } from "./tokens";
 import { PositionAssignment } from "../entities";
@@ -38,6 +44,222 @@ export class HRRequestExecutionService implements Services.HRRequestExecution.Co
         @Inject(POSITION_REPOSITORY)
         private readonly positionRepository: Repositories.Position.Contract,
     ) {}
+
+    public async beginHire(
+        props: Services.HRRequestExecution.BeginHire.Props,
+    ): Services.HRRequestExecution.BeginHire.Result {
+        const { transaction, identifiers } = props;
+        const requests = (await this.hrRequestRepository.find({
+            options: {
+                populate: ["organization"],
+                lockMode: LockMode.PESSIMISTIC_WRITE,
+                orderBy: { effectiveAt: "ASC", createdAt: "ASC", id: "ASC" },
+                strategy: "select-in",
+                refresh: true,
+            },
+            where: {
+                executionStatus: { $in: [HRExecutionStatus.NOT_STARTED, HRExecutionStatus.SCHEDULED] },
+                $or: [{ effectiveAt: { $lte: new Date() } }, { effectiveAt: null }],
+                type: { $in: [HRRequestType.HIRE, HRRequestType.REHIRE] },
+                status: HRRequestStatus.APPROVED,
+                id: { $in: identifiers },
+            },
+            transaction,
+        })) as Entities.HRRequest<HRRequestType.HIRE | HRRequestType.REHIRE>[];
+
+        if (requests.length) {
+            const employeeIds = [...new Set(requests.map(({ employee }) => employee.id))];
+            const positionIds = [...new Set(requests.map(({ payload }) => payload.position))];
+            const employees = await this.employeeRepository.find({
+                options: { lockMode: LockMode.PESSIMISTIC_WRITE, orderBy: { id: "ASC" }, refresh: true },
+                where: { id: { $in: employeeIds } },
+                transaction,
+            });
+            const positions = await this.positionRepository.find({
+                options: { lockMode: LockMode.PESSIMISTIC_WRITE, orderBy: { id: "ASC" }, refresh: true },
+                where: { id: { $in: positionIds } },
+                transaction,
+            });
+            const [assignments, calendars, schedules, policies] = await Promise.all([
+                this.positionAssignmentRepository.find({
+                    options: { lockMode: LockMode.PESSIMISTIC_WRITE, orderBy: { id: "ASC" }, refresh: true },
+                    where: {
+                        $or: [{ employee: { id: { $in: employeeIds } } }, { position: { id: { $in: positionIds } } }],
+                        status: { $in: [PositionAssignmentStatus.RESERVED, PositionAssignmentStatus.ACTIVE] },
+                    },
+                    transaction,
+                }),
+                this.workCalendarRepository.find({
+                    options: { lockMode: LockMode.PESSIMISTIC_READ, orderBy: { id: "ASC" }, refresh: true },
+                    where: { id: { $in: [...new Set(requests.map(({ payload }) => payload.workCalendar))] } },
+                    transaction,
+                }),
+                this.workScheduleRepository.find({
+                    options: { lockMode: LockMode.PESSIMISTIC_READ, orderBy: { id: "ASC" }, refresh: true },
+                    where: { id: { $in: [...new Set(requests.map(({ payload }) => payload.workSchedule))] } },
+                    transaction,
+                }),
+                this.leavePolicyRepository.find({
+                    options: { lockMode: LockMode.PESSIMISTIC_READ, orderBy: { id: "ASC" }, refresh: true },
+                    where: { id: { $in: [...new Set(requests.map(({ payload }) => payload.leavePolicy))] } },
+                    transaction,
+                }),
+            ]);
+            const assignmentsByEmployee = new Map(assignments.map((entity) => [entity.employee.id, entity]));
+            const assignmentsByPosition = new Map(assignments.map((entity) => [entity.position.id, entity]));
+            const employeesById = new Map(employees.map((entity) => [entity.id, entity]));
+            const positionsById = new Map(positions.map((entity) => [entity.id, entity]));
+            const calendarsById = new Map(calendars.map((entity) => [entity.id, entity]));
+            const schedulesById = new Map(schedules.map((entity) => [entity.id, entity]));
+            const policiesById = new Map(policies.map((entity) => [entity.id, entity]));
+
+            for (const request of requests) {
+                const employee = employeesById.get(request.employee.id)!;
+                const position = positionsById.get(request.payload.position);
+                const workCalendar = calendarsById.get(request.payload.workCalendar);
+                const workSchedule = schedulesById.get(request.payload.workSchedule);
+                const leavePolicy = policiesById.get(request.payload.leavePolicy);
+                const status = request.type === HRRequestType.HIRE ? EmployeeStatus.DRAFT : EmployeeStatus.TERMINATED;
+
+                try {
+                    request.beginApplication();
+                    if (employee.status !== status) {
+                        throw Exception.invariantViolation({
+                            messageKey: `${this.dictionaryPath}.INVALID_EMPLOYEE_STATUS`,
+                        });
+                    } else if (!workCalendar || !workSchedule || !leavePolicy) {
+                        throw Exception.invariantViolation({ messageKey: `${this.dictionaryPath}.TERMS_NOT_FOUND` });
+                    } else if (!position) {
+                        throw Exception.invariantViolation({ messageKey: `${this.dictionaryPath}.PLACEMENT_NOT_FOUND` });
+                    } else if (request.targetPosition && request.targetPosition.id !== position.id) {
+                        throw Exception.invariantViolation({ messageKey: `${this.dictionaryPath}.POSITION_MISMATCH` });
+                    } else if (assignmentsByEmployee.has(employee.id) || assignmentsByPosition.has(position.id)) {
+                        throw Exception.invariantViolation({ messageKey: `${this.dictionaryPath}.POSITION_OCCUPIED` });
+                    } else {
+                        const input = { ...request.payload, workCalendar, workSchedule, leavePolicy };
+                        employee.canHire(input);
+                        const assignment = new PositionAssignment({
+                            placementSnapshot: {
+                                department: position.department,
+                                title: position.title,
+                                grade: position.grade,
+                                code: position.code,
+                                team: position.team,
+                            },
+                            status: PositionAssignmentStatus.RESERVED,
+                            salaryCurrency: request.payload.salaryCurrency,
+                            validFrom: request.payload.employmentStartedOn,
+                            salaryAmount: request.payload.salaryAmount,
+                            salaryPeriod: request.payload.salaryPeriod,
+                            organization: request.organization,
+                            department: position.department,
+                            positionTitle: position.title,
+                            fte: request.payload.fte,
+                            sourceRequest: request,
+                            grade: position.grade,
+                            team: position.team,
+                            employee,
+                            position,
+                        });
+                        assignment.canCreate();
+
+                        if (employee.account) {
+                            employee.reserve(request.id);
+                            position.reserve(request.id);
+                        } else {
+                            employee.hire(input);
+                            assignment.activate();
+                            request.markApplied({ result: { assignment: assignment.id, employee: employee.id } });
+                        }
+
+                        transaction.persist(assignment);
+                        assignmentsByEmployee.set(employee.id, assignment);
+                        assignmentsByPosition.set(position.id, assignment);
+                    }
+                } catch (error) {
+                    if (!(error instanceof Exception) || Boolean(Exception.isRetryable(error))) {
+                        throw error;
+                    } else {
+                        request.markFailed({ reason: error.message });
+                    }
+                }
+            }
+        }
+
+        return requests;
+    }
+
+    public async completeHire(
+        props: Services.HRRequestExecution.CompleteHire.Props,
+    ): Services.HRRequestExecution.CompleteHire.Result {
+        const { transaction, input, realm } = props;
+        const request = (await this.hrRequestRepository.findUnique({
+            options: { lockMode: LockMode.PESSIMISTIC_WRITE, refresh: true },
+            where: {
+                organization: { id: input.organization, realm },
+                type: { $in: [HRRequestType.HIRE, HRRequestType.REHIRE] },
+                executionStatus: HRExecutionStatus.RUNNING,
+                employee: { account: input.account },
+                id: input.process,
+            },
+            transaction,
+        })) as Nullable<Entities.HRRequest<HRRequestType.HIRE | HRRequestType.REHIRE>>;
+
+        if (request) {
+            const employee = await this.employeeRepository.findUniqueOrThrow({
+                options: { lockMode: LockMode.PESSIMISTIC_WRITE, refresh: true },
+                where: { organization: input.organization, reservation: request.id, id: request.employee.id },
+                transaction,
+            });
+            const position = await this.positionRepository.findUniqueOrThrow({
+                options: { lockMode: LockMode.PESSIMISTIC_WRITE, refresh: true },
+                where: { organization: input.organization, reservation: request.id, id: request.payload.position },
+                transaction,
+            });
+            const assignment = await this.positionAssignmentRepository.findUniqueOrThrow({
+                options: { lockMode: LockMode.PESSIMISTIC_WRITE, refresh: true },
+                where: {
+                    status: PositionAssignmentStatus.RESERVED,
+                    organization: input.organization,
+                    sourceRequest: { id: request.id },
+                },
+                transaction,
+            });
+
+            if ("reason" in input) {
+                employee.release(request.id);
+                position.release(request.id);
+                assignment.release();
+                request.markFailed({ reason: input.reason });
+            } else {
+                const [workCalendar, workSchedule, leavePolicy] = await Promise.all([
+                    this.workCalendarRepository.findUniqueOrThrow({
+                        options: { lockMode: LockMode.PESSIMISTIC_READ, refresh: true },
+                        where: { organization: input.organization, id: request.payload.workCalendar },
+                        transaction,
+                    }),
+                    this.workScheduleRepository.findUniqueOrThrow({
+                        options: { lockMode: LockMode.PESSIMISTIC_READ, refresh: true },
+                        where: { organization: input.organization, id: request.payload.workSchedule },
+                        transaction,
+                    }),
+                    this.leavePolicyRepository.findUniqueOrThrow({
+                        options: { lockMode: LockMode.PESSIMISTIC_READ, refresh: true },
+                        where: { organization: input.organization, id: request.payload.leavePolicy },
+                        transaction,
+                    }),
+                ]);
+
+                employee.release(request.id);
+                position.release(request.id);
+                employee.hire({ ...request.payload, workCalendar, workSchedule, leavePolicy });
+                assignment.activate();
+                request.markApplied({
+                    result: { assignment: assignment.id, employee: employee.id, account: input.account },
+                });
+            }
+        }
+    }
 
     public async changeTerms(
         props: Services.HRRequestExecution.ChangeTerms.Props,

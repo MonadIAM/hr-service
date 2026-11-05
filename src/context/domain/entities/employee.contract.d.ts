@@ -10,6 +10,7 @@ declare global {
                 version: number;
                 createdAt: Date;
                 updatedAt?: Date;
+                reservation?: string;
 
                 employmentStartedOn?: string;
                 scheduleAnchorDate?: string;
@@ -49,8 +50,12 @@ declare global {
                 terminate(props: Terminate.Props): void;
                 update(props: ChangeDataProps): void;
                 setHRBP(props: SetHRBP.Props): void;
+                canHire(props: Hire.Props): void;
+                reserve(request: string): void;
+                release(request: string): void;
                 hire(props: Hire.Props): void;
                 unlinkAccount(): void;
+                assertReady(): void;
                 canCreate(): void;
                 archive(): void;
                 restore(): void;

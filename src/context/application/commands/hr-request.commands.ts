@@ -1,9 +1,9 @@
 import { Injectable, Inject, Scope } from "@nestjs/common";
 
-import { HR_REQUEST_REPOSITORY } from "~context/infrastructure/repositories";
-import { TRANSACTIONAL_SERVICE } from "~common/transaction-manager";
 import { HR_REQUEST_EXECUTION_SERVICE, HR_REQUEST_SERVICE } from "~context/domain/services";
+import { HR_REQUEST_REPOSITORY } from "~context/infrastructure/repositories";
 import { SYSTEM_ACCOUNT_ID, CONSUMER_META } from "~context/constants";
+import { TRANSACTIONAL_SERVICE } from "~common/transaction-manager";
 import {
     HRExecutionStatus,
     RealmTopicAction,
@@ -42,19 +42,57 @@ export class HRRequestCommands implements Commands.HRRequest.Contract {
                 executionStatus: { $in: [HRExecutionStatus.NOT_STARTED, HRExecutionStatus.SCHEDULED] },
                 $or: [{ effectiveAt: { $lte: new Date() } }, { effectiveAt: null }],
                 status: HRRequestStatus.APPROVED,
-                type: { $in: [HRRequestType.CHANGE_TERMS, HRRequestType.TERMINATE, HRRequestType.TRANSFER] },
+                type: {
+                    $in: [
+                        HRRequestType.CHANGE_TERMS,
+                        HRRequestType.TERMINATE,
+                        HRRequestType.TRANSFER,
+                        HRRequestType.REHIRE,
+                        HRRequestType.HIRE,
+                    ],
+                },
             },
         });
 
         if (requests.length) {
+            const changeTermsIdentifiers = new Set<string>();
+            const terminationIdentifiers = new Set<string>();
+            const transferIdentifiers = new Set<string>();
+            const hireIdentifiers = new Set<string>();
+
+            for (const { type, id } of requests) {
+                switch (type) {
+                    case HRRequestType.CHANGE_TERMS:
+                        changeTermsIdentifiers.add(id);
+                        break;
+                    case HRRequestType.TERMINATE:
+                        terminationIdentifiers.add(id);
+                        break;
+                    case HRRequestType.TRANSFER:
+                        transferIdentifiers.add(id);
+                        break;
+                    case HRRequestType.REHIRE:
+                    case HRRequestType.HIRE:
+                        hireIdentifiers.add(id);
+                        break;
+                }
+            }
+
             let processed = 0;
             await this.transactionalService.run({
                 resource: this.resource,
-                outbox: {
-                    payloadMapper: this.mapper.leavePayload,
-                    actionType: RealmTopicAction.MEMBERSHIP_LEAVE_REQUESTED,
-                    destinationTopic: KafkaTopic.REALM,
-                },
+                outbox: [
+                    {
+                        payloadMapper: this.mapper.leavePayload,
+                        actionType: RealmTopicAction.MEMBERSHIP_LEAVE_REQUESTED,
+                        destinationTopic: KafkaTopic.REALM,
+                    },
+                    {
+                        payloadMapper: this.mapper.hirePayload,
+                        actionType: RealmTopicAction.MEMBERSHIP_ENSURE_REQUESTED,
+                        destinationTopic: KafkaTopic.REALM,
+                    },
+                ],
                 audit: {
                     actor: SYSTEM_ACCOUNT_ID,
                     entityType: EntityType.HR_REQUEST,
@@ -70,19 +108,23 @@ export class HRRequestCommands implements Commands.HRRequest.Contract {
                 changeLog: true,
                 execute: async (transaction) => {
                     await this.hrRequestExecutionService.changeTerms({
-                        identifiers: requests.filter(({ type }) => type === HRRequestType.CHANGE_TERMS).map(({ id }) => id),
+                        identifiers: Array.from(changeTermsIdentifiers),
                         transaction,
                     });
                     await this.hrRequestExecutionService.transfer({
-                        identifiers: requests.filter(({ type }) => type === HRRequestType.TRANSFER).map(({ id }) => id),
+                        identifiers: Array.from(transferIdentifiers),
                         transaction,
                     });
                     const entities = await this.hrRequestExecutionService.beginLeave({
-                        identifiers: requests.filter(({ type }) => type === HRRequestType.TERMINATE).map(({ id }) => id),
+                        identifiers: Array.from(terminationIdentifiers),
+                        transaction,
+                    });
+                    const hires = await this.hrRequestExecutionService.beginHire({
+                        identifiers: Array.from(hireIdentifiers),
                         transaction,
                     });
                     processed = requests.length;
-                    return { requests: entities };
+                    return { requests: [...entities, ...hires] };
                 },
             });
 
@@ -90,6 +132,25 @@ export class HRRequestCommands implements Commands.HRRequest.Contract {
         } else {
             return 0;
         }
+    }
+
+    public async completeHire(props: Commands.HRRequest.CompleteHire.Props): Commands.HRRequest.CompleteHire.Result {
+        const { incoming, ...request } = props;
+
+        await this.transactionalService.consume({
+            incoming,
+            resource: this.resource,
+            audit: {
+                entityType: EntityType.HR_REQUEST,
+                actionType: ActionType.UPDATE,
+                context: CONSUMER_META,
+                ...request,
+            },
+            changeLog: true,
+            execute: (transaction) => {
+                return this.hrRequestExecutionService.completeHire({ ...request, transaction });
+            },
+        });
     }
 
     public async confirmLeave(props: Commands.HRRequest.ConfirmLeave.Props): Commands.HRRequest.ConfirmLeave.Result {

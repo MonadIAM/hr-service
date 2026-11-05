@@ -5,11 +5,12 @@ declare namespace Unit.Domain.LeavePolicy {
 
     namespace Service {
         type Result = {
-            service: Services.LeavePolicy.Contract;
             transaction: Unit.Domain.Core.Transaction;
+            service: Services.LeavePolicy.Contract;
             repositories: {
                 organization: Unit.Domain.HR.RepositoryMock<Entities.Organization>;
                 leavePolicy: Unit.Domain.HR.RepositoryMock<Entities.LeavePolicy>;
+                hrRequest: Unit.Domain.HR.RepositoryMock<Entities.HRRequest>;
             };
             services: {};
         };

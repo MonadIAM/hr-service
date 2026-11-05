@@ -17,16 +17,22 @@
     "REQUEST_FAILED": "Vault Transit request failed.",
     "INVALID_SIGNATURE": "Vault Transit returned an invalid signature."
   },
+  "work-calendar": {
+    "HIRE_PENDING": "This record is reserved by a pending hire request."
+  },
   "work-schedule": {
+    "HIRE_PENDING": "This record is reserved by a pending hire request.",
     "STALE_REVISION": "Create a revision from the latest revision."
   },
   "leave-policy": {
+    "HIRE_PENDING": "This record is reserved by a pending hire request.",
     "STALE_REVISION": "Create a revision from the latest revision."
   },
   "leave-ledger-entry": {
     "INVALID_REVERSAL": "A reversal must be created from an original entry that has not already been reversed."
   },
   "hr-request-execution": {
+    "INVALID_EMPLOYEE_STATUS": "The request type does not match the employee status.",
     "TERMS_NOT_FOUND": "The employee work calendar, work schedule or leave policy was not found.",
     "PLACEMENT_NOT_FOUND": "The active assignment or target position was not found.",
     "POSITION_MISMATCH": "The target position does not match the request.",

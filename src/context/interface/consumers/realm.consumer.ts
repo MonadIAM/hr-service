@@ -65,6 +65,10 @@ export class RealmConsumer implements Consumers.Realm.Contract, OnModuleInit {
         });
         this.schemaRegistry.validate({ topic: KafkaTopic.REALM, value: message });
         switch (message.actionType) {
+            case RealmTopicAction.MEMBERSHIP_ENSURE_CONFIRMED:
+            case RealmTopicAction.MEMBERSHIP_ENSURE_REJECTED:
+                await this.hrRequestCommands.completeHire({ incoming, ...message.payload });
+                break;
             case RealmTopicAction.MEMBERSHIP_LEAVE_CONFIRMED:
                 await this.hrRequestCommands.confirmLeave({ incoming, ...message.payload });
                 break;
@@ -105,6 +109,8 @@ export class RealmConsumer implements Consumers.Realm.Contract, OnModuleInit {
                 },
             });
         } else if (
+            decoded.actionType === RealmTopicAction.MEMBERSHIP_ENSURE_CONFIRMED ||
+            decoded.actionType === RealmTopicAction.MEMBERSHIP_ENSURE_REJECTED ||
             decoded.actionType === RealmTopicAction.MEMBERSHIP_LEAVE_REJECTED ||
             decoded.actionType === RealmTopicAction.SYSTEM_PURGE
         ) {

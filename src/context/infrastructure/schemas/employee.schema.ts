@@ -60,6 +60,8 @@ export const EmployeeSchema = new EntitySchema<Employee>({
     properties: {
         id: { primary: true, type: "uuid" },
 
+        reservation: { type: "uuid", nullable: true },
+
         account: { type: "uuid", fieldName: "account_id", nullable: true },
 
         status: {

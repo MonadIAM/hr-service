@@ -27,12 +27,12 @@ export const PositionAssignmentSchema = new EntitySchema<PositionAssignment>({
         {
             name: "position_assignment_active_employee_unique",
             expression:
-                'CREATE UNIQUE INDEX "position_assignment_active_employee_unique" ON "hr"."position_assignment" (employee_id) WHERE status = \'ACTIVE\'',
+                'CREATE UNIQUE INDEX "position_assignment_active_employee_unique" ON "hr"."position_assignment" (employee_id) WHERE status IN (\'ACTIVE\', \'RESERVED\')',
         },
         {
             name: "position_assignment_active_position_unique",
             expression:
-                'CREATE UNIQUE INDEX "position_assignment_active_position_unique" ON "hr"."position_assignment" (position_id) WHERE status = \'ACTIVE\'',
+                'CREATE UNIQUE INDEX "position_assignment_active_position_unique" ON "hr"."position_assignment" (position_id) WHERE status IN (\'ACTIVE\', \'RESERVED\')',
         },
     ],
 

@@ -41,6 +41,8 @@ export const PositionSchema = new EntitySchema<Position>({
     properties: {
         id: { primary: true, type: "uuid" },
 
+        reservation: { type: "uuid", nullable: true },
+
         department: { type: "uuid", fieldName: "department_id" },
         team: { type: "uuid", fieldName: "team_id" },
         process: { type: "uuid", nullable: true },

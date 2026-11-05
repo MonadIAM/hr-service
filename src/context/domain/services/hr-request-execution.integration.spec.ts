@@ -22,6 +22,303 @@ describe("[DomainService] - HRRequestExecution", () => {
         fixture: (entityManager) => new HRFixture(entityManager),
     });
 
+    describe("[Behavior] - hire and rehire execution", () => {
+        async function createBatch(
+            count: number,
+            type: HRRequestType.HIRE | HRRequestType.REHIRE = HRRequestType.HIRE,
+        ): Promise<HRRequest<HRRequestType.HIRE | HRRequestType.REHIRE>[]> {
+            const organization = await suite.fixtures().createOrganization();
+            const workCalendar = await suite.fixtures().createWorkCalendar({ organization });
+            const workSchedule = await suite.fixtures().createWorkSchedule({ organization });
+            const leavePolicy = await suite.fixtures().createLeavePolicy({ organization });
+
+            return await suite.transaction(async (transaction) => {
+                const requests = Array.from({ length: count }, () => {
+                    const employee = new Employee({
+                        employmentEndedOn: type === HRRequestType.REHIRE ? "2026-01-31" : undefined,
+                        status: type === HRRequestType.REHIRE ? EmployeeStatus.TERMINATED : EmployeeStatus.DRAFT,
+                        employeeNumber: randomUUID(),
+                        termsRevision: type === HRRequestType.REHIRE ? 2 : 1,
+                        firstName: "Alice",
+                        lastName: "Morgan",
+                        account: randomUUID(),
+                        organization,
+                    });
+                    const position = new Position({
+                        department: randomUUID(),
+                        status: RecordStatus.ACTIVE,
+                        plannedFte: "1",
+                        title: "Engineer",
+                        team: randomUUID(),
+                        code: randomUUID(),
+                        organization,
+                    });
+                    position.completePlacement(false);
+                    const request = new HRRequest({
+                        executionStatus: HRExecutionStatus.NOT_STARTED,
+                        payloadSchemaVersion: 1,
+                        initiatorAccount: randomUUID(),
+                        status: HRRequestStatus.APPROVED,
+                        idempotencyKey: randomUUID(),
+                        approvedRevision: 1,
+                        targetPosition: position,
+                        revision: 1,
+                        organization,
+                        employee,
+                        payload: {
+                            employmentStartedOn: "2026-02-01",
+                            scheduleTimezone: "Europe/London",
+                            termsValidFrom: "2026-02-01",
+                            workCalendar: workCalendar.id,
+                            workSchedule: workSchedule.id,
+                            leavePolicy: leavePolicy.id,
+                            position: position.id,
+                            fte: "1",
+                        },
+                        type,
+                    });
+                    transaction.persist([employee, position, request]);
+
+                    return request;
+                });
+                await transaction.flush();
+
+                return requests;
+            });
+        }
+
+        it.each([HRRequestType.HIRE, HRRequestType.REHIRE] as const)(
+            "[case] - reserves %s until membership confirmation and ignores repeated outcomes",
+            async (type) => {
+                // Arrange
+                const [request] = await createBatch(1, type);
+                const payload = {
+                    actor: request.initiatorAccount,
+                    realm: request.organization.realm,
+                    input: {
+                        organization: request.organization.id,
+                        account: request.employee.account!,
+                        process: request.id,
+                    },
+                };
+
+                // Act
+                await suite.transaction((transaction) =>
+                    suite.repository().service.beginHire({ identifiers: [request.id], transaction }),
+                );
+                await suite.transaction(async (transaction) => {
+                    const employee = await transaction.findOneOrFail(Employee, request.employee.id);
+                    const position = await transaction.findOneOrFail(Position, request.payload.position);
+                    const assignment = await transaction.findOneOrFail(PositionAssignment, {
+                        sourceRequest: { id: request.id },
+                    });
+
+                    expect(employee.status).toBe(
+                        type === HRRequestType.HIRE ? EmployeeStatus.DRAFT : EmployeeStatus.TERMINATED,
+                    );
+                    expect(employee.reservation).toBe(request.id);
+                    expect(position.reservation).toBe(request.id);
+                    expect(assignment.status).toBe(PositionAssignmentStatus.RESERVED);
+                    expect(() => employee.unlinkAccount()).toThrow();
+                    expect(() => employee.archive()).toThrow();
+                    expect(() => position.archive()).toThrow();
+                    expect(() => assignment.void()).toThrow();
+                });
+                await suite.transaction((transaction) =>
+                    suite.repository().service.completeHire({ ...payload, realm: randomUUID(), transaction }),
+                );
+                await suite.transaction((transaction) =>
+                    suite.repository().service.completeHire({ ...payload, transaction }),
+                );
+                await suite.transaction((transaction) =>
+                    suite.repository().service.completeHire({ ...payload, transaction }),
+                );
+                await suite.transaction((transaction) =>
+                    suite.repository().service.completeHire({
+                        ...payload,
+                        input: { ...payload.input, reason: "stale rejection" },
+                        transaction,
+                    }),
+                );
+
+                // Assert
+                await suite.transaction(async (transaction) => {
+                    const employee = await transaction.findOneOrFail(Employee, request.employee.id);
+                    const position = await transaction.findOneOrFail(Position, request.payload.position);
+                    const assignment = await transaction.findOneOrFail(PositionAssignment, {
+                        sourceRequest: { id: request.id },
+                    });
+                    const applied = await transaction.findOneOrFail(HRRequest, request.id);
+                    expect(employee).toMatchObject({
+                        employmentStartedOn: "2026-02-01",
+                        scheduleTimezone: "Europe/London",
+                        status: EmployeeStatus.ACTIVE,
+                        termsRevision: type === HRRequestType.REHIRE ? 3 : 1,
+                    });
+                    expect(employee.reservation).toBeFalsy();
+                    expect(position.reservation).toBeFalsy();
+                    expect(assignment.status).toBe(PositionAssignmentStatus.ACTIVE);
+                    expect(applied.executionStatus).toBe(HRExecutionStatus.APPLIED);
+                    expect(await transaction.count(PositionAssignment, { employee: { id: employee.id } })).toBe(1);
+                });
+            },
+        );
+
+        it("[case] - releases rejected reservations without changing previous employee terms", async () => {
+            // Arrange
+            const [request] = await createBatch(1, HRRequestType.REHIRE);
+            const payload = {
+                actor: request.initiatorAccount,
+                realm: request.organization.realm,
+                input: {
+                    organization: request.organization.id,
+                    account: request.employee.account!,
+                    process: request.id,
+                    reason: "membership blocked",
+                },
+            };
+
+            // Act
+            await suite.transaction((transaction) =>
+                suite.repository().service.beginHire({ identifiers: [request.id], transaction }),
+            );
+            await suite.transaction((transaction) => suite.repository().service.completeHire({ ...payload, transaction }));
+            await suite.transaction((transaction) => suite.repository().service.completeHire({ ...payload, transaction }));
+
+            // Assert
+            await suite.transaction(async (transaction) => {
+                const employee = await transaction.findOneOrFail(Employee, request.employee.id);
+                const position = await transaction.findOneOrFail(Position, request.payload.position);
+                const assignment = await transaction.findOneOrFail(PositionAssignment, {
+                    sourceRequest: { id: request.id },
+                });
+                const failed = await transaction.findOneOrFail(HRRequest, request.id);
+                expect(employee).toMatchObject({
+                    status: EmployeeStatus.TERMINATED,
+                    employmentEndedOn: "2026-01-31",
+                    termsRevision: 2,
+                });
+                expect(employee.reservation).toBeFalsy();
+                expect(position.reservation).toBeFalsy();
+                expect(assignment.status).toBe(PositionAssignmentStatus.VOIDED);
+                expect(failed).toMatchObject({ executionStatus: HRExecutionStatus.FAILED, failure: "membership blocked" });
+            });
+        });
+
+        it("[case] - applies an unlinked hire immediately and isolates a mismatched employee status", async () => {
+            // Arrange
+            const requests = await createBatch(2);
+            await suite.transaction(async (transaction) => {
+                const employee = await transaction.findOneOrFail(Employee, requests[0].employee.id);
+                employee.unlinkAccount();
+                const other = await transaction.findOneOrFail(Employee, requests[1].employee.id);
+                other.archive();
+            });
+
+            // Act
+            const result = await suite.transaction((transaction) =>
+                suite.repository().service.beginHire({ identifiers: requests.map(({ id }) => id), transaction }),
+            );
+
+            // Assert
+            expect(result.find(({ id }) => id === requests[0].id)?.executionStatus).toBe(HRExecutionStatus.APPLIED);
+            expect(result.find(({ id }) => id === requests[1].id)?.executionStatus).toBe(HRExecutionStatus.FAILED);
+            await suite.transaction(async (transaction) => {
+                expect(await transaction.count(PositionAssignment, { status: PositionAssignmentStatus.ACTIVE })).toBe(1);
+                expect(await transaction.count(PositionAssignment, { status: PositionAssignmentStatus.RESERVED })).toBe(0);
+            });
+        });
+
+        it("[case] - reserves a shared position for only one concurrent hire", async () => {
+            // Arrange
+            const requests = await createBatch(2);
+            await suite.transaction(async (transaction) => {
+                const request = await transaction.findOneOrFail(HRRequest, requests[1].id);
+                request.payload = { ...request.payload, position: requests[0].payload.position };
+                request.targetPosition = transaction.getReference(Position, requests[0].payload.position);
+            });
+
+            // Act
+            const outcomes = await Promise.all(
+                requests.map((request) =>
+                    suite.transaction((transaction) =>
+                        suite.repository().service.beginHire({ identifiers: [request.id], transaction }),
+                    ),
+                ),
+            );
+
+            // Assert
+            expect(
+                outcomes.flat().filter(({ executionStatus }) => executionStatus === HRExecutionStatus.RUNNING),
+            ).toHaveLength(1);
+            expect(
+                outcomes.flat().filter(({ executionStatus }) => executionStatus === HRExecutionStatus.FAILED),
+            ).toHaveLength(1);
+            await suite.transaction(async (transaction) => {
+                expect(await transaction.count(PositionAssignment, { status: PositionAssignmentStatus.RESERVED })).toBe(1);
+            });
+        });
+
+        it("[case] - rolls back reservations together with execution state", async () => {
+            // Arrange
+            const [request] = await createBatch(1);
+
+            // Act
+            const result = suite.transaction(async (transaction) => {
+                await suite.repository().service.beginHire({ identifiers: [request.id], transaction });
+                await transaction.flush();
+                throw new Error("rollback hire");
+            });
+
+            // Assert
+            await expect(result).rejects.toThrow("rollback hire");
+            await suite.transaction(async (transaction) => {
+                const employee = await transaction.findOneOrFail(Employee, request.employee.id);
+                const position = await transaction.findOneOrFail(Position, request.payload.position);
+                const pending = await transaction.findOneOrFail(HRRequest, request.id);
+                expect(employee.reservation).toBeFalsy();
+                expect(position.reservation).toBeFalsy();
+                expect(pending.executionStatus).toBe(HRExecutionStatus.NOT_STARTED);
+                expect(await transaction.count(PositionAssignment, { sourceRequest: { id: request.id } })).toBe(0);
+            });
+        });
+
+        it("[case] - keeps business SQL count constant for 1, 2, 10 and 100 reserved hires", async () => {
+            // Arrange
+            async function measure(count: number): Promise<{ reads: number; writes: number }> {
+                const requests = await createBatch(count);
+
+                // Act
+                return await suite.transaction(async (transaction) => {
+                    const execute = jest.spyOn(transaction.getConnection(), "execute");
+                    try {
+                        const result = await suite.repository().service.beginHire({
+                            identifiers: requests.map(({ id }) => id),
+                            transaction,
+                        });
+                        await transaction.flush();
+                        const queries = execute.mock.calls.map(([sql]) => String(sql).toLowerCase());
+                        expect(result.every(({ executionStatus }) => executionStatus === HRExecutionStatus.RUNNING)).toBe(
+                            true,
+                        );
+                        return {
+                            reads: queries.filter((sql) => sql.startsWith("select")).length,
+                            writes: queries.filter((sql) => /^(insert|update|delete)/.test(sql)).length,
+                        };
+                    } finally {
+                        execute.mockRestore();
+                    }
+                });
+            }
+
+            const counts = [await measure(1), await measure(2), await measure(10), await measure(100)];
+
+            // Assert
+            expect(counts[0]).toEqual({ reads: 8, writes: 4 });
+            expect(counts.slice(1)).toEqual(Array.from({ length: 3 }, () => ({ reads: 11, writes: 4 })));
+        });
+    });
+
     describe("[Method] - changeTerms", () => {
         it("[case] - applies partial terms once and preserves history and unrelated fields", async () => {
             // Arrange

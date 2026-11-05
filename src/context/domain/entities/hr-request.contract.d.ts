@@ -1,4 +1,4 @@
-import { HRExecutionStatus, HRRequestStatus, HRRequestType } from "~context/enums";
+import { HRExecutionStatus, HRRequestStatus, HRRequestType, PayPeriod } from "~context/enums";
 
 declare global {
     namespace Entities {
@@ -69,8 +69,25 @@ declare global {
                     [HRRequestType.TRANSFER]: Transfer;
                     [HRRequestType.OVERTIME]: UnknownObject;
                     [HRRequestType.ABSENCE]: UnknownObject;
-                    [HRRequestType.REHIRE]: UnknownObject;
-                    [HRRequestType.HIRE]: UnknownObject;
+                    [HRRequestType.REHIRE]: Hire;
+                    [HRRequestType.HIRE]: Hire;
+                };
+
+                type Hire = {
+                    employmentStartedOn: string;
+                    scheduleAnchorDate?: string;
+                    salaryPeriod?: PayPeriod;
+                    scheduleTimezone: string;
+                    salaryCurrency?: string;
+                    contractEndsOn?: string;
+                    termsValidFrom: string;
+                    contractType?: string;
+                    salaryAmount?: string;
+                    workCalendar: string;
+                    workSchedule: string;
+                    leavePolicy: string;
+                    position: string;
+                    fte: string;
                 };
 
                 type ChangeTerms = {

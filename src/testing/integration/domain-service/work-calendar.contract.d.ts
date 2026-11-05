@@ -14,6 +14,7 @@ declare global {
                 repositories: {
                     organization: globalThis.Repositories.Organization.Contract;
                     workCalendar: globalThis.Repositories.WorkCalendar.Contract;
+                    hrRequest: globalThis.Repositories.HRRequest.Contract;
                 };
             };
 

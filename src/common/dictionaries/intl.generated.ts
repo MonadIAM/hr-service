@@ -110,6 +110,7 @@ export type I18nTranslations = {
             "NO_CHANGES_DETECTED": string;
         };
         "employee": {
+            "OPERATION_PENDING": string;
             "CANNOT_UPDATE_ARCHIVED": string;
             "NO_CHANGES_DETECTED": string;
             "EMPTY_UPDATE_PATCH": string;
@@ -212,16 +213,22 @@ export type I18nTranslations = {
             "REQUEST_FAILED": string;
             "INVALID_SIGNATURE": string;
         };
+        "work-calendar": {
+            "HIRE_PENDING": string;
+        };
         "work-schedule": {
+            "HIRE_PENDING": string;
             "STALE_REVISION": string;
         };
         "leave-policy": {
+            "HIRE_PENDING": string;
             "STALE_REVISION": string;
         };
         "leave-ledger-entry": {
             "INVALID_REVERSAL": string;
         };
         "hr-request-execution": {
+            "INVALID_EMPLOYEE_STATUS": string;
             "TERMS_NOT_FOUND": string;
             "PLACEMENT_NOT_FOUND": string;
             "POSITION_MISMATCH": string;

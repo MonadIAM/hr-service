@@ -65,9 +65,12 @@ export enum EmployeeStatus {
 }
 
 export enum PositionAssignmentStatus {
-    ACTIVE = "ACTIVE",
-    CLOSED = "CLOSED",
-    VOIDED = "VOIDED",
+    /* eslint-disable prettier/prettier */
+    RESERVED = "RESERVED",
+    ACTIVE   = "ACTIVE",
+    CLOSED   = "CLOSED",
+    VOIDED   = "VOIDED",
+    /* eslint-enable prettier/prettier */
 }
 
 export enum SchedulePattern {

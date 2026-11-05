@@ -36,6 +36,7 @@
         "NO_CHANGES_DETECTED": "No changes were detected."
     },
     "employee": {
+    "OPERATION_PENDING": "The employee has a pending hire request.",
         "CANNOT_UPDATE_ARCHIVED": "An archived record cannot be changed.",
         "NO_CHANGES_DETECTED": "No changes were detected.",
         "EMPTY_UPDATE_PATCH": "No fields were provided for the update.",
