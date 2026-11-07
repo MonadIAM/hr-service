@@ -272,6 +272,9 @@ export class HRRequestExecutionService implements Services.HRRequestExecution.Co
                     result: { assignment: assignment.id, employee: employee.id, account: input.account },
                 });
             }
+            return [request];
+        } else {
+            return [];
         }
     }
 
@@ -1141,6 +1144,9 @@ export class HRRequestExecutionService implements Services.HRRequestExecution.Co
                     account: input.account,
                 },
             });
+            return [request];
+        } else {
+            return [];
         }
     }
 
@@ -1161,6 +1167,9 @@ export class HRRequestExecutionService implements Services.HRRequestExecution.Co
 
         if (request?.executionStatus === HRExecutionStatus.RUNNING) {
             request.markFailed({ reason: input.reason });
+            return [request];
+        } else {
+            return [];
         }
     }
 
@@ -1236,6 +1245,7 @@ export class HRRequestExecutionService implements Services.HRRequestExecution.Co
 
         return requestEntity;
     }
+
     private leaveAmount(value: string): bigint {
         const [whole, fraction = ""] = value.replace("-", "").split(".");
         return (value.startsWith("-") ? -1n : 1n) * BigInt(whole + fraction.padEnd(6, "0"));

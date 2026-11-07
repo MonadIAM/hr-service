@@ -28,7 +28,7 @@ declare namespace Services.HRRequestExecution {
             realm: string;
         };
 
-        type Result = Promise<void>;
+        type Result = Promise<Entities.HRRequest[]>;
 
         type Signature = (props: Props) => Result;
     }
@@ -38,7 +38,7 @@ declare namespace Services.HRRequestExecution {
             transaction: ORM.EntityManager;
         };
 
-        type Result = Promise<void>;
+        type Result = Promise<Entities.HRRequest[]>;
 
         type Signature = (props: Props) => Result;
     }
@@ -48,7 +48,7 @@ declare namespace Services.HRRequestExecution {
             transaction: ORM.EntityManager;
         };
 
-        type Result = Promise<void>;
+        type Result = Promise<Entities.HRRequest[]>;
 
         type Signature = (props: Props) => Result;
     }

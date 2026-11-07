@@ -69,7 +69,7 @@ describe("[DomainService] - HRApprovalStep", () => {
                 });
 
                 // Assert
-                expect(result).toBe(entity);
+                expect("step" in result ? result.step : result).toBe(entity);
                 expect(spy).toHaveBeenCalledTimes(1);
                 expect(repositories.hrRequest.findUniqueOrThrow).toHaveBeenCalledWith(
                     expect.objectContaining({
@@ -149,7 +149,9 @@ describe("[DomainService] - HRApprovalStep", () => {
                 });
 
                 // Assert
-                expect(result.status).toBe(status);
+                expect(result.step.status).toBe(status);
+                expect(result.previous.status).toBe(HRApprovalStatus.ACTIVE);
+                expect(result.previous).not.toBe(result.step);
                 expect(request.status).toBe(requestStatus);
                 if (pending) {
                     expect(next.status).toBe(

@@ -141,7 +141,7 @@ describe("[DomainService] - HRRequest", () => {
             });
 
             // Assert
-            expect(result.status).toBe(HRRequestStatus.SUBMITTED);
+            expect(result.request.status).toBe(HRRequestStatus.SUBMITTED);
             expect(repositories.organization.findUniqueOrThrow).toHaveBeenCalledWith({
                 where: { realm: entity.organization.realm, id: entity.organization.id },
                 transaction: transaction.entityManager,
@@ -217,7 +217,7 @@ describe("[DomainService] - HRRequest", () => {
                     request: { id: entity.id },
                     organization: entity.organization.id,
                 },
-                options: { refresh: true },
+                options: { populate: ["assigneeEmployee"], strategy: "select-in", refresh: true },
                 transaction: transaction.entityManager,
             });
         });

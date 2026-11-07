@@ -18,7 +18,10 @@ declare namespace Services.HRRequest {
             id: string;
         };
 
-        type Result = Promise<Entities.HRRequest>;
+        type Result = Promise<{
+            steps: Entities.HRApprovalStep[];
+            request: Entities.HRRequest;
+        }>;
 
         type Signature = (props: Props) => Result;
     }
@@ -83,7 +86,10 @@ declare namespace Services.HRRequest {
             id: string;
         };
 
-        type Result = Promise<Entities.HRRequest>;
+        type Result = Promise<{
+            steps: Entities.HRApprovalStep[];
+            request: Entities.HRRequest;
+        }>;
 
         type Signature = (props: Props) => Result;
     }

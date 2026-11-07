@@ -9,6 +9,14 @@ declare namespace Commands.HRApprovalStep {
     }
 
     namespace Reassign {
+        type ExecuteResult = {
+            previousSteps: Entities.HRApprovalStep[];
+            steps: Entities.HRApprovalStep[];
+            reassigned: boolean;
+            actor: string;
+            realm: string;
+        };
+
         type Props = {
             id: string;
             organization: string;
@@ -27,17 +35,25 @@ declare namespace Commands.HRApprovalStep {
     }
 
     namespace Approve {
-        type Props = {
-            id: string;
-            organization: string;
+        type ExecuteResult = {
+            previousSteps: Entities.HRApprovalStep[];
+            steps: Entities.HRApprovalStep[];
+            requests: Entities.HRRequest[];
             actor: string;
             realm: string;
+        };
+
+        type Props = {
+            id: string;
+            actor: string;
+            realm: string;
+            organization: string;
+            context: Extract.Meta;
             input: {
                 actorEmployee: string;
                 comment?: string;
                 reason: string;
             };
-            context: Extract.Meta;
         };
 
         type Result = Promise<MessageResult>;
@@ -46,6 +62,13 @@ declare namespace Commands.HRApprovalStep {
     }
 
     namespace Reject {
+        type ExecuteResult = {
+            previousSteps: Entities.HRApprovalStep[];
+            requests: Entities.HRRequest[];
+            actor: string;
+            realm: string;
+        };
+
         type Props = {
             id: string;
             organization: string;
@@ -67,15 +90,22 @@ declare namespace Commands.HRApprovalStep {
     namespace ReturnForRevision {
         type Props = {
             id: string;
-            organization: string;
             actor: string;
             realm: string;
+            organization: string;
+            context: Extract.Meta;
             input: {
                 actorEmployee: string;
                 comment?: string;
                 reason: string;
             };
-            context: Extract.Meta;
+        };
+
+        type ExecuteResult = {
+            previousSteps: Entities.HRApprovalStep[];
+            requests: Entities.HRRequest[];
+            actor: string;
+            realm: string;
         };
 
         type Result = Promise<MessageResult>;
