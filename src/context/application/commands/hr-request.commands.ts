@@ -5,6 +5,7 @@ import { HR_REQUEST_EXECUTION_SERVICE, HR_REQUEST_SERVICE } from "~context/domai
 import { SYSTEM_ACCOUNT_ID, CONSUMER_META } from "~context/constants";
 import { TRANSACTIONAL_SERVICE } from "~common/transaction-manager";
 import {
+    NotificationTopicAction,
     HRExecutionStatus,
     RealmTopicAction,
     HRRequestStatus,
@@ -105,6 +106,11 @@ export class HRRequestCommands implements Commands.HRRequest.Contract {
                 resource: this.resource,
                 outbox: [
                     {
+                        payloadMapper: this.mapper.outcomePayload,
+                        actionType: NotificationTopicAction.CREATE,
+                        destinationTopic: KafkaTopic.NOTIFICATION,
+                    },
+                    {
                         payloadMapper: this.mapper.leavePayload,
                         actionType: RealmTopicAction.MEMBERSHIP_LEAVE_REQUESTED,
                         destinationTopic: KafkaTopic.REALM,
@@ -133,6 +139,13 @@ export class HRRequestCommands implements Commands.HRRequest.Contract {
                         identifiers: Array.from(cancellationIdentifiers),
                         transaction,
                     });
+                    if (cancellations.length) {
+                        await this.hrRequestRepository.find({
+                            options: { populate: ["organization"], strategy: "joined" },
+                            where: { id: { $in: cancellations.map(({ id }) => id) } },
+                            transaction,
+                        });
+                    }
                     for (const request of cancellations) {
                         if (request.executionStatus === HRExecutionStatus.APPLIED) {
                             const id = request.relatedRequest!.id;
@@ -145,23 +158,23 @@ export class HRRequestCommands implements Commands.HRRequest.Contract {
                             hireIdentifiers.delete(id);
                         }
                     }
-                    await this.hrRequestExecutionService.changeTerms({
+                    const terms = await this.hrRequestExecutionService.changeTerms({
                         identifiers: Array.from(changeTermsIdentifiers),
                         transaction,
                     });
-                    await this.hrRequestExecutionService.adjustLeave({
+                    const adjustments = await this.hrRequestExecutionService.adjustLeave({
                         identifiers: Array.from(leaveAdjustmentIdentifiers),
                         transaction,
                     });
-                    await this.hrRequestExecutionService.recordOvertime({
+                    const overtime = await this.hrRequestExecutionService.recordOvertime({
                         identifiers: Array.from(overtimeIdentifiers),
                         transaction,
                     });
-                    await this.hrRequestExecutionService.beginAbsence({
+                    const absences = await this.hrRequestExecutionService.beginAbsence({
                         identifiers: Array.from(absenceIdentifiers),
                         transaction,
                     });
-                    await this.hrRequestExecutionService.transfer({
+                    const transfers = await this.hrRequestExecutionService.transfer({
                         identifiers: Array.from(transferIdentifiers),
                         transaction,
                     });
@@ -174,7 +187,17 @@ export class HRRequestCommands implements Commands.HRRequest.Contract {
                         transaction,
                     });
                     processed = requests.length;
-                    return { requests: [...entities, ...hires] };
+                    const completed = [
+                        ...cancellations,
+                        ...terms,
+                        ...adjustments,
+                        ...overtime,
+                        ...absences,
+                        ...transfers,
+                        ...entities,
+                        ...hires,
+                    ];
+                    return { requests: completed, execution: true };
                 },
             });
 
@@ -217,6 +240,11 @@ export class HRRequestCommands implements Commands.HRRequest.Contract {
         await this.transactionalService.consume({
             incoming,
             resource: this.resource,
+            outbox: {
+                payloadMapper: this.mapper.outcomePayload,
+                actionType: NotificationTopicAction.CREATE,
+                destinationTopic: KafkaTopic.NOTIFICATION,
+            },
             audit: {
                 entityType: EntityType.HR_REQUEST,
                 actionType: ActionType.UPDATE,
@@ -224,8 +252,10 @@ export class HRRequestCommands implements Commands.HRRequest.Contract {
                 ...request,
             },
             changeLog: true,
-            execute: (transaction) => {
-                return this.hrRequestExecutionService.completeHire({ ...request, transaction });
+            execute: async (transaction) => {
+                const requests = await this.hrRequestExecutionService.completeHire({ ...request, transaction });
+
+                return { requests, realm: request.realm, actor: request.actor, execution: true };
             },
         });
     }
@@ -236,6 +266,11 @@ export class HRRequestCommands implements Commands.HRRequest.Contract {
         await this.transactionalService.consume({
             incoming,
             resource: this.resource,
+            outbox: {
+                payloadMapper: this.mapper.outcomePayload,
+                actionType: NotificationTopicAction.CREATE,
+                destinationTopic: KafkaTopic.NOTIFICATION,
+            },
             audit: {
                 entityType: EntityType.HR_REQUEST,
                 actionType: ActionType.UPDATE,
@@ -243,8 +278,10 @@ export class HRRequestCommands implements Commands.HRRequest.Contract {
                 ...request,
             },
             changeLog: true,
-            execute: (transaction) => {
-                return this.hrRequestExecutionService.confirmLeave({ ...request, transaction });
+            execute: async (transaction) => {
+                const requests = await this.hrRequestExecutionService.confirmLeave({ ...request, transaction });
+
+                return { requests, realm: request.realm, actor: request.actor, execution: true };
             },
         });
     }
@@ -255,6 +292,11 @@ export class HRRequestCommands implements Commands.HRRequest.Contract {
         await this.transactionalService.consume({
             incoming,
             resource: this.resource,
+            outbox: {
+                payloadMapper: this.mapper.outcomePayload,
+                actionType: NotificationTopicAction.CREATE,
+                destinationTopic: KafkaTopic.NOTIFICATION,
+            },
             audit: {
                 entityType: EntityType.HR_REQUEST,
                 actionType: ActionType.UPDATE,
@@ -262,8 +304,10 @@ export class HRRequestCommands implements Commands.HRRequest.Contract {
                 ...request,
             },
             changeLog: true,
-            execute: (transaction) => {
-                return this.hrRequestExecutionService.rejectLeave({ ...request, transaction });
+            execute: async (transaction) => {
+                const requests = await this.hrRequestExecutionService.rejectLeave({ ...request, transaction });
+
+                return { requests, realm: request.realm, actor: request.actor, execution: true };
             },
         });
     }
@@ -327,6 +371,11 @@ export class HRRequestCommands implements Commands.HRRequest.Contract {
 
         await this.transactionalService.run({
             resource: this.resource,
+            outbox: {
+                payloadMapper: this.mapper.approvalPayload,
+                actionType: NotificationTopicAction.CREATE,
+                destinationTopic: KafkaTopic.NOTIFICATION,
+            },
             audit: {
                 entityType: EntityType.HR_REQUEST,
                 actionType: ActionType.UPDATE,
@@ -334,7 +383,7 @@ export class HRRequestCommands implements Commands.HRRequest.Contract {
             },
             changeLog: true,
             execute: async (transaction) => {
-                return await this.hrRequestService.submit({
+                const { steps } = await this.hrRequestService.submit({
                     organization,
                     permissions,
                     transaction,
@@ -343,6 +392,8 @@ export class HRRequestCommands implements Commands.HRRequest.Contract {
                     input,
                     id,
                 });
+
+                return { steps, realm, actor, created: true };
             },
         });
 
@@ -354,6 +405,11 @@ export class HRRequestCommands implements Commands.HRRequest.Contract {
 
         await this.transactionalService.run({
             resource: this.resource,
+            outbox: {
+                payloadMapper: this.mapper.cancellationPayload,
+                actionType: NotificationTopicAction.CANCEL,
+                destinationTopic: KafkaTopic.NOTIFICATION,
+            },
             audit: {
                 entityType: EntityType.HR_REQUEST,
                 actionType: ActionType.UPDATE,
@@ -361,7 +417,7 @@ export class HRRequestCommands implements Commands.HRRequest.Contract {
             },
             changeLog: true,
             execute: async (transaction) => {
-                return await this.hrRequestService.withdraw({
+                const { steps } = await this.hrRequestService.withdraw({
                     organization,
                     permissions,
                     transaction,
@@ -369,6 +425,8 @@ export class HRRequestCommands implements Commands.HRRequest.Contract {
                     actor,
                     id,
                 });
+
+                return { previousSteps: steps, realm, actor };
             },
         });
 

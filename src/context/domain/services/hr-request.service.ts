@@ -214,6 +214,7 @@ export class HRRequestService implements Services.HRRequest.Contract {
 
         requestEntity.submit(input);
 
+        const steps: Entities.HRApprovalStep[] = [];
         for (const [index, step] of input.steps.entries()) {
             const assigneeEmployeeEntity = assignees.get(step.assigneeEmployee);
 
@@ -232,12 +233,13 @@ export class HRRequestService implements Services.HRRequest.Contract {
                 transaction,
             });
 
+            steps.push(stepEntity);
             if (index === 0) {
                 stepEntity.activate();
             }
         }
 
-        return requestEntity;
+        return { request: requestEntity, steps };
     }
 
     public async withdraw(props: Services.HRRequest.Withdraw.Props): Services.HRRequest.Withdraw.Result {
@@ -266,7 +268,7 @@ export class HRRequestService implements Services.HRRequest.Contract {
         });
 
         const pendingStepEntities = await this.hrApprovalStepRepository.find({
-            options: { refresh: true },
+            options: { populate: ["assigneeEmployee"], strategy: "select-in", refresh: true },
             transaction,
             where: {
                 status: { $in: [HRApprovalStatus.WAITING, HRApprovalStatus.ACTIVE] },
@@ -276,13 +278,16 @@ export class HRRequestService implements Services.HRRequest.Contract {
             },
         });
 
+        const steps = pendingStepEntities
+            .filter((step) => step.status === HRApprovalStatus.ACTIVE)
+            .map((step) => ({ ...step }));
         requestEntity.withdraw();
 
         for (const stepEntity of pendingStepEntities) {
             stepEntity.skip();
         }
 
-        return requestEntity;
+        return { request: requestEntity, steps };
     }
 
     public async approve(props: Services.HRRequest.Approve.Props): Services.HRRequest.Approve.Result {

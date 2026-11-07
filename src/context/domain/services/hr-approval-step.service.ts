@@ -74,9 +74,10 @@ export class HRApprovalStepService implements Services.HRApprovalStep.Contract {
             transaction,
         });
 
+        const previous = { ...stepEntity };
         stepEntity.reassign({ employee: employeeEntity });
 
-        return stepEntity;
+        return { step: stepEntity, previous };
     }
 
     public async activate(props: Services.HRApprovalStep.Activate.Props): Services.HRApprovalStep.Activate.Result {
@@ -202,6 +203,7 @@ export class HRApprovalStepService implements Services.HRApprovalStep.Contract {
             transaction,
         });
 
+        const previous = { ...stepEntity };
         switch (decision) {
             case HRDecisionKind.APPROVE:
                 stepEntity.approve();
@@ -227,6 +229,6 @@ export class HRApprovalStepService implements Services.HRApprovalStep.Contract {
                 break;
         }
 
-        return stepEntity;
+        return { step: stepEntity, previous, steps: pendingStepEntities };
     }
 }

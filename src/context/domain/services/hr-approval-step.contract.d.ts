@@ -15,7 +15,10 @@ declare namespace Services.HRApprovalStep {
             id: string;
         };
 
-        type Result = Promise<Entities.HRApprovalStep>;
+        type Result = Promise<{
+            previous: Entities.HRApprovalStep;
+            step: Entities.HRApprovalStep;
+        }>;
 
         type Signature = (props: Props) => Result;
     }
@@ -32,7 +35,11 @@ declare namespace Services.HRApprovalStep {
             id: string;
         };
 
-        type Result = Promise<Entities.HRApprovalStep>;
+        type Result = Promise<{
+            step: Entities.HRApprovalStep;
+            previous: Entities.HRApprovalStep;
+            steps: Entities.HRApprovalStep[];
+        }>;
 
         type Signature = (props: Props) => Result;
     }

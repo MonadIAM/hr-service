@@ -80,15 +80,15 @@ declare global {
         namespace Create {
             type Props<T extends HRRequestType = HRRequestType> = {
                 input: {
+                    payload: Entities.HRRequest.Payload.ByType[T];
                     payloadSchemaVersion: number;
                     initiatorEmployee?: string;
                     relatedRequest?: string;
                     targetPosition?: string;
                     idempotencyKey: string;
-                    payload: Entities.HRRequest.Payload.ByType[T];
-                    type: T;
                     effectiveAt?: Date;
                     employee: string;
+                    type: T;
                 };
                 permissions: string[];
                 context: Extract.Meta;
