@@ -46,5 +46,9 @@
   "hr-request": {
     "EMPTY_APPROVAL_ROUTE": "At least one approval step is required.",
     "ASSIGNEE_NOT_FOUND": "The approval step assignee does not exist."
+  },
+  "access-cache": {
+    "UNAVAILABLE": "An up-to-date permission snapshot is unavailable.",
+    "REALM_MISMATCH": "The projection checkpoint contains a different realm."
   }
 }

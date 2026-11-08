@@ -91,7 +91,7 @@ declare global {
         }
 
         namespace AccessCache {
-            type Message = Topics.AccessCache.Message;
+            type Message = Topics.ProjectionJournal.Message;
 
             interface Contract extends PublicContract, InternalContract {}
 

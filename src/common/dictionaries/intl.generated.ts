@@ -246,6 +246,10 @@ export type I18nTranslations = {
             "EMPTY_APPROVAL_ROUTE": string;
             "ASSIGNEE_NOT_FOUND": string;
         };
+        "access-cache": {
+            "UNAVAILABLE": string;
+            "REALM_MISMATCH": string;
+        };
     };
     "validator": {
         "IS_TIME_RANGE": string;
