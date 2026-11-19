@@ -23,5 +23,3 @@ allowBuilds:
   "protobufjs": true
   "esbuild": true
   "ssh2": true
-  '@monadiam/shared@https://codeload.github.com/MonadIAM/shared/tar.gz/946c1543d833279f1656a79d029d1a938d534605': false
-  "@monadiam/shared@https://codeload.github.com/MonadIAM/shared/tar.gz/44d6e78b8de25bd00d9f7763a9a1df3c41bbd5b3": false
