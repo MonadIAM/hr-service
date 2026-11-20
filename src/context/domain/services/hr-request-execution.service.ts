@@ -63,6 +63,7 @@ export class HRRequestExecutionService implements Services.HRRequestExecution.Co
         props: Services.HRRequestExecution.BeginHire.Props,
     ): Services.HRRequestExecution.BeginHire.Result {
         const { transaction, identifiers } = props;
+
         const requests = (await this.hrRequestRepository.find({
             options: {
                 populate: ["organization"],
@@ -82,8 +83,23 @@ export class HRRequestExecutionService implements Services.HRRequestExecution.Co
         })) as Entities.HRRequest<HRRequestType.HIRE | HRRequestType.REHIRE>[];
 
         if (requests.length) {
-            const employeeIds = [...new Set(requests.map(({ employee }) => employee.id))];
-            const positionIds = [...new Set(requests.map(({ payload }) => payload.position))];
+            const employeeIdentifiers = new Set<string>();
+            const positionIdentifiers = new Set<string>();
+            const calendarIdentifiers = new Set<string>();
+            const scheduleIdentifiers = new Set<string>();
+            const policyIdentifiers = new Set<string>();
+
+            for (const { employee, payload } of requests) {
+                employeeIdentifiers.add(employee.id);
+                positionIdentifiers.add(payload.position);
+                calendarIdentifiers.add(payload.workCalendar);
+                scheduleIdentifiers.add(payload.workSchedule);
+                policyIdentifiers.add(payload.leavePolicy);
+            }
+
+            const employeeIds = Array.from(employeeIdentifiers);
+            const positionIds = Array.from(positionIdentifiers);
+
             const employees = await this.employeeRepository.find({
                 options: { lockMode: LockMode.PESSIMISTIC_WRITE, orderBy: { id: "ASC" }, refresh: true },
                 where: { id: { $in: employeeIds } },
@@ -94,6 +110,7 @@ export class HRRequestExecutionService implements Services.HRRequestExecution.Co
                 where: { id: { $in: positionIds } },
                 transaction,
             });
+
             const [assignments, calendars, schedules, policies] = await Promise.all([
                 this.positionAssignmentRepository.find({
                     options: { lockMode: LockMode.PESSIMISTIC_WRITE, orderBy: { id: "ASC" }, refresh: true },
@@ -105,27 +122,47 @@ export class HRRequestExecutionService implements Services.HRRequestExecution.Co
                 }),
                 this.workCalendarRepository.find({
                     options: { lockMode: LockMode.PESSIMISTIC_READ, orderBy: { id: "ASC" }, refresh: true },
-                    where: { id: { $in: [...new Set(requests.map(({ payload }) => payload.workCalendar))] } },
+                    where: { id: { $in: Array.from(calendarIdentifiers) } },
                     transaction,
                 }),
                 this.workScheduleRepository.find({
                     options: { lockMode: LockMode.PESSIMISTIC_READ, orderBy: { id: "ASC" }, refresh: true },
-                    where: { id: { $in: [...new Set(requests.map(({ payload }) => payload.workSchedule))] } },
+                    where: { id: { $in: Array.from(scheduleIdentifiers) } },
                     transaction,
                 }),
                 this.leavePolicyRepository.find({
                     options: { lockMode: LockMode.PESSIMISTIC_READ, orderBy: { id: "ASC" }, refresh: true },
-                    where: { id: { $in: [...new Set(requests.map(({ payload }) => payload.leavePolicy))] } },
+                    where: { id: { $in: Array.from(policyIdentifiers) } },
                     transaction,
                 }),
             ]);
-            const assignmentsByEmployee = new Map(assignments.map((entity) => [entity.employee.id, entity]));
-            const assignmentsByPosition = new Map(assignments.map((entity) => [entity.position.id, entity]));
-            const employeesById = new Map(employees.map((entity) => [entity.id, entity]));
-            const positionsById = new Map(positions.map((entity) => [entity.id, entity]));
-            const calendarsById = new Map(calendars.map((entity) => [entity.id, entity]));
-            const schedulesById = new Map(schedules.map((entity) => [entity.id, entity]));
-            const policiesById = new Map(policies.map((entity) => [entity.id, entity]));
+
+            const occupiedEmployees = new Set<string>();
+            const occupiedPositions = new Set<string>();
+            for (const assignment of assignments) {
+                occupiedEmployees.add(assignment.employee.id);
+                occupiedPositions.add(assignment.position.id);
+            }
+            const employeesById = new Map<string, Entities.Employee>();
+            for (const entity of employees) {
+                employeesById.set(entity.id, entity);
+            }
+            const positionsById = new Map<string, Entities.Position>();
+            for (const entity of positions) {
+                positionsById.set(entity.id, entity);
+            }
+            const calendarsById = new Map<string, Entities.WorkCalendar>();
+            for (const entity of calendars) {
+                calendarsById.set(entity.id, entity);
+            }
+            const schedulesById = new Map<string, Entities.WorkSchedule>();
+            for (const entity of schedules) {
+                schedulesById.set(entity.id, entity);
+            }
+            const policiesById = new Map<string, Entities.LeavePolicy>();
+            for (const entity of policies) {
+                policiesById.set(entity.id, entity);
+            }
 
             for (const request of requests) {
                 const employee = employeesById.get(request.employee.id)!;
@@ -147,7 +184,7 @@ export class HRRequestExecutionService implements Services.HRRequestExecution.Co
                         throw Exception.invariantViolation({ messageKey: `${this.dictionaryPath}.PLACEMENT_NOT_FOUND` });
                     } else if (request.targetPosition && request.targetPosition.id !== position.id) {
                         throw Exception.invariantViolation({ messageKey: `${this.dictionaryPath}.POSITION_MISMATCH` });
-                    } else if (assignmentsByEmployee.has(employee.id) || assignmentsByPosition.has(position.id)) {
+                    } else if (occupiedEmployees.has(employee.id) || occupiedPositions.has(position.id)) {
                         throw Exception.invariantViolation({ messageKey: `${this.dictionaryPath}.POSITION_OCCUPIED` });
                     } else {
                         const input = { ...request.payload, workCalendar, workSchedule, leavePolicy };
@@ -187,8 +224,8 @@ export class HRRequestExecutionService implements Services.HRRequestExecution.Co
                         }
 
                         transaction.persist(assignment);
-                        assignmentsByEmployee.set(employee.id, assignment);
-                        assignmentsByPosition.set(position.id, assignment);
+                        occupiedEmployees.add(employee.id);
+                        occupiedPositions.add(position.id);
                     }
                 } catch (error) {
                     if (!(error instanceof Exception) || Boolean(Exception.isRetryable(error))) {
@@ -299,13 +336,20 @@ export class HRRequestExecutionService implements Services.HRRequestExecution.Co
         });
 
         if (requests.length) {
-            const targetIds = [...new Set(requests.map(({ relatedRequest }) => relatedRequest!.id))];
+            const targetIdentifiers = new Set<string>();
+            for (const request of requests) {
+                targetIdentifiers.add(request.relatedRequest!.id);
+            }
+            const targetIds = Array.from(targetIdentifiers);
             const targets = await this.hrRequestRepository.find({
                 options: { lockMode: LockMode.PESSIMISTIC_WRITE, orderBy: { id: "ASC" }, refresh: true },
                 where: { id: { $in: targetIds } },
                 transaction,
             });
-            const targetsById = new Map(targets.map((target) => [target.id, target]));
+            const targetsById = new Map<string, Entities.HRRequest>();
+            for (const target of targets) {
+                targetsById.set(target.id, target);
+            }
 
             for (const request of requests) {
                 const target = targetsById.get(request.relatedRequest!.id)!;
@@ -350,8 +394,22 @@ export class HRRequestExecutionService implements Services.HRRequestExecution.Co
         })) as Entities.HRRequest<HRRequestType.OVERTIME>[];
 
         if (requests.length) {
-            const employeeIds = [...new Set(requests.map(({ employee }) => employee.id))];
-            const dates = [...new Set(requests.map(({ payload }) => payload.date))].sort();
+            const employeeIdentifiers = new Set<string>();
+            const uniqueDates = new Set<string>();
+            let firstDate = requests[0].payload.date;
+            let lastDate = firstDate;
+            for (const { employee, payload } of requests) {
+                employeeIdentifiers.add(employee.id);
+                uniqueDates.add(payload.date);
+                if (payload.date < firstDate) {
+                    firstDate = payload.date;
+                }
+                if (payload.date > lastDate) {
+                    lastDate = payload.date;
+                }
+            }
+            const employeeIds = Array.from(employeeIdentifiers);
+            const dates = Array.from(uniqueDates);
             const employees = await this.employeeRepository.find({
                 options: { lockMode: LockMode.PESSIMISTIC_WRITE, orderBy: { id: "ASC" }, refresh: true },
                 where: { id: { $in: employeeIds } },
@@ -362,8 +420,8 @@ export class HRRequestExecutionService implements Services.HRRequestExecution.Co
                     options: { lockMode: LockMode.PESSIMISTIC_READ, orderBy: { id: "ASC" }, refresh: true },
                     where: {
                         status: { $in: [PositionAssignmentStatus.ACTIVE, PositionAssignmentStatus.CLOSED] },
-                        $or: [{ validTo: { $gt: dates[0] } }, { validTo: null }],
-                        validFrom: { $lte: dates[dates.length - 1] },
+                        $or: [{ validTo: { $gt: firstDate } }, { validTo: null }],
+                        validFrom: { $lte: lastDate },
                         employee: { id: { $in: employeeIds } },
                     },
                     transaction,
@@ -379,17 +437,23 @@ export class HRRequestExecutionService implements Services.HRRequestExecution.Co
                     transaction,
                 }),
             ]);
-            const employeesById = new Map(employees.map((employee) => [employee.id, employee]));
+            const employeesById = new Map<string, Entities.Employee>();
+            for (const employee of employees) {
+                employeesById.set(employee.id, employee);
+            }
             const assignmentsByEmployee = new Map<string, Entities.PositionAssignment[]>();
-            const recordedDays = new Set(
-                recorded.map(
-                    (request) => `${request.employee.id}/${(request.payload as Entities.HRRequest.Payload.Overtime).date}`,
-                ),
-            );
+            const recordedDays = new Set<string>();
+            for (const request of recorded) {
+                recordedDays.add(`${request.employee.id}/${(request.payload as Entities.HRRequest.Payload.Overtime).date}`);
+            }
             for (const assignment of assignments) {
-                const values = assignmentsByEmployee.get(assignment.employee.id) ?? [];
-                values.push(assignment);
-                assignmentsByEmployee.set(assignment.employee.id, values);
+                const group = assignmentsByEmployee.get(assignment.employee.id);
+
+                if (group) {
+                    group.push(assignment);
+                } else {
+                    assignmentsByEmployee.set(assignment.employee.id, [assignment]);
+                }
             }
 
             for (const request of requests) {
@@ -406,10 +470,20 @@ export class HRRequestExecutionService implements Services.HRRequestExecution.Co
                     } else {
                         request.beginApplication();
                         employee.assertReady();
-                        const assignments = (assignmentsByEmployee.get(employee.id) ?? []).filter(
-                            (assignment) =>
-                                assignment.validFrom <= date && (!assignment.validTo || date < assignment.validTo),
-                        );
+                        let matchingAssignment: Entities.PositionAssignment | undefined;
+                        let assignmentCount = 0;
+                        const candidates = assignmentsByEmployee.get(employee.id);
+                        if (candidates) {
+                            for (const assignment of candidates) {
+                                if (assignment.validFrom <= date && (!assignment.validTo || date < assignment.validTo)) {
+                                    matchingAssignment = assignment;
+                                    assignmentCount += 1;
+                                    if (assignmentCount === 2) {
+                                        break;
+                                    }
+                                }
+                            }
+                        }
 
                         if (![EmployeeStatus.ACTIVE, EmployeeStatus.TERMINATED].includes(employee.status)) {
                             throw Exception.invariantViolation({
@@ -419,7 +493,7 @@ export class HRRequestExecutionService implements Services.HRRequestExecution.Co
                             throw Exception.invariantViolation({
                                 messageKey: `${this.dictionaryPath}.OVERTIME_TERMS_MISMATCH`,
                             });
-                        } else if (assignments.length !== 1) {
+                        } else if (assignmentCount !== 1) {
                             throw Exception.invariantViolation({
                                 messageKey: `${this.dictionaryPath}.PLACEMENT_NOT_FOUND`,
                             });
@@ -428,7 +502,7 @@ export class HRRequestExecutionService implements Services.HRRequestExecution.Co
                                 messageKey: `${this.dictionaryPath}.OVERTIME_ALREADY_RECORDED`,
                             });
                         } else {
-                            request.markApplied({ result: request.calculateOvertime({ assignment: assignments[0] }) });
+                            request.markApplied({ result: request.calculateOvertime({ assignment: matchingAssignment! }) });
                             recordedDays.add(key);
                         }
                     }
@@ -469,7 +543,17 @@ export class HRRequestExecutionService implements Services.HRRequestExecution.Co
         })) as Entities.HRRequest<HRRequestType.ABSENCE>[];
 
         if (requests.length) {
-            const employeeIds = [...new Set(requests.map(({ employee }) => employee.id))];
+            const employeeIdentifiers = new Set<string>();
+            let earliest = Infinity;
+            let latest = -Infinity;
+            for (const { employee, payload } of requests) {
+                employeeIdentifiers.add(employee.id);
+                const start = Date.parse(payload.unit === LeaveUnit.DAY ? payload.startDate : payload.startsAt);
+                const end = Date.parse(payload.unit === LeaveUnit.DAY ? payload.endDate : payload.endsAt);
+                earliest = Math.min(earliest, start, end);
+                latest = Math.max(latest, start, end);
+            }
+            const employeeIds = Array.from(employeeIdentifiers);
             const employees = await this.employeeRepository.find({
                 options: {
                     populate: ["workCalendar", "workSchedule", "leavePolicy"],
@@ -482,27 +566,28 @@ export class HRRequestExecutionService implements Services.HRRequestExecution.Co
                 transaction,
             });
 
-            const boundaries = requests.flatMap(({ payload }) =>
-                payload.unit === LeaveUnit.DAY
-                    ? [Date.parse(payload.startDate), Date.parse(payload.endDate)]
-                    : [Date.parse(payload.startsAt), Date.parse(payload.endsAt)],
-            );
-            const from = new Date(Math.min(...boundaries) - 86400000);
-            const to = new Date(Math.max(...boundaries) + 86400000);
+            const employeesById = new Map<string, Entities.Employee>();
+            const calendarIdentifiers = new Set<string>();
+            for (const employee of employees) {
+                employeesById.set(employee.id, employee);
+                if (employee.workCalendar) {
+                    calendarIdentifiers.add(employee.workCalendar.id);
+                }
+            }
+            const from = new Date(earliest - 86400000);
+            const to = new Date(latest + 86400000);
+            const fromDate = from.toISOString().slice(0, 10);
+            const toDate = to.toISOString().slice(0, 10);
 
             const [exceptions, absences, balances] = await Promise.all([
                 this.workCalendarExceptionRepository.find({
                     where: {
                         calendar: {
                             id: {
-                                $in: [
-                                    ...new Set(
-                                        employees.flatMap(({ workCalendar }) => (workCalendar ? [workCalendar.id] : [])),
-                                    ),
-                                ],
+                                $in: Array.from(calendarIdentifiers),
                             },
                         },
-                        date: { $gte: from.toISOString().slice(0, 10), $lte: to.toISOString().slice(0, 10) },
+                        date: { $gte: fromDate, $lte: toDate },
                     },
                     transaction,
                 }),
@@ -510,8 +595,8 @@ export class HRRequestExecutionService implements Services.HRRequestExecution.Co
                     where: {
                         $or: [
                             {
-                                startDate: { $lt: to.toISOString().slice(0, 10) },
-                                endDate: { $gt: from.toISOString().slice(0, 10) },
+                                startDate: { $lt: toDate },
+                                endDate: { $gt: fromDate },
                             },
                             { startsAt: { $lt: to }, endsAt: { $gt: from } },
                         ],
@@ -523,21 +608,35 @@ export class HRRequestExecutionService implements Services.HRRequestExecution.Co
                 this.leaveLedgerEntryRepository.getBalances({ employees: employeeIds, transaction, at }),
             ]);
 
-            const employeesById = new Map(employees.map((employee) => [employee.id, employee]));
+            const exceptionsByCalendar = new Map<string, Entities.WorkCalendarException[]>();
+            for (const exception of exceptions) {
+                const group = exceptionsByCalendar.get(exception.calendar.id);
+
+                if (group) {
+                    group.push(exception);
+                } else {
+                    exceptionsByCalendar.set(exception.calendar.id, [exception]);
+                }
+            }
             const periodsByEmployee = new Map<string, [Date, Date][]>();
 
             for (const absence of absences) {
-                const periods = periodsByEmployee.get(absence.employee.id) ?? [];
-                periods.push(absence.period());
-                periodsByEmployee.set(absence.employee.id, periods);
+                const periods = periodsByEmployee.get(absence.employee.id);
+
+                if (periods) {
+                    periods.push(absence.period());
+                } else {
+                    periodsByEmployee.set(absence.employee.id, [absence.period()]);
+                }
             }
 
-            const available = new Map(
-                balances.map((balance) => [
+            const available = new Map<string, bigint>();
+            for (const balance of balances) {
+                available.set(
                     `${balance.employee}/${balance.poolCode}/${balance.unit}`,
                     this.leaveAmount(balance.available),
-                ]),
-            );
+                );
+            }
 
             for (const request of requests) {
                 const employee = employeesById.get(request.employee.id)!;
@@ -575,7 +674,7 @@ export class HRRequestExecutionService implements Services.HRRequestExecution.Co
                         });
                         absence.canCreate();
                         absence.calculate({
-                            exceptions: exceptions.filter(({ calendar }) => calendar.id === workCalendar.id),
+                            exceptions: exceptionsByCalendar.get(workCalendar.id) ?? [],
                         });
                         const [start, end] = absence.period();
                         const periods = periodsByEmployee.get(employee.id) ?? [];
@@ -701,21 +800,33 @@ export class HRRequestExecutionService implements Services.HRRequestExecution.Co
         })) as Entities.HRRequest<HRRequestType.LEAVE_ADJUSTMENT>[];
 
         if (requests.length) {
+            const employeeIdentifiers = new Set<string>();
+            const policyIdentifiers = new Set<string>();
+            for (const { employee, payload } of requests) {
+                employeeIdentifiers.add(employee.id);
+                policyIdentifiers.add(payload.leavePolicy);
+            }
             const [employees, policies] = await Promise.all([
                 this.employeeRepository.find({
                     options: { lockMode: LockMode.PESSIMISTIC_WRITE, orderBy: { id: "ASC" }, refresh: true },
-                    where: { id: { $in: [...new Set(requests.map(({ employee }) => employee.id))] } },
+                    where: { id: { $in: Array.from(employeeIdentifiers) } },
                     transaction,
                 }),
                 this.leavePolicyRepository.find({
                     options: { lockMode: LockMode.PESSIMISTIC_READ, orderBy: { id: "ASC" }, refresh: true },
-                    where: { id: { $in: [...new Set(requests.map(({ payload }) => payload.leavePolicy))] } },
+                    where: { id: { $in: Array.from(policyIdentifiers) } },
                     transaction,
                 }),
             ]);
 
-            const employeesById = new Map(employees.map((entity) => [entity.id, entity]));
-            const policiesById = new Map(policies.map((entity) => [entity.id, entity]));
+            const employeesById = new Map<string, Entities.Employee>();
+            for (const entity of employees) {
+                employeesById.set(entity.id, entity);
+            }
+            const policiesById = new Map<string, Entities.LeavePolicy>();
+            for (const entity of policies) {
+                policiesById.set(entity.id, entity);
+            }
 
             for (const request of requests) {
                 const employee = employeesById.get(request.employee.id)!;
@@ -790,7 +901,22 @@ export class HRRequestExecutionService implements Services.HRRequestExecution.Co
 
         if (requests.length) {
             const pending = requests as Entities.HRRequest<HRRequestType.CHANGE_TERMS>[];
-            const values = pending.map(({ payload }) => payload);
+            const employeeIdentifiers = new Set<string>();
+            const calendarIdentifiers = new Set<string>();
+            const scheduleIdentifiers = new Set<string>();
+            const policyIdentifiers = new Set<string>();
+            for (const { employee, payload } of pending) {
+                employeeIdentifiers.add(employee.id);
+                if (payload.workCalendar) {
+                    calendarIdentifiers.add(payload.workCalendar);
+                }
+                if (payload.workSchedule) {
+                    scheduleIdentifiers.add(payload.workSchedule);
+                }
+                if (payload.leavePolicy) {
+                    policyIdentifiers.add(payload.leavePolicy);
+                }
+            }
             const [employees, calendars, schedules, policies] = await Promise.all([
                 this.employeeRepository.find({
                     options: {
@@ -800,40 +926,48 @@ export class HRRequestExecutionService implements Services.HRRequestExecution.Co
                         strategy: "select-in",
                         refresh: true,
                     },
-                    where: { id: { $in: [...new Set(pending.map(({ employee }) => employee.id))] } },
+                    where: { id: { $in: Array.from(employeeIdentifiers) } },
                     transaction,
                 }),
-                this.workCalendarRepository.find({
-                    options: { lockMode: LockMode.PESSIMISTIC_READ, orderBy: { id: "ASC" }, refresh: true },
-                    where: {
-                        id: {
-                            $in: [...new Set(values.flatMap(({ workCalendar }) => (workCalendar ? [workCalendar] : [])))],
-                        },
-                    },
-                    transaction,
-                }),
-                this.workScheduleRepository.find({
-                    options: { lockMode: LockMode.PESSIMISTIC_READ, orderBy: { id: "ASC" }, refresh: true },
-                    where: {
-                        id: {
-                            $in: [...new Set(values.flatMap(({ workSchedule }) => (workSchedule ? [workSchedule] : [])))],
-                        },
-                    },
-                    transaction,
-                }),
-                this.leavePolicyRepository.find({
-                    options: { lockMode: LockMode.PESSIMISTIC_READ, orderBy: { id: "ASC" }, refresh: true },
-                    where: {
-                        id: { $in: [...new Set(values.flatMap(({ leavePolicy }) => (leavePolicy ? [leavePolicy] : [])))] },
-                    },
-                    transaction,
-                }),
+                calendarIdentifiers.size
+                    ? this.workCalendarRepository.find({
+                          options: { lockMode: LockMode.PESSIMISTIC_READ, orderBy: { id: "ASC" }, refresh: true },
+                          where: { id: { $in: Array.from(calendarIdentifiers) } },
+                          transaction,
+                      })
+                    : [],
+                scheduleIdentifiers.size
+                    ? this.workScheduleRepository.find({
+                          options: { lockMode: LockMode.PESSIMISTIC_READ, orderBy: { id: "ASC" }, refresh: true },
+                          where: { id: { $in: Array.from(scheduleIdentifiers) } },
+                          transaction,
+                      })
+                    : [],
+                policyIdentifiers.size
+                    ? this.leavePolicyRepository.find({
+                          options: { lockMode: LockMode.PESSIMISTIC_READ, orderBy: { id: "ASC" }, refresh: true },
+                          where: { id: { $in: Array.from(policyIdentifiers) } },
+                          transaction,
+                      })
+                    : [],
             ]);
 
-            const employeesById = new Map(employees.map((entity) => [entity.id, entity]));
-            const calendarsById = new Map(calendars.map((entity) => [entity.id, entity]));
-            const schedulesById = new Map(schedules.map((entity) => [entity.id, entity]));
-            const policiesById = new Map(policies.map((entity) => [entity.id, entity]));
+            const employeesById = new Map<string, Entities.Employee>();
+            for (const entity of employees) {
+                employeesById.set(entity.id, entity);
+            }
+            const calendarsById = new Map<string, Entities.WorkCalendar>();
+            for (const entity of calendars) {
+                calendarsById.set(entity.id, entity);
+            }
+            const schedulesById = new Map<string, Entities.WorkSchedule>();
+            for (const entity of schedules) {
+                schedulesById.set(entity.id, entity);
+            }
+            const policiesById = new Map<string, Entities.LeavePolicy>();
+            for (const entity of policies) {
+                policiesById.set(entity.id, entity);
+            }
 
             for (const request of pending) {
                 const employee = employeesById.get(request.employee.id)!;
@@ -907,8 +1041,14 @@ export class HRRequestExecutionService implements Services.HRRequestExecution.Co
         })) as Entities.HRRequest<HRRequestType.TRANSFER>[];
 
         if (requests.length) {
-            const employeeIds = [...new Set(requests.map(({ employee }) => employee.id))];
-            const positionIds = [...new Set(requests.map(({ payload }) => payload.position))];
+            const employeeIdentifiers = new Set<string>();
+            const positionIdentifiers = new Set<string>();
+            for (const { employee, payload } of requests) {
+                employeeIdentifiers.add(employee.id);
+                positionIdentifiers.add(payload.position);
+            }
+            const employeeIds = Array.from(employeeIdentifiers);
+            const positionIds = Array.from(positionIdentifiers);
             const employees = await this.employeeRepository.find({
                 options: { lockMode: LockMode.PESSIMISTIC_WRITE, orderBy: { id: "ASC" }, refresh: true },
                 where: { id: { $in: employeeIds } },
@@ -927,10 +1067,20 @@ export class HRRequestExecutionService implements Services.HRRequestExecution.Co
                 },
                 transaction,
             });
-            const assignmentsByEmployee = new Map(assignments.map((entity) => [entity.employee.id, entity]));
-            const assignmentsByPosition = new Map(assignments.map((entity) => [entity.position.id, entity]));
-            const employeesById = new Map(employees.map((entity) => [entity.id, entity]));
-            const positionsById = new Map(positions.map((entity) => [entity.id, entity]));
+            const assignmentsByEmployee = new Map<string, Entities.PositionAssignment>();
+            const occupiedPositions = new Set<string>();
+            for (const assignment of assignments) {
+                assignmentsByEmployee.set(assignment.employee.id, assignment);
+                occupiedPositions.add(assignment.position.id);
+            }
+            const employeesById = new Map<string, Entities.Employee>();
+            for (const entity of employees) {
+                employeesById.set(entity.id, entity);
+            }
+            const positionsById = new Map<string, Entities.Position>();
+            for (const entity of positions) {
+                positionsById.set(entity.id, entity);
+            }
             const created: Entities.PositionAssignment[] = [];
 
             for (const request of requests) {
@@ -944,7 +1094,7 @@ export class HRRequestExecutionService implements Services.HRRequestExecution.Co
                         throw Exception.invariantViolation({ messageKey: `${this.dictionaryPath}.PLACEMENT_NOT_FOUND` });
                     } else if (request.targetPosition && request.targetPosition.id !== position.id) {
                         throw Exception.invariantViolation({ messageKey: `${this.dictionaryPath}.POSITION_MISMATCH` });
-                    } else if (assignmentsByPosition.has(position.id)) {
+                    } else if (occupiedPositions.has(position.id)) {
                         throw Exception.invariantViolation({ messageKey: `${this.dictionaryPath}.POSITION_OCCUPIED` });
                     } else {
                         const assignment = new PositionAssignment({
@@ -975,8 +1125,8 @@ export class HRRequestExecutionService implements Services.HRRequestExecution.Co
                         request.markApplied({
                             result: { assignment: assignment.id, employee: employee.id, position: position.id },
                         });
-                        assignmentsByPosition.delete(current.position.id);
-                        assignmentsByPosition.set(position.id, assignment);
+                        occupiedPositions.delete(current.position.id);
+                        occupiedPositions.add(position.id);
                         assignmentsByEmployee.set(employee.id, assignment);
                         created.push(assignment);
                     }
@@ -1020,6 +1170,8 @@ export class HRRequestExecutionService implements Services.HRRequestExecution.Co
             transaction,
         })) as Entities.HRRequest<HRRequestType.TERMINATE>[];
 
+        const unlinked: Entities.HRRequest<HRRequestType.TERMINATE>[] = [];
+        const employeeIdentifiers = new Set<string>();
         for (const request of requests) {
             request.beginApplication();
             const { employmentEndedOn } = request.payload;
@@ -1033,14 +1185,14 @@ export class HRRequestExecutionService implements Services.HRRequestExecution.Co
                     request.markFailed({ reason: error.message });
                 }
             }
+            if (request.executionStatus === HRExecutionStatus.RUNNING && !request.employee.account) {
+                unlinked.push(request);
+                employeeIdentifiers.add(request.employee.id);
+            }
         }
 
-        const unlinked = requests.filter(
-            (request) => request.executionStatus === HRExecutionStatus.RUNNING && !request.employee.account,
-        );
-
         if (unlinked.length) {
-            const identifiers = [...new Set(unlinked.map(({ employee }) => employee.id))];
+            const identifiers = Array.from(employeeIdentifiers);
             const employees = await this.employeeRepository.find({
                 options: {
                     populate: ["workCalendar", "workSchedule", "leavePolicy"],
@@ -1065,13 +1217,20 @@ export class HRRequestExecutionService implements Services.HRRequestExecution.Co
                 transaction,
             });
 
-            const employeesById = new Map(employees.map((employee) => [employee.id, employee]));
+            const employeesById = new Map<string, Entities.Employee>();
+            for (const employee of employees) {
+                employeesById.set(employee.id, employee);
+            }
             const assignmentsByEmployee = new Map<string, Entities.PositionAssignment[]>();
 
             for (const assignment of assignments) {
-                const group = assignmentsByEmployee.get(assignment.employee.id) ?? [];
-                group.push(assignment);
-                assignmentsByEmployee.set(assignment.employee.id, group);
+                const group = assignmentsByEmployee.get(assignment.employee.id);
+
+                if (group) {
+                    group.push(assignment);
+                } else {
+                    assignmentsByEmployee.set(assignment.employee.id, [assignment]);
+                }
             }
 
             for (const request of unlinked) {

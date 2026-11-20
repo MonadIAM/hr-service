@@ -62,6 +62,7 @@ export class HRRequestCommands implements Commands.HRRequest.Contract {
         });
 
         if (requests.length) {
+            const identifiers: string[] = [];
             const leaveAdjustmentIdentifiers = new Set<string>();
             const cancellationIdentifiers = new Set<string>();
             const changeTermsIdentifiers = new Set<string>();
@@ -72,6 +73,7 @@ export class HRRequestCommands implements Commands.HRRequest.Contract {
             const hireIdentifiers = new Set<string>();
 
             for (const { type, id } of requests) {
+                identifiers.push(id);
                 switch (type) {
                     case HRRequestType.LEAVE_ADJUSTMENT:
                         leaveAdjustmentIdentifiers.add(id);
@@ -126,7 +128,7 @@ export class HRRequestCommands implements Commands.HRRequest.Contract {
                     entityType: EntityType.HR_REQUEST,
                     actionType: ActionType.UPDATE,
                     input: {
-                        identifiers: requests.map(({ id }) => id),
+                        identifiers,
                     },
                     context: {
                         userAgent: "scheduler",
@@ -135,57 +137,75 @@ export class HRRequestCommands implements Commands.HRRequest.Contract {
                 },
                 changeLog: true,
                 execute: async (transaction) => {
-                    const cancellations = await this.hrRequestExecutionService.cancelRequests({
-                        identifiers: Array.from(cancellationIdentifiers),
-                        transaction,
-                    });
+                    const cancellations = cancellationIdentifiers.size
+                        ? await this.hrRequestExecutionService.cancelRequests({
+                              identifiers: Array.from(cancellationIdentifiers),
+                              transaction,
+                          })
+                        : [];
                     if (cancellations.length) {
+                        const identifiers: string[] = [];
+                        for (const request of cancellations) {
+                            identifiers.push(request.id);
+                            if (request.executionStatus === HRExecutionStatus.APPLIED) {
+                                const id = request.relatedRequest!.id;
+                                leaveAdjustmentIdentifiers.delete(id);
+                                changeTermsIdentifiers.delete(id);
+                                terminationIdentifiers.delete(id);
+                                transferIdentifiers.delete(id);
+                                overtimeIdentifiers.delete(id);
+                                absenceIdentifiers.delete(id);
+                                hireIdentifiers.delete(id);
+                            }
+                        }
                         await this.hrRequestRepository.find({
                             options: { populate: ["organization"], strategy: "joined" },
-                            where: { id: { $in: cancellations.map(({ id }) => id) } },
+                            where: { id: { $in: identifiers } },
                             transaction,
                         });
                     }
-                    for (const request of cancellations) {
-                        if (request.executionStatus === HRExecutionStatus.APPLIED) {
-                            const id = request.relatedRequest!.id;
-                            leaveAdjustmentIdentifiers.delete(id);
-                            changeTermsIdentifiers.delete(id);
-                            terminationIdentifiers.delete(id);
-                            transferIdentifiers.delete(id);
-                            overtimeIdentifiers.delete(id);
-                            absenceIdentifiers.delete(id);
-                            hireIdentifiers.delete(id);
-                        }
-                    }
-                    const terms = await this.hrRequestExecutionService.changeTerms({
-                        identifiers: Array.from(changeTermsIdentifiers),
-                        transaction,
-                    });
-                    const adjustments = await this.hrRequestExecutionService.adjustLeave({
-                        identifiers: Array.from(leaveAdjustmentIdentifiers),
-                        transaction,
-                    });
-                    const overtime = await this.hrRequestExecutionService.recordOvertime({
-                        identifiers: Array.from(overtimeIdentifiers),
-                        transaction,
-                    });
-                    const absences = await this.hrRequestExecutionService.beginAbsence({
-                        identifiers: Array.from(absenceIdentifiers),
-                        transaction,
-                    });
-                    const transfers = await this.hrRequestExecutionService.transfer({
-                        identifiers: Array.from(transferIdentifiers),
-                        transaction,
-                    });
-                    const entities = await this.hrRequestExecutionService.beginLeave({
-                        identifiers: Array.from(terminationIdentifiers),
-                        transaction,
-                    });
-                    const hires = await this.hrRequestExecutionService.beginHire({
-                        identifiers: Array.from(hireIdentifiers),
-                        transaction,
-                    });
+                    const terms = changeTermsIdentifiers.size
+                        ? await this.hrRequestExecutionService.changeTerms({
+                              identifiers: Array.from(changeTermsIdentifiers),
+                              transaction,
+                          })
+                        : [];
+                    const adjustments = leaveAdjustmentIdentifiers.size
+                        ? await this.hrRequestExecutionService.adjustLeave({
+                              identifiers: Array.from(leaveAdjustmentIdentifiers),
+                              transaction,
+                          })
+                        : [];
+                    const overtime = overtimeIdentifiers.size
+                        ? await this.hrRequestExecutionService.recordOvertime({
+                              identifiers: Array.from(overtimeIdentifiers),
+                              transaction,
+                          })
+                        : [];
+                    const absences = absenceIdentifiers.size
+                        ? await this.hrRequestExecutionService.beginAbsence({
+                              identifiers: Array.from(absenceIdentifiers),
+                              transaction,
+                          })
+                        : [];
+                    const transfers = transferIdentifiers.size
+                        ? await this.hrRequestExecutionService.transfer({
+                              identifiers: Array.from(transferIdentifiers),
+                              transaction,
+                          })
+                        : [];
+                    const entities = terminationIdentifiers.size
+                        ? await this.hrRequestExecutionService.beginLeave({
+                              identifiers: Array.from(terminationIdentifiers),
+                              transaction,
+                          })
+                        : [];
+                    const hires = hireIdentifiers.size
+                        ? await this.hrRequestExecutionService.beginHire({
+                              identifiers: Array.from(hireIdentifiers),
+                              transaction,
+                          })
+                        : [];
                     processed = requests.length;
                     const completed = [
                         ...cancellations,
@@ -213,19 +233,23 @@ export class HRRequestCommands implements Commands.HRRequest.Contract {
         const at = new Date();
         const absences = await this.absenceRepository.findDue({ limit: props.batchSize, at });
         if (absences.length) {
+            const identifiers: string[] = [];
+            for (const absence of absences) {
+                identifiers.push(absence.id);
+            }
             await this.transactionalService.run({
                 resource: "Absence",
                 audit: {
                     actor: SYSTEM_ACCOUNT_ID,
                     entityType: EntityType.ABSENCE,
                     actionType: ActionType.UPDATE,
-                    input: { identifiers: absences.map(({ id }) => id) },
+                    input: { identifiers },
                     context: { userAgent: "scheduler", ip: "127.0.0.1" },
                 },
                 changeLog: true,
                 execute: (transaction) =>
                     this.hrRequestExecutionService.advanceAbsences({
-                        identifiers: absences.map(({ id }) => id),
+                        identifiers,
                         transaction,
                         at,
                     }),

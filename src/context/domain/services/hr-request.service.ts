@@ -177,6 +177,11 @@ export class HRRequestService implements Services.HRRequest.Contract {
             throw Exception.invariantViolation({ messageKey: `${this.dictionaryPath}.EMPTY_APPROVAL_ROUTE` });
         }
 
+        const assigneeIdentifiers = new Set<string>();
+        for (const step of input.steps) {
+            assigneeIdentifiers.add(step.assigneeEmployee);
+        }
+
         const [requestEntity, employeeEntities] = await Promise.all([
             this.hrRequestRepository.findUniqueOrThrow({
                 where: {
@@ -199,19 +204,23 @@ export class HRRequestService implements Services.HRRequest.Contract {
             }),
             this.employeeRepository.find({
                 where: {
-                    id: { $in: input.steps.map((step) => step.assigneeEmployee) },
+                    id: { $in: Array.from(assigneeIdentifiers) },
                     organization,
                 },
                 transaction,
             }),
         ]);
 
-        const assignees = new Map(employeeEntities.map((employeeEntity) => [employeeEntity.id, employeeEntity]));
+        const assignees = new Map<string, Entities.Employee>();
+        for (const employeeEntity of employeeEntities) {
+            assignees.set(employeeEntity.id, employeeEntity);
+        }
 
         requestEntity.submit(input);
 
         const steps: Entities.HRApprovalStep[] = [];
-        for (const [index, step] of input.steps.entries()) {
+        for (let index = 0; index < input.steps.length; index += 1) {
+            const step = input.steps[index];
             const assigneeEmployeeEntity = assignees.get(step.assigneeEmployee);
 
             if (!assigneeEmployeeEntity) {
@@ -274,12 +283,13 @@ export class HRRequestService implements Services.HRRequest.Contract {
             },
         });
 
-        const steps = pendingStepEntities
-            .filter((step) => step.status === HRApprovalStatus.ACTIVE)
-            .map((step) => ({ ...step }));
+        const steps: Entities.HRApprovalStep[] = [];
         requestEntity.withdraw();
 
         for (const stepEntity of pendingStepEntities) {
+            if (stepEntity.status === HRApprovalStatus.ACTIVE) {
+                steps.push({ ...stepEntity });
+            }
             stepEntity.skip();
         }
 
