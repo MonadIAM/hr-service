@@ -200,7 +200,10 @@ export class Absence implements Entities.Absence.Contract {
         if (props.rule.dayCounting === LeaveDayCounting.CALENDAR_DAYS) {
             days = end.diff(start, "days").days;
         } else {
-            const exceptions = new Map(props.exceptions.map((exception) => [exception.date, exception]));
+            const exceptions = new Map<string, Entities.WorkCalendarException>();
+            for (const exception of props.exceptions) {
+                exceptions.set(exception.date, exception);
+            }
             for (let day = start; day < end; day = day.plus({ days: 1 })) {
                 const date = day.toISODate()!;
                 if (!this.isPublicHoliday(day, exceptions.get(date))) {
@@ -218,9 +221,13 @@ export class Absence implements Entities.Absence.Contract {
             workSchedule!.patternType === SchedulePattern.CYCLIC
                 ? DateTime.fromISO(scheduleAnchorDate!, { zone: "UTC" })
                 : undefined;
-        const exceptions = appliesOverrides
-            ? new Map(props.exceptions.map((exception) => [exception.date, exception]))
-            : undefined;
+        let exceptions: Map<string, Entities.WorkCalendarException> | undefined;
+        if (appliesOverrides) {
+            exceptions = new Map();
+            for (const exception of props.exceptions) {
+                exceptions.set(exception.date, exception);
+            }
+        }
         const absence = Interval.fromDateTimes(this.startsAt!, this.endsAt!);
         const firstDay = DateTime.fromISO(props.startDate, { zone: "UTC" }).minus({ days: 1 });
         const lastDay = DateTime.fromISO(props.lastDate, { zone: "UTC" });

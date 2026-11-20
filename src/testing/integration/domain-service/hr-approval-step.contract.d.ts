@@ -13,7 +13,6 @@ declare global {
                 service: Services.HRApprovalStep.Contract;
                 repositories: {
                     hrApprovalStep: globalThis.Repositories.HRApprovalStep.Contract;
-                    organization: globalThis.Repositories.Organization.Contract;
                     hrRequest: globalThis.Repositories.HRRequest.Contract;
                     employee: globalThis.Repositories.Employee.Contract;
                 };

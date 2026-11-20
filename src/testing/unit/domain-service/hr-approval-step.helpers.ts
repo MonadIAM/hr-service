@@ -13,11 +13,6 @@ export class HRApprovalStepUnitHelpers extends HRDomainUnitHelpers implements Un
                 findUnique: jest.fn<(props: unknown) => Promise<Optional<Entities.HRApprovalStep>>>(),
                 find: jest.fn<(props: unknown) => Promise<Entities.HRApprovalStep[]>>().mockResolvedValue([]),
             },
-            organization: {
-                findUniqueOrThrow: jest.fn<(props: unknown) => Promise<Entities.Organization>>(),
-                findUnique: jest.fn<(props: unknown) => Promise<Optional<Entities.Organization>>>(),
-                find: jest.fn<(props: unknown) => Promise<Entities.Organization[]>>().mockResolvedValue([]),
-            },
             hrRequest: {
                 findUniqueOrThrow: jest.fn<(props: unknown) => Promise<Entities.HRRequest>>(),
                 findUnique: jest.fn<(props: unknown) => Promise<Optional<Entities.HRRequest>>>(),
@@ -37,7 +32,6 @@ export class HRApprovalStepUnitHelpers extends HRDomainUnitHelpers implements Un
             service: new HRApprovalStepService(
                 this.contract<Services.HRApprovalDecision.ServiceContract>(services.hrApprovalDecision),
                 this.contract<Repositories.HRApprovalStep.Contract>(repositories.hrApprovalStep),
-                this.contract<Repositories.Organization.Contract>(repositories.organization),
                 this.contract<Repositories.HRRequest.Contract>(repositories.hrRequest),
                 this.contract<Repositories.Employee.Contract>(repositories.employee),
             ),

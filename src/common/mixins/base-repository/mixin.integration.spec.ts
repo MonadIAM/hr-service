@@ -1,5 +1,5 @@
+import { QueryOrder, LockMode } from "@mikro-orm/postgresql";
 import { describe, expect, it } from "@jest/globals";
-import { QueryOrder } from "@mikro-orm/postgresql";
 
 import { postgresSuite } from "~testing/integration/containers/postgres.suite";
 import { CoreFixture } from "~testing/integration/repositories/core.fixture";
@@ -80,6 +80,88 @@ describe("[Mixin] - BaseRepository", () => {
             // Assert
             expect(result).toHaveLength(2);
             expect(result1).toBe(true);
+        });
+    });
+
+    describe("[Behavior] - locking", () => {
+        it("[case] - preserves pagination and total count when locking a page", async () => {
+            // Arrange
+            await suite.fixtures().createAuditLog({ createdAt: new Date("2026-01-01T00:00:00Z") });
+            const second = await suite.fixtures().createAuditLog({ createdAt: new Date("2026-01-02T00:00:00Z") });
+            const third = await suite.fixtures().createAuditLog({ createdAt: new Date("2026-01-03T00:00:00Z") });
+
+            // Act
+            await suite.transaction(async (transaction) => {
+                const [entities, total] = await suite.repository().findMany({
+                    where: {},
+                    options: {
+                        lockMode: LockMode.PESSIMISTIC_WRITE,
+                        orderBy: { createdAt: QueryOrder.ASC },
+                        offset: 1,
+                        limit: 1,
+                    },
+                    transaction,
+                });
+                const concurrent = transaction.fork({ useContext: false });
+                await concurrent.begin();
+                try {
+                    // Assert
+                    expect(total).toBe(3);
+                    expect(entities).toHaveLength(1);
+                    expect(entities[0].id).toBe(second.id);
+                    await expect(
+                        concurrent.findOneOrFail(
+                            AuditLog,
+                            { id: third.id },
+                            { lockMode: LockMode.PESSIMISTIC_WRITE_OR_FAIL },
+                        ),
+                    ).resolves.toMatchObject({ id: third.id });
+                    await expect(
+                        concurrent.findOneOrFail(
+                            AuditLog,
+                            { id: second.id },
+                            { lockMode: LockMode.PESSIMISTIC_WRITE_OR_FAIL },
+                        ),
+                    ).rejects.toThrow();
+                } finally {
+                    await concurrent.rollback();
+                }
+            });
+        });
+
+        it("[case] - never returns rows skipped by a partial lock", async () => {
+            // Arrange
+            const locked = await suite.fixtures().createAuditLog();
+            const available = await suite.fixtures().createAuditLog();
+
+            // Act
+            await suite.transaction(async (transaction) => {
+                await suite.repository().findUniqueOrThrow({
+                    where: { id: locked.id },
+                    options: { lockMode: LockMode.PESSIMISTIC_WRITE },
+                    transaction,
+                });
+                const concurrent = transaction.fork({ useContext: false });
+                await concurrent.begin();
+                try {
+                    const entities = await suite.repository().find({
+                        where: {},
+                        options: { lockMode: LockMode.PESSIMISTIC_PARTIAL_WRITE, refresh: true },
+                        transaction: concurrent,
+                    });
+                    const skipped = await suite.repository().findUnique({
+                        where: { id: locked.id },
+                        options: { lockMode: LockMode.PESSIMISTIC_PARTIAL_WRITE },
+                        transaction: concurrent,
+                    });
+                    // Assert
+                    expect(entities).toHaveLength(1);
+                    expect(entities[0].id).toBe(available.id);
+                    expect(skipped).toBeNull();
+                } finally {
+                    await concurrent.rollback();
+                }
+            });
         });
     });
 

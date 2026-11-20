@@ -873,10 +873,10 @@ describe("[DomainService] - HRRequestExecution", () => {
             await measure(10);
             await measure(100);
 
-            expect(advancementCounts[0]).toEqual({ reads: 4, writes: 2 });
-            expect(advancementCounts.slice(1)).toEqual(Array.from({ length: 3 }, () => ({ reads: 5, writes: 2 })));
-            expect(counts[0]).toEqual({ reads: 9, writes: 3 });
-            expect(counts[1]).toEqual({ reads: 10, writes: 3 });
+            expect(advancementCounts[0]).toEqual({ reads: 5, writes: 2 });
+            expect(advancementCounts.slice(1)).toEqual(Array.from({ length: 3 }, () => ({ reads: 6, writes: 2 })));
+            expect(counts[0]).toEqual({ reads: 11, writes: 3 });
+            expect(counts[1]).toEqual({ reads: 12, writes: 3 });
             expect(counts.slice(1)).toEqual(Array.from({ length: 3 }, () => counts[1]));
             expect(counts.every(({ writes }) => writes === 3)).toBe(true);
         });
@@ -1211,8 +1211,8 @@ describe("[DomainService] - HRRequestExecution", () => {
             const counts = [await measure(1), await measure(2), await measure(10), await measure(100)];
 
             // Assert
-            expect(counts[0]).toEqual({ reads: 4, writes: 2 });
-            expect(counts[1]).toEqual({ reads: 5, writes: 2 });
+            expect(counts[0]).toEqual({ reads: 5, writes: 2 });
+            expect(counts[1]).toEqual({ reads: 6, writes: 2 });
             expect(counts.slice(1)).toEqual(Array.from({ length: 3 }, () => counts[1]));
             expect(counts[1].writes).toBe(2);
         });
@@ -1510,8 +1510,8 @@ describe("[DomainService] - HRRequestExecution", () => {
             const counts = [await measure(1), await measure(2), await measure(10), await measure(100)];
 
             // Assert
-            expect(counts[0]).toEqual({ reads: 8, writes: 4 });
-            expect(counts.slice(1)).toEqual(Array.from({ length: 3 }, () => ({ reads: 11, writes: 4 })));
+            expect(counts[0]).toEqual({ reads: 9, writes: 4 });
+            expect(counts.slice(1)).toEqual(Array.from({ length: 3 }, () => ({ reads: 12, writes: 4 })));
         });
     });
 

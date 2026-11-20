@@ -1,11 +1,11 @@
+import { QueryOrder, LockMode } from "@mikro-orm/postgresql";
 import { describe, expect, it } from "@jest/globals";
-import { QueryOrder } from "@mikro-orm/postgresql";
 import { randomUUID } from "node:crypto";
 
+import { Employee, WorkCalendar, WorkSchedule, LeavePolicy, Organization } from "~context/domain/entities";
 import { PublicLinkOperator, PublicStringOperator } from "~infrastructure/database/enums";
 import { postgresSuite } from "~testing/integration/containers/postgres.suite";
 import { HRFixture } from "~testing/integration/repositories/hr.fixture";
-import { Employee } from "~context/domain/entities";
 import { EmployeeStatus } from "~context/enums";
 
 import { EmployeeRepository } from "./employee.repository";
@@ -17,6 +17,76 @@ describe("[Repository] - Employee", () => {
     });
 
     describe("[Behavior] - employment terms", () => {
+        it("[case] - refreshes employee relations without locking shared employment terms", async () => {
+            // Arrange
+            const organization = await suite.fixtures().createOrganization();
+            const workCalendar = await suite.fixtures().createWorkCalendar({ organization });
+            const workSchedule = await suite.fixtures().createWorkSchedule({ organization });
+            const leavePolicy = await suite.fixtures().createLeavePolicy({ organization });
+            const employee = await suite
+                .fixtures()
+                .createEmployee({ organization, workCalendar, workSchedule, leavePolicy });
+
+            // Act
+            await suite.transaction(async (transaction) => {
+                const loaded = await suite.repository().findUniqueOrThrow({
+                    where: { id: employee.id },
+                    options: {
+                        lockMode: LockMode.PESSIMISTIC_WRITE,
+                        populate: ["organization", "workCalendar", "workSchedule", "leavePolicy"],
+                        strategy: "select-in",
+                        refresh: true,
+                    },
+                    transaction,
+                });
+                const concurrent = transaction.fork({ useContext: false });
+                await concurrent.begin();
+                try {
+                    // Assert
+                    expect(loaded.workCalendar?.id).toBe(workCalendar.id);
+                    expect(loaded.workSchedule?.id).toBe(workSchedule.id);
+                    expect(loaded.leavePolicy?.id).toBe(leavePolicy.id);
+                    await expect(
+                        concurrent.findOneOrFail(
+                            Organization,
+                            { id: organization.id },
+                            { lockMode: LockMode.PESSIMISTIC_WRITE_OR_FAIL },
+                        ),
+                    ).resolves.toBeDefined();
+                    await expect(
+                        concurrent.findOneOrFail(
+                            WorkCalendar,
+                            { id: workCalendar.id },
+                            { lockMode: LockMode.PESSIMISTIC_WRITE_OR_FAIL },
+                        ),
+                    ).resolves.toBeDefined();
+                    await expect(
+                        concurrent.findOneOrFail(
+                            WorkSchedule,
+                            { id: workSchedule.id },
+                            { lockMode: LockMode.PESSIMISTIC_WRITE_OR_FAIL },
+                        ),
+                    ).resolves.toBeDefined();
+                    await expect(
+                        concurrent.findOneOrFail(
+                            LeavePolicy,
+                            { id: leavePolicy.id },
+                            { lockMode: LockMode.PESSIMISTIC_WRITE_OR_FAIL },
+                        ),
+                    ).resolves.toBeDefined();
+                    await expect(
+                        concurrent.findOneOrFail(
+                            Employee,
+                            { id: employee.id },
+                            { lockMode: LockMode.PESSIMISTIC_WRITE_OR_FAIL },
+                        ),
+                    ).rejects.toThrow();
+                } finally {
+                    await concurrent.rollback();
+                }
+            });
+        });
+
         it.each(["workCalendar", "workSchedule", "leavePolicy"] as const)(
             "[case] - keeps the database organization constraint for %s",
             async (field) => {

@@ -1,11 +1,12 @@
+import { LockMode, QueryOrder } from "@mikro-orm/postgresql";
 import { describe, expect, it } from "@jest/globals";
 import { randomUUID } from "node:crypto";
-import { QueryOrder } from "@mikro-orm/postgresql";
 
 import { PublicLinkOperator, PublicStringOperator, PublicOrdinalOperator } from "~infrastructure/database/enums";
-import { postgresSuite } from "~testing/integration/containers/postgres.suite";
-import { HRFixture } from "~testing/integration/repositories/hr.fixture";
 import { HRRequestType, HRRequestStatus, HRExecutionStatus, LeaveUnit } from "~context/enums";
+import { postgresSuite } from "~testing/integration/containers/postgres.suite";
+import { Employee, HRRequest, Organization } from "~context/domain/entities";
+import { HRFixture } from "~testing/integration/repositories/hr.fixture";
 
 import { HRRequestRepository } from "./hr-request.repository";
 
@@ -13,6 +14,74 @@ describe("[Repository] - HRRequest", () => {
     const suite = postgresSuite({
         repository: ({ readManager }) => new HRRequestRepository(readManager),
         fixture: (entityManager) => new HRFixture(entityManager),
+    });
+
+    describe("[Behavior] - request locking", () => {
+        it.each(["findUnique", "findUniqueOrThrow", "find", "findMany"] as const)(
+            "[case] - %s locks the request without locking its organization or employee",
+            async (method) => {
+                // Arrange
+                const employee = await suite.fixtures().createEmployee({ account: randomUUID() });
+                const request = await suite.fixtures().createHRRequest({ organization: employee.organization, employee });
+                const other = await suite.fixtures().createHRRequest({ organization: employee.organization, employee });
+
+                // Act
+                await suite.transaction(async (transaction) => {
+                    await suite.repository()[method]({
+                        where: {
+                            organization: { id: employee.organization.id, realm: employee.organization.realm },
+                            employee: { account: employee.account },
+                            id: request.id,
+                        },
+                        options: {
+                            populate: ["organization", "employee"],
+                            lockMode: LockMode.PESSIMISTIC_WRITE,
+                            strategy: "select-in",
+                            refresh: true,
+                        },
+                        transaction,
+                    });
+                    const concurrent = transaction.fork({ useContext: false });
+                    await concurrent.begin();
+
+                    try {
+                        // Assert
+                        const organization = await concurrent.findOneOrFail(
+                            Organization,
+                            { id: employee.organization.id },
+                            { lockMode: LockMode.PESSIMISTIC_WRITE_OR_FAIL },
+                        );
+                        const loadedEmployee = await concurrent.findOneOrFail(
+                            Employee,
+                            { id: employee.id, organization: employee.organization.id },
+                            { lockMode: LockMode.PESSIMISTIC_WRITE_OR_FAIL },
+                        );
+                        const otherRequest = await suite.repository().findUniqueOrThrow({
+                            where: {
+                                organization: { id: employee.organization.id, realm: employee.organization.realm },
+                                employee: { account: employee.account },
+                                id: other.id,
+                            },
+                            options: { lockMode: LockMode.PESSIMISTIC_WRITE_OR_FAIL },
+                            transaction: concurrent,
+                        });
+
+                        expect(organization.id).toBe(employee.organization.id);
+                        expect(loadedEmployee.id).toBe(employee.id);
+                        expect(otherRequest.id).toBe(other.id);
+                        await expect(
+                            concurrent.findOneOrFail(
+                                HRRequest,
+                                { id: request.id },
+                                { lockMode: LockMode.PESSIMISTIC_WRITE_OR_FAIL },
+                            ),
+                        ).rejects.toThrow();
+                    } finally {
+                        await concurrent.rollback();
+                    }
+                });
+            },
+        );
     });
 
     describe("[Method] - findUniqueOrThrow", () => {

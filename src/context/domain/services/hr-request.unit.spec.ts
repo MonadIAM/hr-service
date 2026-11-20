@@ -142,10 +142,7 @@ describe("[DomainService] - HRRequest", () => {
 
             // Assert
             expect(result.request.status).toBe(HRRequestStatus.SUBMITTED);
-            expect(repositories.organization.findUniqueOrThrow).toHaveBeenCalledWith({
-                where: { realm: entity.organization.realm, id: entity.organization.id },
-                transaction: transaction.entityManager,
-            });
+            expect(repositories.organization.findUniqueOrThrow).not.toHaveBeenCalled();
             expect(services.hrApprovalStep.create).toHaveBeenCalledTimes(2);
             expect(services.hrApprovalStep.create.mock.calls.map(([props]) => props.input.ordinal)).toEqual([1, 2]);
             expect(
@@ -217,7 +214,7 @@ describe("[DomainService] - HRRequest", () => {
                     request: { id: entity.id },
                     organization: entity.organization.id,
                 },
-                options: { populate: ["assigneeEmployee"], strategy: "select-in", refresh: true },
+                options: { populate: ["assigneeEmployee"], strategy: "joined", refresh: true },
                 transaction: transaction.entityManager,
             });
         });

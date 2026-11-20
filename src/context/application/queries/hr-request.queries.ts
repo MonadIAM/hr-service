@@ -5,11 +5,6 @@ import { QueryMode } from "~context/enums";
 
 @Injectable({ scope: Scope.DEFAULT })
 export class HRRequestQueries implements Queries.HRRequest.Contract {
-    private readonly populate = {
-        DETAILED: ["initiatorEmployee", "relatedRequest", "targetPosition", "employee"] as const,
-        COMPACT: [] as const,
-    };
-
     public constructor(
         @Inject(HR_REQUEST_REPOSITORY)
         private readonly hrRequestRepository: Repositories.HRRequest.QueryContract,
@@ -29,7 +24,6 @@ export class HRRequestQueries implements Queries.HRRequest.Contract {
         }
 
         return this.hrRequestRepository.findUniqueOrThrow({
-            options: { populate: this.populate[props.view] },
             where,
         });
     }
@@ -48,7 +42,6 @@ export class HRRequestQueries implements Queries.HRRequest.Contract {
         }
 
         return this.hrRequestRepository.findMany({
-            options: { populate: this.populate[props.view] },
             pagination: props.pagination,
             filters: props.filters,
             sort: props.sort,
