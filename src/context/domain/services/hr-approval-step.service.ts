@@ -4,7 +4,6 @@ import { LockMode } from "@mikro-orm/core";
 import { HRApprovalStatus, HRDecisionKind } from "~context/enums";
 import {
     HR_APPROVAL_STEP_REPOSITORY,
-    ORGANIZATION_REPOSITORY,
     HR_REQUEST_REPOSITORY,
     EMPLOYEE_REPOSITORY,
 } from "~context/infrastructure/repositories";
@@ -19,8 +18,6 @@ export class HRApprovalStepService implements Services.HRApprovalStep.Contract {
         private readonly hrApprovalDecisionService: Services.HRApprovalDecision.ServiceContract,
         @Inject(HR_APPROVAL_STEP_REPOSITORY)
         private readonly hrApprovalStepRepository: Repositories.HRApprovalStep.Contract,
-        @Inject(ORGANIZATION_REPOSITORY)
-        private readonly organizationRepository: Repositories.Organization.Contract,
         @Inject(HR_REQUEST_REPOSITORY)
         private readonly hrRequestRepository: Repositories.HRRequest.Contract,
         @Inject(EMPLOYEE_REPOSITORY)
@@ -67,7 +64,7 @@ export class HRApprovalStepService implements Services.HRApprovalStep.Contract {
         const stepEntity = await this.hrApprovalStepRepository.findUniqueOrThrow({
             options: {
                 populate: ["assigneeEmployee"],
-                strategy: "select-in",
+                strategy: "joined",
                 refresh: true,
             },
             where: { organization: { realm: props.realm, id: organization }, id },
@@ -83,28 +80,26 @@ export class HRApprovalStepService implements Services.HRApprovalStep.Contract {
     public async activate(props: Services.HRApprovalStep.Activate.Props): Services.HRApprovalStep.Activate.Result {
         const { transaction, organization, id } = props;
 
-        const [_, stepEntity] = await Promise.all([
-            this.hrRequestRepository.findUniqueOrThrow({
-                options: {
-                    lockMode: LockMode.PESSIMISTIC_WRITE,
-                    refresh: true,
-                },
-                where: {
-                    approvalSteps: { $some: { organization, id } },
-                    organization,
-                },
-                transaction,
-            }),
-            this.hrApprovalStepRepository.findUniqueOrThrow({
-                options: {
-                    populate: ["assigneeEmployee"],
-                    strategy: "select-in",
-                    refresh: true,
-                },
-                where: { organization, id },
-                transaction,
-            }),
-        ]);
+        await this.hrRequestRepository.findUniqueOrThrow({
+            options: {
+                lockMode: LockMode.PESSIMISTIC_WRITE,
+                refresh: true,
+            },
+            where: {
+                approvalSteps: { $some: { organization, id } },
+                organization,
+            },
+            transaction,
+        });
+        const stepEntity = await this.hrApprovalStepRepository.findUniqueOrThrow({
+            options: {
+                populate: ["assigneeEmployee"],
+                strategy: "joined",
+                refresh: true,
+            },
+            where: { organization, id },
+            transaction,
+        });
 
         stepEntity.activate();
 
@@ -114,24 +109,22 @@ export class HRApprovalStepService implements Services.HRApprovalStep.Contract {
     public async skip(props: Services.HRApprovalStep.Skip.Props): Services.HRApprovalStep.Skip.Result {
         const { transaction, organization, id } = props;
 
-        const [_, stepEntity] = await Promise.all([
-            this.hrRequestRepository.findUniqueOrThrow({
-                options: {
-                    lockMode: LockMode.PESSIMISTIC_WRITE,
-                    refresh: true,
-                },
-                where: {
-                    approvalSteps: { $some: { organization, id } },
-                    organization,
-                },
-                transaction,
-            }),
-            this.hrApprovalStepRepository.findUniqueOrThrow({
-                options: { refresh: true },
-                where: { organization, id },
-                transaction,
-            }),
-        ]);
+        await this.hrRequestRepository.findUniqueOrThrow({
+            options: {
+                lockMode: LockMode.PESSIMISTIC_WRITE,
+                refresh: true,
+            },
+            where: {
+                approvalSteps: { $some: { organization, id } },
+                organization,
+            },
+            transaction,
+        });
+        const stepEntity = await this.hrApprovalStepRepository.findUniqueOrThrow({
+            options: { refresh: true },
+            where: { organization, id },
+            transaction,
+        });
 
         stepEntity.skip();
 
@@ -140,11 +133,7 @@ export class HRApprovalStepService implements Services.HRApprovalStep.Contract {
 
     public async decide(props: Services.HRApprovalStep.Decide.Props): Services.HRApprovalStep.Decide.Result {
         const { transaction, organization, decision, id } = props;
-        const [organizationEntity, requestEntity, actorEmployeeEntity] = await Promise.all([
-            this.organizationRepository.findUniqueOrThrow({
-                where: { realm: props.realm, id: organization },
-                transaction,
-            }),
+        const [requestEntity, actorEmployeeEntity] = await Promise.all([
             this.hrRequestRepository.findUniqueOrThrow({
                 options: {
                     lockMode: LockMode.PESSIMISTIC_WRITE,
@@ -166,7 +155,7 @@ export class HRApprovalStepService implements Services.HRApprovalStep.Contract {
             this.hrApprovalStepRepository.findUniqueOrThrow({
                 options: {
                     populate: ["assigneeEmployee"],
-                    strategy: "select-in",
+                    strategy: "joined",
                     refresh: true,
                 },
                 where: { organization: { realm: props.realm, id: organization }, id },
@@ -177,7 +166,7 @@ export class HRApprovalStepService implements Services.HRApprovalStep.Contract {
                     populate: decision === HRDecisionKind.APPROVE ? ["assigneeEmployee"] : [],
                     limit: decision === HRDecisionKind.APPROVE ? 1 : undefined,
                     orderBy: { ordinal: "ASC" },
-                    strategy: "select-in",
+                    strategy: "joined",
                     refresh: true,
                 },
                 where: {
@@ -199,7 +188,7 @@ export class HRApprovalStepService implements Services.HRApprovalStep.Contract {
                 step: stepEntity,
                 decision,
             },
-            organization: organizationEntity,
+            organization: requestEntity.organization,
             transaction,
         });
 

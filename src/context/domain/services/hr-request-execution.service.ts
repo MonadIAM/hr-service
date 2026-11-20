@@ -1041,31 +1041,29 @@ export class HRRequestExecutionService implements Services.HRRequestExecution.Co
 
         if (unlinked.length) {
             const identifiers = [...new Set(unlinked.map(({ employee }) => employee.id))];
-            const [employees, assignments] = await Promise.all([
-                this.employeeRepository.find({
-                    options: {
-                        populate: ["workCalendar", "workSchedule", "leavePolicy"],
-                        lockMode: LockMode.PESSIMISTIC_WRITE,
-                        orderBy: { id: "ASC" },
-                        strategy: "select-in",
-                        refresh: true,
-                    },
-                    where: { id: { $in: identifiers } },
-                    transaction,
-                }),
-                this.positionAssignmentRepository.find({
-                    options: {
-                        lockMode: LockMode.PESSIMISTIC_WRITE,
-                        orderBy: { id: "ASC" },
-                        refresh: true,
-                    },
-                    where: {
-                        status: PositionAssignmentStatus.ACTIVE,
-                        employee: { id: { $in: identifiers } },
-                    },
-                    transaction,
-                }),
-            ]);
+            const employees = await this.employeeRepository.find({
+                options: {
+                    populate: ["workCalendar", "workSchedule", "leavePolicy"],
+                    lockMode: LockMode.PESSIMISTIC_WRITE,
+                    orderBy: { id: "ASC" },
+                    strategy: "select-in",
+                    refresh: true,
+                },
+                where: { id: { $in: identifiers } },
+                transaction,
+            });
+            const assignments = await this.positionAssignmentRepository.find({
+                options: {
+                    lockMode: LockMode.PESSIMISTIC_WRITE,
+                    orderBy: { id: "ASC" },
+                    refresh: true,
+                },
+                where: {
+                    status: PositionAssignmentStatus.ACTIVE,
+                    employee: { id: { $in: identifiers } },
+                },
+                transaction,
+            });
 
             const employeesById = new Map(employees.map((employee) => [employee.id, employee]));
             const assignmentsByEmployee = new Map<string, Entities.PositionAssignment[]>();
@@ -1109,27 +1107,25 @@ export class HRRequestExecutionService implements Services.HRRequestExecution.Co
         })) as Nullable<Entities.HRRequest<HRRequestType.TERMINATE>>;
 
         if (request?.executionStatus === HRExecutionStatus.RUNNING) {
-            const [employee, assignments] = await Promise.all([
-                this.employeeRepository.findUniqueOrThrow({
-                    options: {
-                        populate: ["workCalendar", "workSchedule", "leavePolicy"],
-                        lockMode: LockMode.PESSIMISTIC_WRITE,
-                        strategy: "select-in",
-                        refresh: true,
-                    },
-                    where: { organization: input.organization, id: request.employee.id },
-                    transaction,
-                }),
-                this.positionAssignmentRepository.find({
-                    options: { lockMode: LockMode.PESSIMISTIC_WRITE, orderBy: { id: "ASC" }, refresh: true },
-                    where: {
-                        status: PositionAssignmentStatus.ACTIVE,
-                        employee: { id: request.employee.id },
-                        organization: input.organization,
-                    },
-                    transaction,
-                }),
-            ]);
+            const employee = await this.employeeRepository.findUniqueOrThrow({
+                options: {
+                    populate: ["workCalendar", "workSchedule", "leavePolicy"],
+                    lockMode: LockMode.PESSIMISTIC_WRITE,
+                    strategy: "select-in",
+                    refresh: true,
+                },
+                where: { organization: input.organization, id: request.employee.id },
+                transaction,
+            });
+            const assignments = await this.positionAssignmentRepository.find({
+                options: { lockMode: LockMode.PESSIMISTIC_WRITE, orderBy: { id: "ASC" }, refresh: true },
+                where: {
+                    status: PositionAssignmentStatus.ACTIVE,
+                    employee: { id: request.employee.id },
+                    organization: input.organization,
+                },
+                transaction,
+            });
 
             this.employeeService.terminate({
                 input: { employmentEndedOn: request.payload.employmentEndedOn },

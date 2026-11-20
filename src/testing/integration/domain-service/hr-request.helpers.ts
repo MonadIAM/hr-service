@@ -22,7 +22,6 @@ export class HRRequestIntegrationHelpers implements Integration.Domain.HRRequest
                 new HRApprovalStepService(
                     new HRApprovalDecisionService(),
                     repositories.hrApprovalStep,
-                    repositories.organization,
                     repositories.hrRequest,
                     repositories.employee,
                 ),

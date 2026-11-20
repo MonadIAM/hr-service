@@ -177,11 +177,7 @@ export class HRRequestService implements Services.HRRequest.Contract {
             throw Exception.invariantViolation({ messageKey: `${this.dictionaryPath}.EMPTY_APPROVAL_ROUTE` });
         }
 
-        const [organizationEntity, requestEntity, employeeEntities] = await Promise.all([
-            this.organizationRepository.findUniqueOrThrow({
-                where: { id: organization, realm },
-                transaction,
-            }),
+        const [requestEntity, employeeEntities] = await Promise.all([
             this.hrRequestRepository.findUniqueOrThrow({
                 where: {
                     organization: { id: organization, realm },
@@ -229,7 +225,7 @@ export class HRRequestService implements Services.HRRequest.Contract {
                     request: requestEntity,
                     ordinal: index + 1,
                 },
-                organization: organizationEntity,
+                organization: requestEntity.organization,
                 transaction,
             });
 
@@ -268,7 +264,7 @@ export class HRRequestService implements Services.HRRequest.Contract {
         });
 
         const pendingStepEntities = await this.hrApprovalStepRepository.find({
-            options: { populate: ["assigneeEmployee"], strategy: "select-in", refresh: true },
+            options: { populate: ["assigneeEmployee"], strategy: "joined", refresh: true },
             transaction,
             where: {
                 status: { $in: [HRApprovalStatus.WAITING, HRApprovalStatus.ACTIVE] },

@@ -130,7 +130,6 @@ describe("[DomainService] - HRApprovalStep", () => {
                     status: HRApprovalStatus.ACTIVE,
                 });
                 const next = helpers.createHRApprovalStep({ request, assigneeEmployee: actor, ordinal: 2 });
-                repositories.organization.findUniqueOrThrow.mockResolvedValue(request.organization);
                 repositories.hrRequest.findUniqueOrThrow.mockResolvedValue(request);
                 repositories.employee.findUniqueOrThrow.mockResolvedValue(actor);
                 repositories.hrApprovalStep.findUniqueOrThrow.mockResolvedValue(entity);
@@ -187,7 +186,6 @@ describe("[DomainService] - HRApprovalStep", () => {
                 assigneeEmployee: actor,
                 status: HRApprovalStatus.ACTIVE,
             });
-            repositories.organization.findUniqueOrThrow.mockResolvedValue(request.organization);
             repositories.hrRequest.findUniqueOrThrow.mockResolvedValue(request);
             repositories.employee.findUniqueOrThrow.mockResolvedValue(actor);
             repositories.hrApprovalStep.findUniqueOrThrow.mockResolvedValue(entity);

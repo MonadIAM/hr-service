@@ -1,5 +1,4 @@
 import { HRApprovalStepRepository } from "~context/infrastructure/repositories/hr-approval-step.repository";
-import { OrganizationRepository } from "~context/infrastructure/repositories/organization.repository";
 import { HRApprovalDecisionService } from "~context/domain/services/hr-approval-decision.service";
 import { HRRequestRepository } from "~context/infrastructure/repositories/hr-request.repository";
 import { EmployeeRepository } from "~context/infrastructure/repositories/employee.repository";
@@ -9,7 +8,6 @@ export class HRApprovalStepIntegrationHelpers implements Integration.Domain.HRAp
     public service(context: Integration.Postgres.Suite.FactoryContext): Integration.Domain.HRApprovalStep.Service.Context {
         const repositories = {
             hrApprovalStep: new HRApprovalStepRepository(context.readManager),
-            organization: new OrganizationRepository(context.readManager),
             hrRequest: new HRRequestRepository(context.readManager),
             employee: new EmployeeRepository(context.readManager),
         };
@@ -18,7 +16,6 @@ export class HRApprovalStepIntegrationHelpers implements Integration.Domain.HRAp
             service: new HRApprovalStepService(
                 new HRApprovalDecisionService(),
                 repositories.hrApprovalStep,
-                repositories.organization,
                 repositories.hrRequest,
                 repositories.employee,
             ),

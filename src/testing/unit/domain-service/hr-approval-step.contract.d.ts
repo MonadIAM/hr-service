@@ -12,7 +12,6 @@ declare global {
                 transaction: Unit.Domain.Core.Transaction;
                 repositories: {
                     hrApprovalStep: Unit.Domain.HR.RepositoryMock<Entities.HRApprovalStep>;
-                    organization: Unit.Domain.HR.RepositoryMock<Entities.Organization>;
                     hrRequest: Unit.Domain.HR.RepositoryMock<Entities.HRRequest>;
                     employee: Unit.Domain.HR.RepositoryMock<Entities.Employee>;
                 };
