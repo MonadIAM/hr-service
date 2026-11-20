@@ -6,6 +6,7 @@ import { Expose, Type } from "class-transformer";
 import { Reflector } from "@nestjs/core";
 
 import { FORMAT_RESPONSE_DTO, SKIP_INTERCEPTORS } from "~common/decorators";
+import { HRRequestDTO } from "~context/interface/dto/hr-request/res/entity.dto";
 
 import { FormatResponseInterceptor } from "./format-response.interceptor";
 
@@ -75,6 +76,17 @@ function setup(options: { dto?: Class; body?: unknown; lang?: string; skipClass?
 
 describe("[Interceptor] - FormatResponse", () => {
     describe("[Method] - intercept", () => {
+        it("[case] - preserves public HR request JSON fields while excluding private fields", async () => {
+            const { run } = setup({ dto: HRRequestDTO });
+            const payload = { unit: "DAY", dates: ["2026-11-09"], nested: { minutes: 60 } };
+            const result = { absence: "absence-id", employee: "employee-id" };
+
+            const response = await run({ id: "request-id", payload, result, privateField: "hidden" });
+
+            expect(response).toEqual(expect.objectContaining({ payload, result }));
+            expect(response).not.toHaveProperty("privateField");
+        });
+
         it("[case] - passes the original stream through when no response DTO is configured", () => {
             // Arrange
             const { interceptor, context, translate } = setup();

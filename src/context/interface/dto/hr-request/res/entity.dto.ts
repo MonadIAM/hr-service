@@ -1,5 +1,5 @@
 import { ApiProperty, ApiSchema } from "@nestjs/swagger";
-import { Expose } from "class-transformer";
+import { Expose, Transform } from "class-transformer";
 
 import { HRExecutionStatus, HRRequestStatus, HRRequestType } from "~context/enums";
 import { Validator } from "~common/validator";
@@ -73,12 +73,14 @@ export class HRRequestDTO {
     @Expose()
     @Validator.IsObject()
     @ApiProperty({ required: true, type: Object })
+    @Transform(({ obj }: { obj: HRRequestDTO }) => obj.payload, { toClassOnly: true })
     declare public payload: UnknownObject;
 
     @Expose()
     @Validator.IsOptional()
     @Validator.IsObject()
     @ApiProperty({ required: false, type: Object })
+    @Transform(({ obj }: { obj: HRRequestDTO }) => obj.result, { toClassOnly: true })
     declare public result?: UnknownObject;
 
     @Expose()

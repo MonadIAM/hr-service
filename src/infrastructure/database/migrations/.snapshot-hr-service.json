@@ -279,13 +279,13 @@
           "comment": null,
           "collation": null,
           "enumItems": [
+            "SCHEDULED",
             "IN_PROGRESS",
             "COMPLETED",
-            "CANCELLED",
-            "SCHEDULED"
+            "CANCELLED"
           ],
-          "mappedType": "enum",
-          "nativeEnumName": "absence_status"
+          "mappedType": "unknown",
+          "nativeEnumName": "hr.absence_status"
         },
         "timezone": {
           "name": "timezone",
@@ -319,11 +319,11 @@
           "comment": null,
           "collation": null,
           "enumItems": [
-            "MINUTE",
-            "DAY"
+            "DAY",
+            "MINUTE"
           ],
-          "mappedType": "enum",
-          "nativeEnumName": "leave_unit"
+          "mappedType": "unknown",
+          "nativeEnumName": "hr.leave_unit"
         },
         "updated_at": {
           "name": "updated_at",
@@ -450,7 +450,8 @@
             "employee_id",
             "organization_id"
           ],
-          "referencedTableName": "hr.hr_request"
+          "referencedTableName": "hr.hr_request",
+          "deleteRule": "restrict"
         },
         "absence_employee_id_organization_id_foreign": {
           "columnNames": [
@@ -463,7 +464,8 @@
             "id",
             "organization_id"
           ],
-          "referencedTableName": "hr.employee"
+          "referencedTableName": "hr.employee",
+          "deleteRule": "restrict"
         },
         "absence_leave_policy_id_organization_id_foreign": {
           "columnNames": [
@@ -476,7 +478,8 @@
             "id",
             "organization_id"
           ],
-          "referencedTableName": "hr.leave_policy"
+          "referencedTableName": "hr.leave_policy",
+          "deleteRule": "restrict"
         },
         "absence_organization_id_foreign": {
           "columnNames": [
@@ -503,7 +506,8 @@
             "employee_id",
             "organization_id"
           ],
-          "referencedTableName": "hr.hr_request"
+          "referencedTableName": "hr.hr_request",
+          "deleteRule": "restrict"
         }
       },
       "comment": null
@@ -816,13 +820,13 @@
           "comment": null,
           "collation": null,
           "enumItems": [
-            "TERMINATED",
-            "ARCHIVED",
+            "DRAFT",
             "ACTIVE",
-            "DRAFT"
+            "TERMINATED",
+            "ARCHIVED"
           ],
-          "mappedType": "enum",
-          "nativeEnumName": "employee_status"
+          "mappedType": "unknown",
+          "nativeEnumName": "hr.employee_status"
         },
         "terms_revision": {
           "name": "terms_revision",
@@ -946,22 +950,27 @@
       },
       "indexes": [
         {
-          "columnNames": [],
+          "columnNames": [
+            "employee_number"
+          ],
           "composite": false,
           "constraint": false,
           "keyName": "employee_employee_number_trgm_idx",
           "primary": false,
           "unique": false,
-          "expression": "CREATE INDEX \"employee_employee_number_trgm_idx\" ON \"hr\".\"employee\" USING gin (employee_number gin_trgm_ops)"
+          "type": "gin"
         },
         {
-          "columnNames": [],
+          "columnNames": [
+            "(((last_name ||  ::text) || first_name) || COALESCE( ::text || middle_name, ::text))"
+          ],
           "composite": false,
           "constraint": false,
           "keyName": "employee_full_name_trgm_idx",
           "primary": false,
           "unique": false,
-          "expression": "CREATE INDEX \"employee_full_name_trgm_idx\" ON \"hr\".\"employee\" USING gin ((last_name || ' ' || first_name || coalesce(' ' || middle_name, '')) gin_trgm_ops)"
+          "expression": "CREATE INDEX employee_full_name_trgm_idx ON hr.employee USING gin (((((last_name || ' '::text) || first_name) || COALESCE((' '::text || middle_name), ''::text))) gin_trgm_ops)",
+          "type": "gin"
         },
         {
           "columnNames": [
@@ -1043,18 +1052,22 @@
             "id",
             "organization_id"
           ],
-          "referencedTableName": "hr.employee"
+          "referencedTableName": "hr.employee",
+          "deleteRule": "restrict"
         },
-        "employee_leave_policy_id_foreign": {
+        "employee_leave_policy_id_organization_id_foreign": {
           "columnNames": [
-            "leave_policy_id"
+            "leave_policy_id",
+            "organization_id"
           ],
-          "constraintName": "employee_leave_policy_id_foreign",
+          "constraintName": "employee_leave_policy_id_organization_id_foreign",
           "localTableName": "hr.employee",
           "referencedColumnNames": [
-            "id"
+            "id",
+            "organization_id"
           ],
-          "referencedTableName": "hr.leave_policy"
+          "referencedTableName": "hr.leave_policy",
+          "deleteRule": "restrict"
         },
         "employee_organization_id_foreign": {
           "columnNames": [
@@ -1068,27 +1081,33 @@
           "referencedTableName": "hr.organization",
           "deleteRule": "cascade"
         },
-        "employee_work_calendar_id_foreign": {
+        "employee_work_calendar_id_organization_id_foreign": {
           "columnNames": [
-            "work_calendar_id"
+            "work_calendar_id",
+            "organization_id"
           ],
-          "constraintName": "employee_work_calendar_id_foreign",
+          "constraintName": "employee_work_calendar_id_organization_id_foreign",
           "localTableName": "hr.employee",
           "referencedColumnNames": [
-            "id"
+            "id",
+            "organization_id"
           ],
-          "referencedTableName": "hr.work_calendar"
+          "referencedTableName": "hr.work_calendar",
+          "deleteRule": "restrict"
         },
-        "employee_work_schedule_id_foreign": {
+        "employee_work_schedule_id_organization_id_foreign": {
           "columnNames": [
-            "work_schedule_id"
+            "work_schedule_id",
+            "organization_id"
           ],
-          "constraintName": "employee_work_schedule_id_foreign",
+          "constraintName": "employee_work_schedule_id_organization_id_foreign",
           "localTableName": "hr.employee",
           "referencedColumnNames": [
-            "id"
+            "id",
+            "organization_id"
           ],
-          "referencedTableName": "hr.work_schedule"
+          "referencedTableName": "hr.work_schedule",
+          "deleteRule": "restrict"
         }
       },
       "comment": null
@@ -1361,7 +1380,8 @@
             "id",
             "organization_id"
           ],
-          "referencedTableName": "hr.employee"
+          "referencedTableName": "hr.employee",
+          "deleteRule": "restrict"
         },
         "employment_leave_policy_id_organization_id_foreign": {
           "columnNames": [
@@ -1374,7 +1394,8 @@
             "id",
             "organization_id"
           ],
-          "referencedTableName": "hr.leave_policy"
+          "referencedTableName": "hr.leave_policy",
+          "deleteRule": "restrict"
         },
         "employment_organization_id_foreign": {
           "columnNames": [
@@ -1401,7 +1422,8 @@
             "employee_id",
             "organization_id"
           ],
-          "referencedTableName": "hr.hr_request"
+          "referencedTableName": "hr.hr_request",
+          "deleteRule": "restrict"
         },
         "employment_work_calendar_id_organization_id_foreign": {
           "columnNames": [
@@ -1414,7 +1436,8 @@
             "id",
             "organization_id"
           ],
-          "referencedTableName": "hr.work_calendar"
+          "referencedTableName": "hr.work_calendar",
+          "deleteRule": "restrict"
         },
         "employment_work_schedule_id_organization_id_foreign": {
           "columnNames": [
@@ -1427,7 +1450,8 @@
             "id",
             "organization_id"
           ],
-          "referencedTableName": "hr.work_schedule"
+          "referencedTableName": "hr.work_schedule",
+          "deleteRule": "restrict"
         }
       },
       "comment": null
@@ -1540,8 +1564,8 @@
             "REJECT",
             "RETURN"
           ],
-          "mappedType": "enum",
-          "nativeEnumName": "decision_kind"
+          "mappedType": "unknown",
+          "nativeEnumName": "hr.decision_kind"
         },
         "id": {
           "name": "id",
@@ -1689,7 +1713,8 @@
             "id",
             "organization_id"
           ],
-          "referencedTableName": "hr.employee"
+          "referencedTableName": "hr.employee",
+          "deleteRule": "restrict"
         },
         "hr_approval_decision_organization_id_foreign": {
           "columnNames": [
@@ -1718,7 +1743,8 @@
             "request_revision",
             "organization_id"
           ],
-          "referencedTableName": "hr.hr_approval_step"
+          "referencedTableName": "hr.hr_approval_step",
+          "deleteRule": "restrict"
         }
       },
       "comment": null
@@ -1919,8 +1945,8 @@
             "RETURNED",
             "SKIPPED"
           ],
-          "mappedType": "enum",
-          "nativeEnumName": "approval_status"
+          "mappedType": "unknown",
+          "nativeEnumName": "hr.approval_status"
         },
         "updated_at": {
           "name": "updated_at",
@@ -2032,7 +2058,8 @@
             "id",
             "organization_id"
           ],
-          "referencedTableName": "hr.employee"
+          "referencedTableName": "hr.employee",
+          "deleteRule": "restrict"
         },
         "hr_approval_step_organization_id_foreign": {
           "columnNames": [
@@ -2057,7 +2084,8 @@
             "id",
             "organization_id"
           ],
-          "referencedTableName": "hr.hr_request"
+          "referencedTableName": "hr.hr_request",
+          "deleteRule": "restrict"
         }
       },
       "comment": null
@@ -2206,8 +2234,8 @@
             "APPLIED",
             "FAILED"
           ],
-          "mappedType": "enum",
-          "nativeEnumName": "execution_status"
+          "mappedType": "unknown",
+          "nativeEnumName": "hr.execution_status"
         },
         "failure": {
           "name": "failure",
@@ -2418,8 +2446,8 @@
             "WITHDRAWN",
             "CANCELLED"
           ],
-          "mappedType": "enum",
-          "nativeEnumName": "request_status"
+          "mappedType": "unknown",
+          "nativeEnumName": "hr.request_status"
         },
         "submitted_at": {
           "name": "submitted_at",
@@ -2480,8 +2508,8 @@
             "CANCEL_REQUEST",
             "LEAVE_ADJUSTMENT"
           ],
-          "mappedType": "enum",
-          "nativeEnumName": "request_type"
+          "mappedType": "unknown",
+          "nativeEnumName": "hr.request_type"
         },
         "updated_at": {
           "name": "updated_at",
@@ -2646,7 +2674,8 @@
             "id",
             "organization_id"
           ],
-          "referencedTableName": "hr.employee"
+          "referencedTableName": "hr.employee",
+          "deleteRule": "restrict"
         },
         "hr_request_initiator_employee_id_organization_id_foreign": {
           "columnNames": [
@@ -2659,7 +2688,8 @@
             "id",
             "organization_id"
           ],
-          "referencedTableName": "hr.employee"
+          "referencedTableName": "hr.employee",
+          "deleteRule": "restrict"
         },
         "hr_request_organization_id_foreign": {
           "columnNames": [
@@ -2686,7 +2716,8 @@
             "employee_id",
             "organization_id"
           ],
-          "referencedTableName": "hr.hr_request"
+          "referencedTableName": "hr.hr_request",
+          "deleteRule": "restrict"
         },
         "hr_request_target_position_id_organization_id_foreign": {
           "columnNames": [
@@ -2700,7 +2731,7 @@
             "organization_id"
           ],
           "referencedTableName": "hr.position",
-          "deleteRule": "set null (\"target_position_id\")"
+          "deleteRule": "set null (target_position_id)"
         }
       },
       "comment": null
@@ -2894,15 +2925,15 @@
           "comment": null,
           "collation": null,
           "enumItems": [
-            "ADJUSTMENT",
-            "REVERSAL",
             "ACCRUAL",
             "RESERVE",
             "RELEASE",
-            "CONSUME"
+            "CONSUME",
+            "ADJUSTMENT",
+            "REVERSAL"
           ],
-          "mappedType": "enum",
-          "nativeEnumName": "ledger_kind"
+          "mappedType": "unknown",
+          "nativeEnumName": "hr.ledger_kind"
         },
         "leave_policy_id": {
           "name": "leave_policy_id",
@@ -3038,10 +3069,11 @@
           "comment": null,
           "collation": null,
           "enumItems": [
-            "MINUTE",
-            "DAY"
+            "DAY",
+            "MINUTE"
           ],
-          "mappedType": "unknown"
+          "mappedType": "unknown",
+          "nativeEnumName": "hr.leave_unit"
         }
       },
       "indexes": [
@@ -3152,7 +3184,8 @@
             "unit",
             "organization_id"
           ],
-          "referencedTableName": "hr.absence"
+          "referencedTableName": "hr.absence",
+          "deleteRule": "restrict"
         },
         "leave_ledger_entry_employee_id_organization_id_foreign": {
           "columnNames": [
@@ -3165,7 +3198,8 @@
             "id",
             "organization_id"
           ],
-          "referencedTableName": "hr.employee"
+          "referencedTableName": "hr.employee",
+          "deleteRule": "restrict"
         },
         "leave_ledger_entry_leave_policy_id_organization_id_foreign": {
           "columnNames": [
@@ -3178,7 +3212,8 @@
             "id",
             "organization_id"
           ],
-          "referencedTableName": "hr.leave_policy"
+          "referencedTableName": "hr.leave_policy",
+          "deleteRule": "restrict"
         },
         "leave_ledger_entry_organization_id_foreign": {
           "columnNames": [
@@ -3209,7 +3244,8 @@
             "unit",
             "organization_id"
           ],
-          "referencedTableName": "hr.leave_ledger_entry"
+          "referencedTableName": "hr.leave_ledger_entry",
+          "deleteRule": "restrict"
         },
         "leave_ledger_entry_source_request_id_employee_id_d2bd6_foreign": {
           "columnNames": [
@@ -3224,7 +3260,8 @@
             "employee_id",
             "organization_id"
           ],
-          "referencedTableName": "hr.hr_request"
+          "referencedTableName": "hr.hr_request",
+          "deleteRule": "restrict"
         }
       },
       "comment": null
@@ -3384,11 +3421,11 @@
           "comment": null,
           "collation": null,
           "enumItems": [
-            "ARCHIVED",
-            "ACTIVE"
+            "ACTIVE",
+            "ARCHIVED"
           ],
-          "mappedType": "enum",
-          "nativeEnumName": "record_status"
+          "mappedType": "unknown",
+          "nativeEnumName": "hr.record_status"
         },
         "updated_at": {
           "name": "updated_at",
@@ -3427,13 +3464,15 @@
       },
       "indexes": [
         {
-          "columnNames": [],
+          "columnNames": [
+            "code"
+          ],
           "composite": false,
           "constraint": false,
           "keyName": "leave_policy_code_trgm_idx",
           "primary": false,
           "unique": false,
-          "expression": "CREATE INDEX \"leave_policy_code_trgm_idx\" ON \"hr\".\"leave_policy\" USING gin (code gin_trgm_ops)"
+          "type": "gin"
         },
         {
           "columnNames": [
@@ -3447,13 +3486,15 @@
           "unique": true
         },
         {
-          "columnNames": [],
+          "columnNames": [
+            "name"
+          ],
           "composite": false,
           "constraint": false,
           "keyName": "leave_policy_name_trgm_idx",
           "primary": false,
           "unique": false,
-          "expression": "CREATE INDEX \"leave_policy_name_trgm_idx\" ON \"hr\".\"leave_policy\" USING gin (name gin_trgm_ops)"
+          "type": "gin"
         },
         {
           "columnNames": [
@@ -3836,11 +3877,11 @@
           "comment": null,
           "collation": null,
           "enumItems": [
-            "ARCHIVED",
-            "ACTIVE"
+            "ACTIVE",
+            "ARCHIVED"
           ],
-          "mappedType": "enum",
-          "nativeEnumName": "record_status"
+          "mappedType": "unknown",
+          "nativeEnumName": "hr.record_status"
         },
         "team_id": {
           "name": "team_id",
@@ -3913,13 +3954,15 @@
       },
       "indexes": [
         {
-          "columnNames": [],
+          "columnNames": [
+            "code"
+          ],
           "composite": false,
           "constraint": false,
           "keyName": "position_code_trgm_idx",
           "primary": false,
           "unique": false,
-          "expression": "CREATE INDEX \"position_code_trgm_idx\" ON \"hr\".\"position\" USING gin (code gin_trgm_ops)"
+          "type": "gin"
         },
         {
           "columnNames": [
@@ -3976,13 +4019,15 @@
           "unique": true
         },
         {
-          "columnNames": [],
+          "columnNames": [
+            "title"
+          ],
           "composite": false,
           "constraint": false,
           "keyName": "position_title_trgm_idx",
           "primary": false,
           "unique": false,
-          "expression": "CREATE INDEX \"position_title_trgm_idx\" ON \"hr\".\"position\" USING gin (title gin_trgm_ops)"
+          "type": "gin"
         }
       ],
       "checks": [],
@@ -4065,7 +4110,7 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
-          "unique": false,
+          "unique": true,
           "length": null,
           "precision": null,
           "scale": null,
@@ -4167,7 +4212,7 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
-          "unique": false,
+          "unique": true,
           "length": null,
           "precision": null,
           "scale": null,
@@ -4282,8 +4327,8 @@
             "CLOSED",
             "VOIDED"
           ],
-          "mappedType": "enum",
-          "nativeEnumName": "assignment_status"
+          "mappedType": "unknown",
+          "nativeEnumName": "hr.assignment_status"
         },
         "team_id": {
           "name": "team_id",
@@ -4373,22 +4418,26 @@
       },
       "indexes": [
         {
-          "columnNames": [],
+          "columnNames": [
+            "employee_id"
+          ],
           "composite": false,
           "constraint": false,
           "keyName": "position_assignment_active_employee_unique",
           "primary": false,
-          "unique": false,
-          "expression": "CREATE UNIQUE INDEX \"position_assignment_active_employee_unique\" ON \"hr\".\"position_assignment\" (employee_id) WHERE status IN ('ACTIVE', 'RESERVED')"
+          "unique": true,
+          "where": "status = ANY (ARRAY['ACTIVE'::hr.assignment_status, 'RESERVED'::hr.assignment_status])"
         },
         {
-          "columnNames": [],
+          "columnNames": [
+            "position_id"
+          ],
           "composite": false,
           "constraint": false,
           "keyName": "position_assignment_active_position_unique",
           "primary": false,
-          "unique": false,
-          "expression": "CREATE UNIQUE INDEX \"position_assignment_active_position_unique\" ON \"hr\".\"position_assignment\" (position_id) WHERE status IN ('ACTIVE', 'RESERVED')"
+          "unique": true,
+          "where": "status = ANY (ARRAY['ACTIVE'::hr.assignment_status, 'RESERVED'::hr.assignment_status])"
         },
         {
           "columnNames": [
@@ -4439,16 +4488,21 @@
       "checks": [],
       "triggers": [],
       "foreignKeys": {
-        "position_assignment_closed_by_request_id_foreign": {
+        "position_assignment_closed_by_request_id_employe_5d1df_foreign": {
           "columnNames": [
-            "closed_by_request_id"
+            "closed_by_request_id",
+            "employee_id",
+            "organization_id"
           ],
-          "constraintName": "position_assignment_closed_by_request_id_foreign",
+          "constraintName": "position_assignment_closed_by_request_id_employe_5d1df_foreign",
           "localTableName": "hr.position_assignment",
           "referencedColumnNames": [
-            "id"
+            "id",
+            "employee_id",
+            "organization_id"
           ],
-          "referencedTableName": "hr.hr_request"
+          "referencedTableName": "hr.hr_request",
+          "deleteRule": "restrict"
         },
         "position_assignment_employee_id_organization_id_foreign": {
           "columnNames": [
@@ -4461,7 +4515,8 @@
             "id",
             "organization_id"
           ],
-          "referencedTableName": "hr.employee"
+          "referencedTableName": "hr.employee",
+          "deleteRule": "restrict"
         },
         "position_assignment_organization_id_foreign": {
           "columnNames": [
@@ -4502,7 +4557,8 @@
             "employee_id",
             "organization_id"
           ],
-          "referencedTableName": "hr.hr_request"
+          "referencedTableName": "hr.hr_request",
+          "deleteRule": "restrict"
         }
       },
       "comment": null
@@ -4662,11 +4718,11 @@
           "comment": null,
           "collation": null,
           "enumItems": [
-            "ARCHIVED",
-            "ACTIVE"
+            "ACTIVE",
+            "ARCHIVED"
           ],
-          "mappedType": "enum",
-          "nativeEnumName": "record_status"
+          "mappedType": "unknown",
+          "nativeEnumName": "hr.record_status"
         },
         "updated_at": {
           "name": "updated_at",
@@ -4722,13 +4778,15 @@
       },
       "indexes": [
         {
-          "columnNames": [],
+          "columnNames": [
+            "code"
+          ],
           "composite": false,
           "constraint": false,
           "keyName": "work_calendar_code_trgm_idx",
           "primary": false,
           "unique": false,
-          "expression": "CREATE INDEX \"work_calendar_code_trgm_idx\" ON \"hr\".\"work_calendar\" USING gin (code gin_trgm_ops)"
+          "type": "gin"
         },
         {
           "columnNames": [
@@ -4742,13 +4800,15 @@
           "unique": true
         },
         {
-          "columnNames": [],
+          "columnNames": [
+            "name"
+          ],
           "composite": false,
           "constraint": false,
           "keyName": "work_calendar_name_trgm_idx",
           "primary": false,
           "unique": false,
-          "expression": "CREATE INDEX \"work_calendar_name_trgm_idx\" ON \"hr\".\"work_calendar\" USING gin (name gin_trgm_ops)"
+          "type": "gin"
         },
         {
           "columnNames": [
@@ -4999,8 +5059,8 @@
             "WORKDAY",
             "DAY_OFF"
           ],
-          "mappedType": "enum",
-          "nativeEnumName": "day_override"
+          "mappedType": "unknown",
+          "nativeEnumName": "hr.day_override"
         }
       },
       "indexes": [
@@ -5062,7 +5122,8 @@
             "id",
             "organization_id"
           ],
-          "referencedTableName": "hr.work_calendar"
+          "referencedTableName": "hr.work_calendar",
+          "deleteRule": "restrict"
         },
         "work_calendar_exception_organization_id_foreign": {
           "columnNames": [
@@ -5101,8 +5162,8 @@
             "APPLY_OVERRIDES",
             "KEEP_CYCLE"
           ],
-          "mappedType": "enum",
-          "nativeEnumName": "calendar_application"
+          "mappedType": "unknown",
+          "nativeEnumName": "hr.calendar_application"
         },
         "code": {
           "name": "code",
@@ -5224,8 +5285,8 @@
             "WEEKLY",
             "CYCLIC"
           ],
-          "mappedType": "enum",
-          "nativeEnumName": "schedule_pattern"
+          "mappedType": "unknown",
+          "nativeEnumName": "hr.schedule_pattern"
         },
         "revision": {
           "name": "revision",
@@ -5259,11 +5320,11 @@
           "comment": null,
           "collation": null,
           "enumItems": [
-            "ARCHIVED",
-            "ACTIVE"
+            "ACTIVE",
+            "ARCHIVED"
           ],
-          "mappedType": "enum",
-          "nativeEnumName": "record_status"
+          "mappedType": "unknown",
+          "nativeEnumName": "hr.record_status"
         },
         "updated_at": {
           "name": "updated_at",
@@ -5302,13 +5363,15 @@
       },
       "indexes": [
         {
-          "columnNames": [],
+          "columnNames": [
+            "code"
+          ],
           "composite": false,
           "constraint": false,
           "keyName": "work_schedule_code_trgm_idx",
           "primary": false,
           "unique": false,
-          "expression": "CREATE INDEX \"work_schedule_code_trgm_idx\" ON \"hr\".\"work_schedule\" USING gin (code gin_trgm_ops)"
+          "type": "gin"
         },
         {
           "columnNames": [
@@ -5322,13 +5385,15 @@
           "unique": true
         },
         {
-          "columnNames": [],
+          "columnNames": [
+            "name"
+          ],
           "composite": false,
           "constraint": false,
           "keyName": "work_schedule_name_trgm_idx",
           "primary": false,
           "unique": false,
-          "expression": "CREATE INDEX \"work_schedule_name_trgm_idx\" ON \"hr\".\"work_schedule\" USING gin (name gin_trgm_ops)"
+          "type": "gin"
         },
         {
           "columnNames": [
@@ -6101,10 +6166,10 @@
       "name": "absence_status",
       "schema": "hr",
       "items": [
+        "SCHEDULED",
         "IN_PROGRESS",
         "COMPLETED",
-        "CANCELLED",
-        "SCHEDULED"
+        "CANCELLED"
       ]
     },
     "hr.approval_status": {
@@ -6158,10 +6223,10 @@
       "name": "employee_status",
       "schema": "hr",
       "items": [
-        "TERMINATED",
-        "ARCHIVED",
+        "DRAFT",
         "ACTIVE",
-        "DRAFT"
+        "TERMINATED",
+        "ARCHIVED"
       ]
     },
     "hr.execution_status": {
@@ -6179,28 +6244,28 @@
       "name": "leave_unit",
       "schema": "hr",
       "items": [
-        "MINUTE",
-        "DAY"
+        "DAY",
+        "MINUTE"
       ]
     },
     "hr.ledger_kind": {
       "name": "ledger_kind",
       "schema": "hr",
       "items": [
-        "ADJUSTMENT",
-        "REVERSAL",
         "ACCRUAL",
         "RESERVE",
         "RELEASE",
-        "CONSUME"
+        "CONSUME",
+        "ADJUSTMENT",
+        "REVERSAL"
       ]
     },
     "hr.record_status": {
       "name": "record_status",
       "schema": "hr",
       "items": [
-        "ARCHIVED",
-        "ACTIVE"
+        "ACTIVE",
+        "ARCHIVED"
       ]
     },
     "hr.request_status": {

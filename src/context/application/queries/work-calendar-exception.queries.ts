@@ -5,11 +5,6 @@ import { QueryMode } from "~context/enums";
 
 @Injectable({ scope: Scope.DEFAULT })
 export class WorkCalendarExceptionQueries implements Queries.WorkCalendarException.Contract {
-    private readonly populate = {
-        DETAILED: ["calendar"] as const,
-        COMPACT: [] as const,
-    };
-
     public constructor(
         @Inject(WORK_CALENDAR_EXCEPTION_REPOSITORY)
         private readonly workCalendarExceptionRepository: Repositories.WorkCalendarException.QueryContract,
@@ -23,7 +18,6 @@ export class WorkCalendarExceptionQueries implements Queries.WorkCalendarExcepti
                 organization: { id: props.organization, realm: props.realm },
                 id: props.exception,
             },
-            options: { populate: this.populate[props.view] },
         });
     }
 
@@ -32,7 +26,6 @@ export class WorkCalendarExceptionQueries implements Queries.WorkCalendarExcepti
             props.mode === QueryMode.DEFAULT ? { organization: { id: props.organization, realm: props.realm } } : {};
 
         return this.workCalendarExceptionRepository.findMany({
-            options: { populate: this.populate[props.view] },
             pagination: props.pagination,
             filters: props.filters,
             sort: props.sort,
